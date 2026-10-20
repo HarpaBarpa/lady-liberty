@@ -1,0 +1,7 @@
+.vercel/
+.env*
+.claude/
+__pycache__/
+design/raw/
+design/logs/
+design/ref/
