@@ -6,12 +6,36 @@ window.LIBERTY_CONFIG = {
   rules: {
     network: "Robinhood Chain",
     valuation: "Finnhub-backed oracle, USD value locked at deposit",
-    feeBps: 200,                 // 2% protocol fee, in basis points
-    drawIntervalMinutes: 10,     // proposed, not a running timer
+
+    // Entry eligibility
+    minLibertyUsdCents: 1000,     // $10 minimum $LIBERTY hold
+    maxLinkedWallets: 5,          // max additional wallets per primary
+
+    // Dust contribution rules
+    minDustUsdCents: 50,          // $0.50 minimum qualifying contribution
+    bonusDustUsdCents: 500,       // $5+ earns an additional bonus entry
+
+    // Draw mechanics
+    drawIntervalMinutes: 60,      // checks every hour
+    minPoolUsdCents: 5000,        // $50 minimum pool for a drawing
     winnersPerRound: 10,
     onePrizePerWallet: true,
+    cooldownHours: 24,            // winner excluded for 24h after win
+
+    // Protocol fee
+    feeBps: 200,                  // 2% protocol fee, in basis points
+
+    // Buy tax funding
+    buyTaxBps: 300,               // 3% total buy tax
+    raffleTaxBps: 135,            // 1.35% to raffle vault
+    torchTaxBps: 90,              // 0.90% to Torch Protocol
+    buybackTaxBps: 50,            // 0.50% buyback & burn
+    devTaxBps: 25,                // 0.25% development / marketing
+    volumePerDrawUsdCents: 370370, // ~$3,703.70 volume → ~$50 raffle
+
     payoutDraft: [35, 20, 12, 8, 6, 5, 4, 3, 2, 1], // reference split, totals 96: keep as draft
-    walletConnection: "Optional, only for your own stats"
+
+    walletConnection: "Optional, for tracking your entries and linked wallets"
   },
 
   // Real vault state. Stays at zero until a vault is actually deployed.
@@ -36,7 +60,7 @@ window.LIBERTY_CONFIG = {
       { symbol: "TSLAx", micros: 750000 },
       { symbol: "SPYx", micros: 400000 }
     ],
-    // net entry values in cents
+    // net entry values in cents (weight = base entry + bonus entries from dust)
     pigeons: [
       { name: "Gus", cents: 4116 },
       { name: "Admiral Crumb", cents: 24500 },
@@ -62,25 +86,27 @@ window.LIBERTY_CONFIG = {
   },
 
   openDecisions: [
-    "The final payout split, and where the remaining 4% goes",
-    "Who receives the 2% fee and how it is accounted",
+    "Where the remaining 4% of the payout split goes",
+    "Maximum bonus entries per primary account",
+    "Duration of dust-earned entries before expiry",
+    "Exact $5 bonus-entry threshold behaviour",
+    "Rules for drawings with fewer than 10 eligible participants",
+    "Who receives the 2% protocol fee and how it is accounted",
     "Entry-weight precision and rounding",
     "Deposits that land while a draw is in progress",
     "Oracle timestamps and what happens with stale prices",
     "The supported token list and contract addresses",
     "Where the draw randomness comes from",
     "How settlement is carried out",
-    "What happens when too few people take part",
-    "How one prize per wallet shapes weighted picks",
-    "Legal review and who is eligible to take part"
+    "Legal review and eligible jurisdictions"
   ],
 
   torchQuips: [
     "Held up since 1886. Copper hands.",
-    "Closed to visitors since 1916. Opening at launch.",
+    "Closed to visitors since 1916. Open at launch.",
     "Mint green, never out. Not even for an empty vault.",
     "Everything that burns becomes greater.",
-    "Yes, it's real fire. No, you can't deposit it.",
+    "Every hour, on the hour. If the pool's ready.",
     "Not financial advice. I'm a torch."
   ]
 };

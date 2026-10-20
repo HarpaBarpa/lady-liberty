@@ -1,5 +1,7 @@
 /* Lady Liberty: wallet ledger — link secondary wallets, sign to prove control,
-   credit dust contributions to your primary $LIBERTY account. */
+   credit dust contributions to your primary $LIBERTY account.
+   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, $5→bonus entry,
+   24h cooldown after winning. */
 (function () {
   "use strict";
 
@@ -19,12 +21,12 @@
   }
 
   // --- State (localStorage-backed for concept preview) ---
-  var LS_KEY = "lady-liberty-ledger";
   var WALLETS_KEY = "lady-liberty-linked";
+  var RULES = C.rules;
 
   function loadState() {
-    try { return JSON.parse(localStorage.getItem(WALLETS_KEY)) || { primary: null, linked: [] }; }
-    catch (_) { return { primary: null, linked: [] }; }
+    try { return JSON.parse(localStorage.getItem(WALLETS_KEY)) || { primary: null, linked: [], lastWin: 0 }; }
+    catch (_) { return { primary: null, linked: [], lastWin: 0 }; }
   }
 
   function saveState(s) {
@@ -34,6 +36,44 @@
 
   var state = loadState();
 
+  // --- Entry math ---
+  function isHoldingLiberty() {
+    // Concept preview: assumes primary connected = holds $LIBERTY
+    // At launch: replace with actual balance check
+    return !!state.primary;
+  }
+
+  function baseEntries() {
+    // 1 base entry if holding ≥$10 $LIBERTY
+    return isHoldingLiberty() ? 1 : 0;
+  }
+
+  function dustEntries() {
+    var total = 0;
+    state.linked.forEach(function (l) {
+      var contrib = l.contributed || 0;
+      if (contrib < RULES.minDustUsdCents) return; // below $0.50
+      total++; // qualifying contribution = 1 entry
+      total += Math.floor(contrib / RULES.bonusDustUsdCents); // +1 per $5
+    });
+    return total;
+  }
+
+  function totalEntries() {
+    return baseEntries() + dustEntries();
+  }
+
+  function isInCooldown() {
+    if (!state.lastWin) return false;
+    return (Date.now() - state.lastWin) < (RULES.cooldownHours * 3600 * 1000);
+  }
+
+  function cooldownRemaining() {
+    if (!state.lastWin) return 0;
+    var ms = RULES.cooldownHours * 3600 * 1000 - (Date.now() - state.lastWin);
+    return Math.max(0, ms);
+  }
+
   // --- Wallet connection ---
   function getProvider() {
     if (window.ethereum) return window.ethereum;
@@ -42,11 +82,6 @@
 
   function shortAddr(a) {
     return a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
-  }
-
-  function shortEns(addr, ens) {
-    if (ens) return ens;
-    return shortAddr(addr);
   }
 
   async function connectPrimary() {
@@ -60,10 +95,11 @@
 
   async function linkSecondary() {
     if (!state.primary) throw new Error("Connect your main $LIBERTY wallet first.");
-    var prov = getProvider();
+    if (state.linked.length >= RULES.maxLinkedWallets) {
+      throw new Error("Maximum " + RULES.maxLinkedWallets + " linked wallets. Unlink one before adding another.");
+    }
 
-    // Request a fresh connection event — MetaMask may show the same account;
-    // user should switch to their secondary wallet in the extension.
+    var prov = getProvider();
     var accounts = await prov.request({ method: "eth_requestAccounts" });
     var secondaryAddr = accounts[0];
 
@@ -121,18 +157,33 @@
     if (!linked) return;
 
     var asset = C.exampleAssets[Math.floor(Math.random() * C.exampleAssets.length)];
-    var usd = Math.floor(Math.random() * 50000 + 500); // $5–505
+    var usd = Math.floor(Math.random() * 24500 + 50); // $0.50–$245
     linked.contributed = (linked.contributed || 0) + usd;
     linked.lastAsset = asset.symbol;
     linked.lastUsd = usd;
     linked.lastTime = Date.now();
 
-    // Show a brief toast
-    var p = $(".ledger-toast");
-    p.textContent = "Contributed $" + R.formatUsd(usd) + " in " + asset.symbol + " from " + shortAddr(addr);
-    p.classList.add("visible");
-    setTimeout(function () { p.classList.remove("visible"); }, 3000);
+    var n = dustEntries();
+    var msg = "Deposited $" + R.formatUsd(usd) + " in " + asset.symbol + " from " + shortAddr(addr);
+    if (usd < RULES.minDustUsdCents) {
+      msg += ". Below $" + (RULES.minDustUsdCents / 100).toFixed(2) + " minimum — no entry earned.";
+    } else if (usd >= RULES.bonusDustUsdCents) {
+      msg += ". Qualifying + bonus: " + usd + " dust entries now.";
+    } else {
+      msg += ". Qualifying: 1 dust entry earned.";
+    }
 
+    var p = $(".ledger-toast");
+    p.textContent = msg;
+    p.classList.add("visible");
+    setTimeout(function () { p.classList.remove("visible"); }, 4000);
+
+    saveState(state);
+    renderLedger();
+  }
+
+  function simulateWin() {
+    state.lastWin = Date.now();
     saveState(state);
     renderLedger();
   }
@@ -143,22 +194,48 @@
     if (!container) return;
 
     var primaryConnected = !!state.primary;
+    var base = baseEntries();
+    var dust = dustEntries();
+    var total = base + dust;
+    var inCooldown = isInCooldown();
+    var slotsLeft = RULES.maxLinkedWallets - state.linked.length;
 
     container.innerHTML = "";
     container.className = "ledger" + (primaryConnected ? " is-connected" : "");
 
-    // Primary wallet card
+    // --- Rules summary card ---
+    var rulesCard = el("div", { class: "ledger-card ledger-rules" });
+    rulesCard.innerHTML =
+      '<div class="ledger-card-header">' +
+        '<span class="ledger-icon" aria-hidden="true">📋</span>' +
+        '<h3>How Entries Work</h3>' +
+      '</div>' +
+      '<div class="rules-grid">' +
+        '<div class="rules-item"><strong>1 base entry</strong>Hold $' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ in $LIBERTY</div>' +
+        '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets for RWA dust</div>' +
+        '<div class="rules-item"><strong>$' + (RULES.minDustUsdCents / 100).toFixed(2) + '+ dust</strong>Qualifying contribution = 1 entry</div>' +
+        '<div class="rules-item"><strong>$' + (RULES.bonusDustUsdCents / 100).toFixed(0) + '+ dust</strong>Each $' + (RULES.bonusDustUsdCents / 100).toFixed(0) + ' in one deposit = +1 bonus entry</div>' +
+        '<div class="rules-item"><strong>Hourly draws</strong>Prize pool must reach $' + (RULES.minPoolUsdCents / 100).toFixed(0) + ' to trigger a drawing</div>' +
+        '<div class="rules-item"><strong>' + RULES.cooldownHours + 'h cooldown</strong>Winners excluded for ' + RULES.cooldownHours + ' hours after a win</div>' +
+      '</div>';
+    container.appendChild(rulesCard);
+
+    // --- Primary wallet card ---
     var primaryCard = el("div", { class: "ledger-card ledger-primary" });
     if (primaryConnected) {
       primaryCard.innerHTML =
         '<div class="ledger-card-header">' +
           '<span class="ledger-icon" aria-hidden="true">🔗</span>' +
           '<h3>Primary Wallet</h3>' +
-          '<span class="ledger-badge badge-active">Active</span>' +
+          '<span class="ledger-badge badge-active">Connected</span>' +
         '</div>' +
         '<div class="ledger-addr">' +
           '<code>' + shortAddr(state.primary.address) + '</code>' +
           '<span class="ledger-copy-hint">Holds $LIBERTY</span>' +
+        '</div>' +
+        '<div class="ledger-entry-row">' +
+          '<span class="entry-stat"><strong>' + base + '</strong> base entry</span>' +
+          (inCooldown ? '<span class="entry-stat cooldown">⏳ Cooldown: ' + R.timeAgo(state.lastWin, { suffix: false }) + ' remaining</span>' : '') +
         '</div>' +
         '<div class="ledger-meta">Connected ' + R.timeAgo(state.primary.linkedAt) + '</div>' +
         '<button class="btn btn-outline-sm" data-disconnect type="button">Disconnect</button>';
@@ -169,31 +246,35 @@
           '<h3>Primary Wallet</h3>' +
           '<span class="ledger-badge badge-inactive">Not connected</span>' +
         '</div>' +
-        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY. This is your raffle account — all dust contributions from your linked wallets will credit here.</p>' +
+        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY ($' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ required for raffle eligibility). This is your raffle account — all dust contributions from linked wallets credit here. 1 base entry.</p>' +
         '<button class="btn btn-primary" data-connect-primary type="button">Connect Primary Wallet</button>';
     }
     container.appendChild(primaryCard);
 
-    // Linked wallets
+    // --- Linked wallets ---
     if (primaryConnected) {
       var linkedCard = el("div", { class: "ledger-card ledger-linked" });
       linkedCard.innerHTML =
         '<div class="ledger-card-header">' +
           '<span class="ledger-icon" aria-hidden="true">📜</span>' +
           '<h3>Linked Wallets</h3>' +
-          '<span class="ledger-count">' + state.linked.length + ' linked</span>' +
+          '<span class="ledger-count">' + state.linked.length + '/' + RULES.maxLinkedWallets + ' linked</span>' +
         '</div>' +
-        '<p class="ledger-blurb">Link secondary wallets holding RWA dust. Sign a message to prove control — no gas, no transaction. Contributions from linked wallets count toward your primary raffle entry.</p>';
+        '<p class="ledger-blurb">Link secondary wallets holding RWA dust. Sign a message to prove control — no gas, no transaction. Every qualifying contribution earns entries toward your primary raffle account.' +
+        (slotsLeft > 0 ? ' <strong>' + slotsLeft + ' slot' + (slotsLeft !== 1 ? 's' : '') + ' remaining</strong>.</p>' : '') +
+        '<p class="ledger-note">Min contribution: $' + (RULES.minDustUsdCents / 100).toFixed(2) + '. Bonus: +1 entry per $' + (RULES.bonusDustUsdCents / 100).toFixed(0) + ' in a single deposit.</p>';
 
       if (state.linked.length) {
         var list = el("ul", { class: "linked-list" });
         state.linked.forEach(function (l) {
           var item = el("li", { class: "linked-item" });
+          var c = l.contributed || 0;
+          var dEntries = c >= RULES.minDustUsdCents ? (1 + Math.floor(c / RULES.bonusDustUsdCents)) : 0;
           item.innerHTML =
             '<div class="linked-info">' +
               '<code class="linked-addr">' + shortAddr(l.address) + '</code>' +
               '<span class="linked-meta">Proved ' + R.timeAgo(l.linkedAt) + '</span>' +
-              '<span class="linked-contrib">$' + R.formatUsd(l.contributed || 0) + ' contributed</span>' +
+              '<span class="linked-contrib">$' + R.formatUsd(c) + ' contributed · <strong>' + dEntries + ' dust entr' + (dEntries !== 1 ? 'ies' : 'y') + '</strong></span>' +
             '</div>' +
             '<div class="linked-actions">' +
               '<button class="btn btn-outline-sm" data-contribute="' + l.address + '" type="button">Simulate Deposit</button>' +
@@ -204,22 +285,41 @@
         linkedCard.appendChild(list);
       }
 
-      linkedCard.appendChild(el("div", { class: "ledger-ctas" },
-        '<button class="btn btn-primary" data-link-secondary type="button">Link Another Wallet</button>'
-      ));
+      if (slotsLeft > 0) {
+        linkedCard.appendChild(el("div", { class: "ledger-ctas" },
+          '<button class="btn btn-primary" data-link-secondary type="button">Link Another Wallet</button>'
+        ));
+      }
 
       container.appendChild(linkedCard);
 
-      // History card
+      // --- Entry tally card ---
+      var tallyCard = el("div", { class: "ledger-card ledger-tally" });
+      tallyCard.innerHTML =
+        '<div class="ledger-card-header">' +
+          '<span class="ledger-icon" aria-hidden="true">🎫</span>' +
+          '<h3>Your Entries</h3>' +
+          '<span class="ledger-badge ' + (total > 0 ? 'badge-active' : 'badge-inactive') + '">' + total + ' total</span>' +
+        '</div>' +
+        '<div class="tally-grid">' +
+          '<div class="tally-item"><span class="tally-num">' + base + '</span><span class="tally-label">Base entry</span><span class="tally-help">$' + (RULES.minLibertyUsdCents / 100).toFixed(0) + ' $LIBERTY</span></div>' +
+          '<div class="tally-item"><span class="tally-num">' + dust + '</span><span class="tally-label">Dust entries</span><span class="tally-help">From ' + state.linked.length + ' linked wallet' + (state.linked.length !== 1 ? 's' : '') + '</span></div>' +
+          '<div class="tally-item"><span class="tally-num">' + total + '</span><span class="tally-label">Total weight</span><span class="tally-help">' + (inCooldown ? '⏳ In 24h cooldown' : '✅ Eligible for next draw') + '</span></div>' +
+        '</div>' +
+        (state.lastWin ? '<p class="ledger-note">Last win: ' + new Date(state.lastWin).toLocaleString() + '. Cooldown lifts ' + new Date(state.lastWin + RULES.cooldownHours * 3600 * 1000).toLocaleString() + '.</p>' : '') +
+        '<button class="btn btn-outline-sm" data-sim-win type="button">Simulate Win (Demo)</button>';
+      container.appendChild(tallyCard);
+
+      // --- History card ---
       if (state.linked.some(function (l) { return l.lastTime; })) {
         var history = el("div", { class: "ledger-card ledger-history" });
         history.innerHTML =
           '<div class="ledger-card-header">' +
             '<span class="ledger-icon" aria-hidden="true">📖</span>' +
-            '<h3>Participation History</h3>' +
+            '<h3>Contribution History</h3>' +
           '</div>';
-        var total = state.linked.reduce(function (s, l) { return s + (l.contributed || 0); }, 0);
-        history.innerHTML += '<p class="ledger-total">Total credited: <strong>$' + R.formatUsd(total) + '</strong> toward next draw</p>';
+        var histTotal = state.linked.reduce(function (s, l) { return s + (l.contributed || 0); }, 0);
+        history.innerHTML += '<p class="ledger-total">Total contributed: <strong>$' + R.formatUsd(histTotal) + '</strong> across ' + state.linked.length + ' wallet' + (state.linked.length !== 1 ? 's' : '') + '</p>';
 
         var histList = el("ul", { class: "history-list" });
         state.linked.filter(function (l) { return l.lastTime; })
@@ -234,7 +334,7 @@
       }
     }
 
-    // Event wiring
+    // --- Event wiring ---
     var btnPrimary = $("[data-connect-primary]");
     if (btnPrimary) btnPrimary.addEventListener("click", function () {
       connectPrimary().catch(function (e) { showError(e.message); });
@@ -248,6 +348,9 @@
     var btnDisc = $("[data-disconnect]");
     if (btnDisc) btnDisc.addEventListener("click", disconnectPrimary);
 
+    var btnSimWin = $("[data-sim-win]");
+    if (btnSimWin) btnSimWin.addEventListener("click", simulateWin);
+
     $$("[data-unlink]").forEach(function (b) {
       b.addEventListener("click", function () { unlink(b.dataset.unlink); });
     });
@@ -255,6 +358,10 @@
     $$("[data-contribute]").forEach(function (b) {
       b.addEventListener("click", function () { simulateContribution(b.dataset.contribute); });
     });
+
+    // Badge wiring
+    var badge = $("[data-entries-total]");
+    if (badge) { badge.textContent = total; badge.className = "ledger-badge " + (total > 0 ? "badge-active" : "badge-inactive"); }
   }
 
   function showError(msg) {
@@ -269,24 +376,23 @@
   document.addEventListener("DOMContentLoaded", function () {
     renderLedger();
 
-    // Ensure ethers.js is available (loaded via CDN in index.html)
     if (!window.ethereum) {
       var p = $("[data-ledger]");
       if (p) {
         p.innerHTML =
           '<div class="ledger-card">' +
-            '<div class="ledger-card-header">' +
-              '<h3>Wallet Ledger</h3>' +
-            '</div>' +
+            '<div class="ledger-card-header"><h3>Wallet Ledger</h3></div>' +
             '<p class="ledger-blurb">No wallet extension detected. Install <a href="https://rabby.io" target="_blank" rel="noopener">Rabby</a> or <a href="https://metamask.io" target="_blank" rel="noopener">MetaMask</a> to link wallets. (The Ledger will be functional at launch — this is a concept preview.)</p>' +
           '</div>';
       }
     }
   });
 
-  // Expose for practice-round carry (carries net value from calculator to ledger)
+  // Expose for external use
   window.LibertyLedger = {
     getState: function () { return state; },
+    totalEntries: totalEntries,
+    isInCooldown: isInCooldown,
     addContribution: function (fromAddr, cents, symbol) {
       var linked = state.linked.find(function (l) { return l.address === fromAddr; });
       if (linked) {

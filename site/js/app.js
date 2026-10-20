@@ -33,6 +33,12 @@
   $$("[data-rule='interval']").forEach(function (n) { n.textContent = rules.drawIntervalMinutes + " minutes"; });
   $$("[data-rule='winners']").forEach(function (n) { n.textContent = rules.winnersPerRound; });
   $$("[data-rule='network']").forEach(function (n) { n.textContent = rules.network; });
+  $$("[data-rule='min-liberty']").forEach(function (n) { n.textContent = (rules.minLibertyUsdCents / 100).toFixed(0); });
+  $$("[data-rule='max-wallets']").forEach(function (n) { n.textContent = rules.maxLinkedWallets; });
+  $$("[data-rule='min-dust']").forEach(function (n) { n.textContent = (rules.minDustUsdCents / 100).toFixed(2); });
+  $$("[data-rule='bonus-dust']").forEach(function (n) { n.textContent = (rules.bonusDustUsdCents / 100).toFixed(0); });
+  $$("[data-rule='min-pool']").forEach(function (n) { n.textContent = (rules.minPoolUsdCents / 100).toFixed(0); });
+  $$("[data-rule='cooldown']").forEach(function (n) { n.textContent = rules.cooldownHours; });
 
   /* Real vault: always the configured (zero) state */
   $("[data-vault-value]").textContent = R.formatUsd(C.vault.valueCents);
@@ -377,11 +383,17 @@
   var params = $("[data-params]");
   [
     ["Network", rules.network],
-    ["Valuation", rules.valuation],
-    ["Protocol fee", rules.feeBps / 100 + "% of each deposit"],
-    ["Draw interval", "Every " + rules.drawIntervalMinutes + " minutes (proposed)"],
+    ["Eligibility", "Hold $" + (rules.minLibertyUsdCents / 100).toFixed(0) + " in $LIBERTY for 1 base entry"],
+    ["Linked wallets", "Up to " + rules.maxLinkedWallets + " secondary wallets for RWA dust"],
+    ["Min dust", "$" + (rules.minDustUsdCents / 100).toFixed(2) + " qualifies; $" + (rules.bonusDustUsdCents / 100).toFixed(0) + "+ earns +1 bonus entry"],
+    ["Protocol fee", rules.feeBps / 100 + "% on each deposit"],
+    ["Draw interval", "Checked every " + rules.drawIntervalMinutes + " minutes; drawing if pool ≥ $" + (rules.minPoolUsdCents / 100).toFixed(0)],
     ["Winners", rules.winnersPerRound + " per round, one prize per wallet"],
-    ["Payouts", "In kind, draft split totals " + draftTotal + "%"],
+    ["Cooldown", rules.cooldownHours + " hours after winning"],
+    ["Buy tax", "3% total → 0.90% Torch / 0.50% buyback / 1.35% raffle / 0.25% dev"],
+    ["Volume to trigger", "~$" + (rules.volumePerDrawUsdCents / 100).toFixed(2) + " in buys builds ~$" + (rules.minPoolUsdCents / 100).toFixed(0)],
+    ["Payouts", "In kind, draft split totals " + draftTotal + "% (" + draftRest + "% TBD)"],
+    ["Prize rollover", "Unspent funds roll to next hour"],
     ["Wallet", rules.walletConnection]
   ].forEach(function (row) {
     var d = el("div");
