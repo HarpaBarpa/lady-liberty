@@ -1,55 +1,48 @@
-# Lady Liberty
+# Lady Liberty 🗽🔥
 
-**$LIBERTY** · RWAFFLE × Lady Liberty 🗽🔥
+**$LIBERTY** · RWAFFLE × Lady Liberty
 
-## What This Project Is
+---
 
-Lady Liberty is a raffle for tokenized real-world assets (RWAs): tokens like AAPLx that track
-real shares. Users bring their small leftover crypto holdings to one shared prize vault. Ten
-winners each round take a slice of every asset in it.
+## What It Is
 
-$LIBERTY is the community token. RWAFFLE turns crypto dust into a second chance at winning.
+Lady Liberty is a raffle for tokenized real-world assets (RWAs): tokens like AAPLx that track real shares. Users bring their small leftover crypto holdings to one shared prize vault. Ten winners each round take a slice of every asset in it.
+
+RWAFFLE turns crypto dust into a second chance at winning. $LIBERTY is the community token that ties platform activity to value.
 
 **Platform:** Robinhood Chain · **Launchpad:** Torch (app.torchpad.fun)
 
 ---
 
-## What's In This Repo
+## Repo Structure
 
-| Folder | What it is |
+| | |
 |---|---|
-| `site/` | Landing page: static HTML, Climb to the Torch (see below) |
-| `code/` | Hardhat project: RWAFFLE smart contract + indexer |
+| `site/` | Landing page — single-page "Climb to the Torch" concept, static HTML |
+| `code/` | Hardhat project: RWAFFLE.sol smart contract + indexer (TypeScript) |
 | `frontend/` | Next.js app: RWAFFLE.com dashboard |
-| `design/` | Image generation prompts + tools |
-| `tools/` | Local static server |
-| `BUILD.md` | Step-by-step launch instructions |
+| `design/artwork/` | Launch artwork: social media formats + variations |
+| `design/prompts/` | Image generation prompts for Codex |
+| `tools/` | Local static server (`python tools/serve.py`) |
+| `BUILD.md` | Step-by-step Torch launch instructions |
 | `SPEC.md` | Architecture specification |
+| `TOKENOMICS.md` | $LIBERTY tokenomics breakdown + flywheel analysis |
+| `Liberty.MD` | Full concept + mechanics description |
 
 ---
 
-## Landing Page
+## The $LIBERTY Token
 
-`site/` is **Climb to the Torch**: the page is a climb up the statue, harbor 0 ft to torch 305 ft,
-served at `/`. The Sweet Liberty take and the side-by-side showcase were removed.
+Launched via Torch on Robinhood Chain in one transaction. Fixed supply 1B, no mint, no owner.
 
-- Copy and structure: `site/index.html`. Look: `site/css/styles.css`. Behaviour: `site/js/app.js`.
-- Every product number and list (fee, interval, payout draft, example assets, practice data, torch quips): `site/js/config.js`.
-- Art: `site/assets/`, generated with Codex from `design/prompts/`. The hero is `05-hero-clean.txt`, redrawn without the pigeon.
+**Proposed tokenomics (see TOKENOMICS.md for full analysis):**
+- Preset: Launch (2.5 ETH starting market cap)
+- Buy tax: 4% (only on buys, fixed forever)
+- Tax destination: Creator → funneled to RWAFFLE prize pool
+- Pair asset: $TORCH ("fuel the torch" narrative)
+- Dev buy: 2% of supply
 
-**Concept preview only.** Nothing is deployed on-chain. The real vault shows $0.00, no deposit
-address, and nothing moves money or connects wallets.
-
-Run locally:
-```bash
-python tools/serve.py
-# → http://localhost:5318
-```
-
----
-
-## Key Addresses (Torch / Robinhood Chain)
-
+**Key addresses:**
 | | |
 |---|---|
 | **$TORCH** | `0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111` |
@@ -59,16 +52,27 @@ python tools/serve.py
 
 ---
 
+## The RWAFFLE System
+
+Custom smart contract + off-chain indexer. Users send ERC-20 tokens to the RWAFFLE contract → indexer monitors Transfer events → credits raffle tickets → draw runs → winners paid in kind.
+
+- No wallet connection needed
+- No sign-up
+- Your wallet address is your raffle account
+- Randomness: Chainlink VRF (or commit-reveal if VRF unavailable on Robinhood Chain)
+
+---
+
 ## Launch Checklist
 
-### Before Launch
-- [ ] Create Lady Liberty artwork for Torch launch
-- [ ] Decide tokenomics: buy tax %, tax destination, pair asset
-- [ ] Deposit ETH on Robinhood Chain
+**Before launch:**
+- [ ] Decide final tokenomics (buy tax %, tax destination, pair asset)
+- [ ] Create Lady Liberty artwork for Torch token page
+- [ ] Deposit ETH on Robinhood Chain (~0.00015 ETH launch fee + ~0.05 ETH dev buy)
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
 - [ ] Register RWAFFLE.com domain
 
-### After Token Launch
+**After token launch:**
 - [ ] Get Robinhood Chain RPC URL + chain ID
 - [ ] Check Chainlink VRF availability on Robinhood Chain
 - [ ] Write RWAFFLE contract (deployer key, randomness)
@@ -80,21 +84,32 @@ python tools/serve.py
 
 ---
 
-## Development
+## Running Locally
 
 ```bash
+# Landing page (static, no build)
+python tools/serve.py
+# → http://localhost:5318
+
 # Smart contracts
 cd code && npm install && npx hardhat compile
 
 # Frontend
 cd frontend && npm install && npm run dev
-
-# Landing page (already built, just serve)
-python tools/serve.py
 ```
 
-**Rules the landing page copy keeps:**
-- Real vault stays at $0.00, 0 participants until a real vault exists
-- Payout split is the reference **draft**: 35/20/12/8/6/5/4/3/2/1 = 96% (4% TBC)
-- AAPLx, NVDAx, TSLAx, SPYx are **examples**, not a confirmed list
-- "Not affiliated with Torchpad, Robinhood or any token issuer" stays in the footer
+---
+
+## Design Notes
+
+**Character:** Lady Liberty — friendly adult anime woman, sea-green bob, copper freckles, seven-ray patina crown, holding torch high. **No pigeon.** Torch flame in mint green #6EE786 is the single glowing light source.
+
+**Palette:** harbor teal #174C4F, seafoam #DCF5EB, porcelain #F7FFFB, patina #5FB59B, torch mint #6EE786, copper #B8733A.
+
+**Style:** Hand-inked anime editorial illustration — confident ink contours, selective flat cel shadows, matte surfaces, subtle gouache and paper grain.
+
+**Rules the landing page keeps:**
+- Vault stays $0.00 until a real vault exists
+- Payout split is reference draft: 35/20/12/8/6/5/4/3/2/1 = 96% (4% TBC)
+- AAPLx, NVDAx, TSLAx, SPYx are **examples**, not confirmed
+- "Not affiliated with Torchpad, Robinhood or any token issuer" stays in footer
