@@ -437,6 +437,57 @@ button { font: inherit; color: inherit; }
 }
 @media (max-width: 860px) { .torch-bg { background-size: max(100%, 900px) auto; } .torch-bg::after { background: linear-gradient(180deg, rgba(10, 31, 33, 0.35) 0, rgba(10, 31, 33, 0.7) 260px, var(--night) 520px); } }
 
+/* Ledger — wallet linking */
+.ledger-lvl { background: linear-gradient(180deg, var(--porcelain) 0, rgba(223, 244, 237, 0.65) 60%, var(--porcelain) 100%); }
+.ledger-head { max-width: 720px; margin-bottom: 28px; }
+.ledger-head h2 { color: var(--harbor); }
+.ledger-head p { margin-top: 12px; color: var(--muted); }
+
+.ledger { display: grid; gap: 20px; }
+.ledger-card { background: #FFFFFF; border: 1px solid rgba(23, 76, 79, 0.16); border-radius: var(--radius); padding: clamp(18px, 3vw, 28px); }
+.ledger-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.ledger-card-header h3 { font-size: 1.3rem; flex: 1; }
+.ledger-icon { font-size: 1.5rem; }
+.ledger-badge { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 650; }
+.badge-active { background: rgba(110, 231, 134, 0.18); color: var(--patina-deep); border: 1px solid var(--mint); }
+.badge-inactive { background: rgba(23, 76, 79, 0.08); color: var(--muted); border: 1px solid var(--granite-line); }
+.ledger-blurb { color: var(--muted); margin: 0 0 14px; max-width: 56em; }
+.ledger-addr { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.ledger-addr code { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 500; background: var(--seafoam); padding: 6px 14px; border-radius: 10px; color: var(--harbor); }
+.ledger-copy-hint { font-size: 0.88rem; color: var(--muted); }
+.ledger-meta { font-size: 0.88rem; color: var(--muted); margin-bottom: 12px; }
+.ledger-count { font-size: 0.88rem; color: var(--muted); margin-left: auto; }
+.ledger-card .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 999px; font-weight: 650; font-family: var(--font-body); font-size: 0.97rem; cursor: pointer; border: none; }
+.btn-primary { background: var(--harbor); color: var(--porcelain); }
+.btn-primary:hover { background: var(--night); }
+.btn-outline-sm { background: transparent; border: 1px solid rgba(23, 76, 79, 0.25) !important; color: var(--harbor) !important; font-size: 0.87rem !important; padding: 0 14px !important; min-height: 36px !important; }
+.btn-outline-sm:hover { background: rgba(23, 76, 79, 0.06); }
+.btn-text-sm { background: none; border: none; color: var(--muted) !important; font-size: 1rem; cursor: pointer; padding: 0; min-height: 32px; min-width: 32px; display: grid; place-items: center; }
+.btn-text-sm:hover { color: var(--harbor) !important; }
+.ledger-ctas { margin-top: 16px; display: flex; gap: 12px; }
+
+/* Linked wallet list */
+.linked-list { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 10px; }
+.linked-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; background: var(--seafoam); border-radius: 14px; border: 1px solid rgba(95, 181, 155, 0.2); }
+.linked-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.linked-addr { font-family: var(--font-mono); font-size: 1rem; font-weight: 500; color: var(--harbor); }
+.linked-meta { font-size: 0.8rem; color: var(--muted); }
+.linked-contrib { font-size: 0.85rem; color: var(--patina-deep); font-weight: 600; }
+.linked-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* History */
+.ledger-history .ledger-total { margin: 0 0 12px; color: var(--harbor); font-size: 1rem; }
+.ledger-total strong { font-family: var(--font-mono); color: var(--patina-deep); }
+.history-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.history-item { font-size: 0.92rem; color: var(--muted); padding: 8px 0; border-bottom: 1px solid var(--granite-line); }
+.history-item:last-child { border-bottom: 0; }
+
+/* Toasts & errors */
+.ledger-toast, .ledger-error { font-size: 0.92rem; margin-top: 14px; opacity: 0; transition: opacity 0.3s; }
+.ledger-toast.visible, .ledger-error.visible { opacity: 1; }
+.ledger-toast { color: var(--patina-deep); background: rgba(110, 231, 134, 0.15); border: 1px solid var(--mint); border-radius: 10px; padding: 10px 16px; }
+.ledger-error { color: var(--copper-deep); background: rgba(184, 115, 58, 0.1); border: 1px solid var(--copper); border-radius: 10px; padding: 10px 16px; }
+
 /* FAQ */
 .faq { background: var(--porcelain); }
 .faq-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(28px, 6vw, 72px); align-items: start; }

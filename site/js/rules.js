@@ -58,6 +58,20 @@
     return frac ? whole + "." + frac : String(whole);
   }
 
+  function timeAgo(ms) {
+    var diff = Date.now() - ms;
+    var sec = Math.floor(diff / 1000);
+    if (sec < 5) return "just now";
+    if (sec < 60) return sec + "s ago";
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min + "m ago";
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr + "h ago";
+    var d = Math.floor(hr / 24);
+    if (d < 30) return d + "d ago";
+    return Math.floor(d / 30) + "mo ago";
+  }
+
   function sum(list) {
     var t = 0;
     for (var i = 0; i < list.length; i++) t += list[i];
@@ -114,6 +128,7 @@
     toRoman: toRoman,
     sliceMicros: sliceMicros,
     formatTokens: formatTokens,
+    timeAgo: timeAgo,
     sum: sum,
     drawWinners: drawWinners,
     simulate: simulate
