@@ -13,7 +13,8 @@ window.LIBERTY_CONFIG = {
 
     // Dust contribution rules
     minDustUsdCents: 50,          // $0.50 minimum qualifying contribution
-    // One dust entry per linked wallet per cycle (no stacking)
+    dustEntryStepCents: 50,       // 1 entry per $0.50 contributed
+    maxDustEntriesPerWallet: 5,   // max 5 entries per wallet per cycle
 
     // Draw mechanics
     drawIntervalMinutes: 60,      // checks every hour

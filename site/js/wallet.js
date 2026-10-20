@@ -1,6 +1,6 @@
 /* Lady Liberty: wallet ledger — link secondary wallets, sign to prove control,
    credit dust contributions to your primary $LIBERTY account.
-   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, 1 entry per wallet per cycle,
+   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, 1 entry per $0.50, max 5 per wallet,
    24h cooldown after winning. */
 (function () {
   "use strict";
@@ -51,8 +51,11 @@
   function dustEntries() {
     var total = 0;
     state.linked.forEach(function (l) {
-      // One entry per qualifying wallet per cycle
-      if ((l.contributed || 0) >= RULES.minDustUsdCents) total++;
+      var c = l.contributed || 0;
+      if (c >= RULES.minDustUsdCents) {
+        var e = Math.floor(c / RULES.dustEntryStepCents);
+        total += Math.min(e, RULES.maxDustEntriesPerWallet);
+      }
     });
     return total;
   }
@@ -163,10 +166,14 @@
 
     var n = dustEntries();
     var msg = "Deposited $" + R.formatUsd(usd) + " in " + asset.symbol + " from " + shortAddr(addr);
-    if (usd < RULES.minDustUsdCents) {
-      msg += ". Below $" + (RULES.minDustUsdCents / 100).toFixed(2) + " minimum — no entry earned.";
+    
+    var walletTotal = (linked.contributed || 0);
+    if (walletTotal < RULES.minDustUsdCents) {
+      msg += ". Below $" + (RULES.minDustUsdCents / 100).toFixed(2) + " minimum — no entries yet.";
     } else {
-      msg += ". 1 dust entry for this wallet this cycle.";
+      var earned = Math.floor(walletTotal / RULES.dustEntryStepCents);
+      var capped = Math.min(earned, RULES.maxDustEntriesPerWallet);
+      msg += ". Earned " + capped + " dust entr" + (capped !== 1 ? 'ies' : 'y') + " (max " + RULES.maxDustEntriesPerWallet + ").";
     }
 
     var p = $(".ledger-toast");
@@ -209,7 +216,8 @@
       '<div class="rules-grid">' +
         '<div class="rules-item"><strong>1 base entry</strong>Hold $' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ in $LIBERTY</div>' +
         '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets for RWA dust</div>' +
-        '<div class="rules-item"><strong>$' + (RULES.minDustUsdCents / 100).toFixed(2) + '+ dust</strong>1 entry per qualifying wallet per cycle</div>' +
+        '<div class="rules-item"><strong>1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' dust</strong>Contributed into the vault</div>' +
+        '<div class="rules-item"><strong>Max ' + RULES.maxDustEntriesPerWallet + ' entries</strong>Per linked wallet per cycle</div>' +
         '<div class="rules-item"><strong>Hourly draws</strong>Prize pool must reach $' + (RULES.minPoolUsdCents / 100).toFixed(0) + ' to trigger a drawing</div>' +
         '<div class="rules-item"><strong>' + RULES.cooldownHours + 'h cooldown</strong>Winners excluded for ' + RULES.cooldownHours + ' hours after a win</div>' +
       '</div>';
@@ -257,14 +265,14 @@
         '</div>' +
         '<p class="ledger-blurb">Link secondary wallets holding RWA dust. Sign a message to prove control — no gas, no transaction. Every qualifying contribution earns entries toward your primary raffle account.' +
         (slotsLeft > 0 ? ' <strong>' + slotsLeft + ' slot' + (slotsLeft !== 1 ? 's' : '') + ' remaining</strong>.</p>' : '') +
-        '<p class="ledger-note">Min contribution: $' + (RULES.minDustUsdCents / 100).toFixed(2) + '. One entry per qualifying wallet per cycle.</p>';
+        '<p class="ledger-note">Must deposit into vault. 1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' contributed. Max ' + RULES.maxDustEntriesPerWallet + ' entries per linked wallet.</p>';
 
       if (state.linked.length) {
         var list = el("ul", { class: "linked-list" });
         state.linked.forEach(function (l) {
           var item = el("li", { class: "linked-item" });
           var c = l.contributed || 0;
-          var dEntries = c >= RULES.minDustUsdCents ? 1 : 0;
+          var dEntries = c >= RULES.minDustUsdCents ? Math.min(Math.floor(c / RULES.dustEntryStepCents), RULES.maxDustEntriesPerWallet) : 0;
           item.innerHTML =
             '<div class="linked-info">' +
               '<code class="linked-addr">' + shortAddr(l.address) + '</code>' +
