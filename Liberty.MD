@@ -66,7 +66,8 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 ## What's Built
 
-- **Landing page** (`site/`) — single-page "Climb to the Torch" concept. Static HTML, fully designed. Run with `python tools/serve.py` locally.
+- **Frontend** (`frontend/`) — Next.js 16 app. Landing page with: hero, tokenomics, about, waitlist, community sections. Built for LibertyTorch. Set up for Vercel deployment.
+- **Landing page** (`site/`) — static HTML "Climb to the Torch" concept. Run with `python tools/serve.py` locally.
 - **Launch artwork** (`design/artwork/`) — 8 social media formats in the Lady Liberty anime style. Pigeon-free.
 - **Tokenomics analysis** (`TOKENOMICS.md`) — full breakdown: flywheel, tax revenue projections, decisions.
 - **Launch instructions** (`BUILD.md`) — step-by-step Torch launch guide.
@@ -74,17 +75,17 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 ---
 
-## Landing Page
+## Deployment Status
 
-Single-page scroll from harbor (0 ft) to torch (305 ft). Sections: Harbor → Vault → How It Works → Prizes → Practice Round → FAQ.
+- **Domain:** `libertytorch.online` registered on Namecheap ✅
+- **Frontend:** Built and pushed to GitHub, ready for Vercel import
+- **Vercel:** Not yet connected — repo is private under HarpaBarpa account
 
-- Copy/structure: `site/index.html`
-- Styles: `site/css/styles.css`
-- Behaviour: `site/js/app.js`
-- Config (fees, payout draft, practice data): `site/js/config.js`
-- Assets: `site/assets/`
-
-**Concept preview only.** Nothing is deployed on-chain. The vault stays $0.00, 0 participants until launch.
+**To get Vercel connected (ACTION NEEDED):**
+1. Make the repo public: https://github.com/HarpaBarpa/lady-liberty → Settings → Danger Zone → Change visibility → Public
+2. Or: go to Settings → Access Management → add Vercel's GitHub App access to the repo
+3. Then import to Vercel: vercel.com/new → Import `HarpaBarpa/lady-liberty` → set root directory to `frontend`
+4. Add domain `libertytorch.online` in Vercel → Domains
 
 ---
 
@@ -92,16 +93,16 @@ Single-page scroll from harbor (0 ft) to torch (305 ft). Sections: Harbor → Va
 
 ### Before Launch
 - [x] Register `libertytorch.online` — Martin, Namecheap
+- [ ] Make GitHub repo public OR add Vercel GitHub App access
+- [ ] Import frontend to Vercel → point `libertytorch.online` at it
 - [ ] Finalize tokenomics: buy tax %, tax destination, pair asset
 - [ ] Create Lady Liberty artwork for Torch token page
 - [ ] Deposit ETH on Robinhood Chain
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
-- [ ] Deploy landing page to Vercel → point `libertytorch.online` at it
 
 ### After Token Launch
+- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var on Vercel
 - [ ] Get Robinhood Chain RPC URL + chain ID
-- [ ] Deploy landing page to Vercel → point domain at it
-- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` on Vercel
 - [ ] Social launch: Twitter/X, Telegram
 - [ ] CoinGecko listing application
 
