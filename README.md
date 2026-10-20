@@ -6,7 +6,7 @@
 
 ## What It Is
 
-Lady Liberty is a raffle for tokenized real-world assets (RWAs): tokens like AAPLx that track real shares. Users bring their small leftover crypto holdings to one shared prize vault. Ten winners each round take a slice of every asset in it.
+LibertyTorch is a community token on Torch — built around the Lady Liberty brand. The Statue of Liberty reimagined as a friendly anime character, torch raised high. Liberation, second chances, turning forgotten things into meaningful wins.
 
 RWAFFLE turns crypto dust into a second chance at winning. $LIBERTY is the community token that ties platform activity to value.
 
@@ -19,8 +19,8 @@ RWAFFLE turns crypto dust into a second chance at winning. $LIBERTY is the commu
 | | |
 |---|---|
 | `site/` | Landing page — single-page "Climb to the Torch" concept, static HTML |
-| `code/` | Hardhat project: RWAFFLE.sol smart contract + indexer (TypeScript) |
-| `frontend/` | Next.js app: RWAFFLE.com dashboard |
+| `code/` | Hardhat project: RWAFFLE smart contract + indexer (not in use — RWAFFLE direction abandoned) |
+| `frontend/` | Next.js app: RWAFFLE.com dashboard (not deployed) |
 | `design/artwork/` | Launch artwork: social media formats + variations |
 | `design/prompts/` | Image generation prompts for Codex |
 | `tools/` | Local static server (`python tools/serve.py`) |
@@ -52,33 +52,25 @@ Launched via Torch on Robinhood Chain in one transaction. Fixed supply 1B, no mi
 
 ---
 
-## The RWAFFLE System
+## The $LIBERTY Token
 
-Custom smart contract + off-chain indexer. Users send ERC-20 tokens to the RWAFFLE contract → indexer monitors Transfer events → credits raffle tickets → draw runs → winners paid in kind.
-
-- No wallet connection needed
-- No sign-up
-- Your wallet address is your raffle account
-- Randomness: Chainlink VRF (or commit-reveal if VRF unavailable on Robinhood Chain)
+Launched via Torch on Robinhood Chain in one transaction. Fixed supply 1B, no mint, no owner. The token is the product — community token + brand.
 
 ---
 
 ## Launch Checklist
 
 **Before launch:**
-- [ ] Decide final tokenomics (buy tax %, tax destination, pair asset)
+- [ ] Register `libertytorch.com` (or similar) — Martin buying
+- [ ] Finalize tokenomics: buy tax %, tax destination, pair asset
 - [ ] Create Lady Liberty artwork for Torch token page
-- [ ] Deposit ETH on Robinhood Chain (~0.00015 ETH launch fee + ~0.05 ETH dev buy)
+- [ ] Deposit ETH on Robinhood Chain
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
-- [ ] Register RWAFFLE.com domain
+- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` on Vercel
 
 **After token launch:**
 - [ ] Get Robinhood Chain RPC URL + chain ID
-- [ ] Check Chainlink VRF availability on Robinhood Chain
-- [ ] Write RWAFFLE contract (deployer key, randomness)
-- [ ] Configure indexer + supported token list
-- [ ] Fund initial RWAFFLE prize pool
-- [ ] Build + deploy RWAFFLE.com (Next.js frontend)
+- [ ] Deploy landing page to Vercel → point domain at it
 - [ ] Social launch: Twitter/X, Telegram
 - [ ] CoinGecko listing application
 
