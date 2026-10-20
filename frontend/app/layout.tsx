@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LibertyTorch 🗽🔥",
-  description: "$LIBERTY — a community token on Torch. Liberation. Second chances. A new torch.",
+  description: "Lady Liberty is a community raffle concept for tokenized real-world assets. Climb from the harbor to the torch to see how it works.",
   icons: {
     icon: "/favicon.ico",
   },
