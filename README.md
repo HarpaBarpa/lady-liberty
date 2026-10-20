@@ -18,7 +18,7 @@ $LIBERTY is the community token. RWAFFLE turns crypto dust into a second chance 
 
 | Folder | What it is |
 |---|---|
-| `site/` | Landing page — static HTML, two design directions (see below) |
+| `site/` | Landing page: static HTML, Climb to the Torch (see below) |
 | `code/` | Hardhat project: RWAFFLE smart contract + indexer |
 | `frontend/` | Next.js app: RWAFFLE.com dashboard |
 | `design/` | Image generation prompts + tools |
@@ -28,13 +28,14 @@ $LIBERTY is the community token. RWAFFLE turns crypto dust into a second chance 
 
 ---
 
-## Landing Page — Two Designs
+## Landing Page
 
-| URL path | What it is | Folder |
-|---|---|---|
-| `/` | Showcase: both takes side by side | `site/index.html` |
-| `/claude/` | **Climb to the Torch** — climb the statue, harbor 0 ft → torch 305 ft | `site/claude/` |
-| `/codex/` | **Sweet Liberty** — morning-harbor direction | `site/codex/` |
+`site/` is **Climb to the Torch**: the page is a climb up the statue, harbor 0 ft to torch 305 ft,
+served at `/`. The Sweet Liberty take and the side-by-side showcase were removed.
+
+- Copy and structure: `site/index.html`. Look: `site/css/styles.css`. Behaviour: `site/js/app.js`.
+- Every product number and list (fee, interval, payout draft, example assets, practice data, torch quips): `site/js/config.js`.
+- Art: `site/assets/`, generated with Codex from `design/prompts/`. The hero is `05-hero-clean.txt`, redrawn without the pigeon.
 
 **Concept preview only.** Nothing is deployed on-chain. The real vault shows $0.00, no deposit
 address, and nothing moves money or connects wallets.

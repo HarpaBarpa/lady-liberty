@@ -75,12 +75,12 @@ window.LIBERTY_CONFIG = {
     "Legal review and who is eligible to take part"
   ],
 
-  pigeonQuips: [
-    "I'm not in the raffle. I'm a pigeon.",
-    "The vault is empty. I checked. Twice.",
-    "She has held that torch since 1886. Copper hands.",
-    "Ten winners a round. Zero pigeons. For now.",
-    "Not financial advice. I'm a bird.",
-    "Coo."
+  torchQuips: [
+    "Held up since 1886. Copper hands.",
+    "Closed to visitors since 1916. Opening at launch.",
+    "Mint green, never out. Not even for an empty vault.",
+    "Everything that burns becomes greater.",
+    "Yes, it's real fire. No, you can't deposit it.",
+    "Not financial advice. I'm a torch."
   ]
 };

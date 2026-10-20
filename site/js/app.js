@@ -64,15 +64,15 @@
   });
   window.matchMedia("(min-width: 1021px)").addEventListener("change", function (m) { if (m.matches) closeMenu(false); });
 
-  /* Pigeon quips */
-  var spot = $(".pigeon-spot");
+  /* Torch quips */
+  var spot = $(".torch-spot");
   var quip = $("#quip");
   var quipIndex = -1;
   var quipTimer = null;
   spot.addEventListener("click", function () {
-    quipIndex = (quipIndex + 1) % C.pigeonQuips.length;
+    quipIndex = (quipIndex + 1) % C.torchQuips.length;
     quip.hidden = false;
-    quip.textContent = C.pigeonQuips[quipIndex];
+    quip.textContent = C.torchQuips[quipIndex];
     quip.style.animation = "none";
     void quip.offsetWidth;
     quip.style.animation = "";

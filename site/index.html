@@ -3,212 +3,348 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lady Liberty · two takes</title>
-<meta name="description" content="Two design directions for the Lady Liberty RWA raffle concept, side by side: Sweet Liberty by Codex and Climb to the Torch by Claude. Concept previews, not live.">
+<title>Lady Liberty · RWA raffle</title>
+<meta name="description" content="Lady Liberty is a proposed raffle for tokenized real-world assets. Climb from the harbor to the torch to see how the shared prize vault would work. Concept preview, not live.">
 <meta name="theme-color" content="#174C4F">
-<link rel="icon" href="claude/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&display=swap">
-<style>
-  :root {
-    --harbor: #174C4F; --night: #0A1F21; --porcelain: #F7FFFB; --seafoam: #DCF5EB;
-    --patina: #5FB59B; --mint: #6EE786; --copper: #B8733A; --copper-deep: #8A4F22; --muted: #3F6466;
-    --bar-h: 64px;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { margin: 0; background: var(--seafoam); color: var(--harbor); font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
-  :focus-visible { outline: 3px solid var(--harbor); outline-offset: 2px; border-radius: 8px; }
-  .bar { height: var(--bar-h); flex-shrink: 0; display: flex; align-items: center; gap: 18px; padding: 0 20px; background: var(--porcelain); border-bottom: 1px solid rgba(23, 76, 79, 0.14); }
-  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .brand img { width: 38px; height: 34px; }
-  .brand h1 { margin: 0; font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-weight: 680; font-size: 1.3rem; line-height: 1; white-space: nowrap; }
-  .brand p { margin: 3px 0 0; font-size: 0.82rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
-  .controls { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .seg { display: inline-flex; background: var(--seafoam); border-radius: 999px; padding: 3px; gap: 2px; }
-  .seg button { border: 0; background: transparent; color: var(--harbor); font: inherit; font-weight: 650; font-size: 0.9rem; min-height: 36px; padding: 0 14px; border-radius: 999px; cursor: pointer; }
-  .seg button[aria-pressed="true"] { background: var(--harbor); color: var(--porcelain); }
-  .seg-label { font-size: 0.82rem; color: var(--muted); font-weight: 600; margin-right: 4px; }
-  .ctl { display: inline-flex; align-items: center; }
-
-  .stage { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
-  .take { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--porcelain); border-radius: 18px; border: 1px solid rgba(23, 76, 79, 0.14); overflow: hidden; }
-  .take-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(23, 76, 79, 0.12); }
-  .take-letter { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: "DM Mono", monospace; font-weight: 500; background: var(--harbor); color: var(--porcelain); flex-shrink: 0; }
-  .take.b .take-letter { background: var(--copper-deep); }
-  .take-name { min-width: 0; }
-  .take-name h2 { margin: 0; font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-weight: 650; font-size: 1.15rem; line-height: 1.1; }
-  .take-name p { margin: 2px 0 0; font-size: 0.84rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .open { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(23, 76, 79, 0.3); text-decoration: none; color: var(--harbor); font-weight: 650; font-size: 0.9rem; }
-  .open:hover { border-color: var(--harbor); }
-  .frame-box { flex: 1; min-height: 0; position: relative; overflow: hidden; background: #E8F3EE; }
-  .frame-box iframe { position: absolute; top: 0; border: 0; background: #fff; transform-origin: 0 0; }
-  .frame-box.is-mobile iframe { box-shadow: 0 0 0 1px rgba(23, 76, 79, 0.18), 0 16px 40px rgba(10, 31, 33, 0.18); border-radius: 18px; }
-  .foot { flex-shrink: 0; padding: 0 20px 12px; font-size: 0.82rem; color: var(--muted); text-align: center; }
-
-  .switch { display: none; }
-  @media (max-width: 900px) {
-    body { overflow: auto; height: auto; min-height: 100%; }
-    .bar { height: auto; padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
-    .controls { margin-left: 0; width: 100%; justify-content: space-between; }
-    .ctl-view, .ctl-scroll { display: none; }
-    .switch { display: inline-flex; }
-    .stage { grid-template-columns: 1fr; padding: 12px; height: calc(100svh - 120px); }
-    .take[hidden] { display: none; }
-  }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-</style>
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<header class="bar">
-  <div class="brand">
-    <img src="claude/assets/favicon.svg" alt="" width="38" height="34">
-    <div>
-      <h1>Lady Liberty</h1>
-      <p>One pitch, two takes · concept previews, not live</p>
-    </div>
-  </div>
-  <div class="controls">
-    <div class="ctl ctl-view"><span class="seg-label" id="view-label">View</span>
-      <div class="seg" role="group" aria-labelledby="view-label">
-        <button type="button" data-view="desktop" aria-pressed="true">Desktop</button>
-        <button type="button" data-view="mobile" aria-pressed="false">Phone</button>
-      </div>
-    </div>
-    <div class="ctl ctl-scroll"><span class="seg-label" id="scroll-label">Scroll</span>
-      <div class="seg" role="group" aria-labelledby="scroll-label">
-        <button type="button" data-sync="on" aria-pressed="true">Linked</button>
-        <button type="button" data-sync="off" aria-pressed="false">Free</button>
-      </div>
-    </div>
-    <div class="seg switch" role="group" aria-label="Choose a take">
-      <button type="button" data-show="a" aria-pressed="true">A · Sweet Liberty</button>
-      <button type="button" data-show="b" aria-pressed="false">B · Climb</button>
-    </div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="bar">
+    <a class="brand" href="#harbor" aria-label="Lady Liberty, back to the harbor">
+      <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
+      <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
+    </a>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#vault">The vault</a></li>
+        <li><a href="#inside">How it works</a></li>
+        <li><a href="#crown">Prizes</a></li>
+        <li><a href="#torch">Practice round</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a class="btn btn-primary nav-cta" href="#vault">Explore the vault</a>
+    </nav>
+    <span class="alt-mini" aria-hidden="true"><span data-alt-ft>0</span> ft</span>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="menu-icon" aria-hidden="true"></span><span class="menu-label">Menu</span>
+    </button>
   </div>
 </header>
 
-<main class="stage">
-  <section class="take a" data-take="a" aria-labelledby="a-title">
-    <div class="take-head">
-      <span class="take-letter" aria-hidden="true">A</span>
-      <div class="take-name">
-        <h2 id="a-title">Sweet Liberty</h2>
-        <p>by Codex · a gentle morning harbor, the original direction</p>
+<nav class="altimeter" aria-label="Climb levels">
+  <p class="alt-readout"><span class="alt-num" data-alt-ft>0</span><span class="alt-unit">ft</span></p>
+  <ol class="alt-track">
+    <li><a href="#torch" data-level="torch"><span class="alt-dot"></span><span class="alt-label">Torch <span class="alt-h">305 ft</span></span></a></li>
+    <li><a href="#crown" data-level="crown"><span class="alt-dot"></span><span class="alt-label">Crown <span class="alt-h">260 ft</span></span></a></li>
+    <li><a href="#tablet" data-level="tablet"><span class="alt-dot"></span><span class="alt-label">Tablet</span></a></li>
+    <li><a href="#inside" data-level="inside"><span class="alt-dot"></span><span class="alt-label">Inside</span></a></li>
+    <li><a href="#vault" data-level="vault"><span class="alt-dot"></span><span class="alt-label">Pedestal <span class="alt-h">154 ft</span></span></a></li>
+    <li><a href="#harbor" data-level="harbor"><span class="alt-dot"></span><span class="alt-label">Harbor <span class="alt-h">0 ft</span></span></a></li>
+  </ol>
+  <span class="alt-fill" aria-hidden="true"></span>
+</nav>
+
+<main id="main">
+
+  <!-- 0 ft: the harbor -->
+  <section class="lvl harbor" id="harbor" data-ft="0" aria-labelledby="hero-title">
+    <div class="harbor-bg" aria-hidden="true"></div>
+    <div class="wrap harbor-grid">
+      <div class="hero-copy">
+        <p class="status-chip"><span class="dot" aria-hidden="true"></span>Concept preview · Not live yet</p>
+        <h1 id="hero-title">Give me your tired, your poor, your huddled <em>dust.</em></h1>
+        <p class="lede">Lady Liberty is a raffle for <strong>tokenized real-world assets</strong>: tokens like AAPLx that track real shares. Bring the small leftovers sitting in your wallet to one shared prize vault. Ten winners each round take a slice of <em>every</em> asset in it.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#vault">Explore the vault</a>
+          <a class="btn btn-ghost" href="#inside">How it works</a>
+        </div>
+        <p class="aside-line">A little holding. A little possibility.</p>
       </div>
-      <a class="open" href="codex/" target="_blank" rel="noopener">Open <span class="sr-only">Sweet Liberty</span>&nbsp;↗</a>
+      <figure class="hero-art">
+        <img src="assets/liberty-hero.webp" width="1024" height="1536" alt="Lady Liberty as a friendly woman with a short sea-green bob, copper freckles and a seven-ray crown, raising a mint-green torch and holding out an open hand.">
+        <button class="torch-spot" type="button" aria-describedby="quip" aria-label="Ask the torch">
+          <span class="torch-ping" aria-hidden="true"></span>
+        </button>
+        <p class="quip" id="quip" role="status" aria-live="polite" hidden></p>
+        <p class="torch-hint" aria-hidden="true">psst, tap the torch</p>
+      </figure>
     </div>
-    <div class="frame-box"><iframe src="codex/" title="Sweet Liberty, take A, by Codex" loading="eager"></iframe></div>
+    <div class="climb-cue"><a href="#vault">Start climbing <span aria-hidden="true">↓</span></a></div>
   </section>
-  <section class="take b" data-take="b" aria-labelledby="b-title">
-    <div class="take-head">
-      <span class="take-letter" aria-hidden="true">B</span>
-      <div class="take-name">
-        <h2 id="b-title">Climb to the Torch</h2>
-        <p>by Claude · harbor to torch, 0 to 305 ft, with a pigeon practice round</p>
+
+  <!-- 154 ft: the pedestal and the vault -->
+  <section class="lvl pedestal" id="vault" data-ft="154" aria-labelledby="vault-title">
+    <div class="wrap">
+      <p class="level-tag">Level 1 · The pedestal · 154 ft</p>
+      <div class="vault-grid">
+        <figure class="vault-art">
+          <img src="assets/pedestal-vault.webp" width="900" height="900" alt="A granite pedestal with a round copper vault door standing open. The vault is empty except for one unimpressed pigeon." loading="lazy">
+        </figure>
+        <div class="vault-copy">
+          <h2 id="vault-title">The vault lives in the pedestal. Right now it's empty.</h2>
+          <p>No deposits, no participants, no prize. Everything here stays at zero until a real vault is deployed. No placeholder numbers, no fake countdown.</p>
+          <div class="plaque" role="group" aria-label="Prize vault status">
+            <div class="plaque-main">
+              <p class="plaque-label">In the prize vault</p>
+              <p class="plaque-value" data-vault-value>$0.00</p>
+              <p class="plaque-state"><span class="dot dot-copper" aria-hidden="true"></span>Awaiting launch</p>
+            </div>
+            <dl class="plaque-stats">
+              <div><dt>Participants</dt><dd data-vault-participants>0</dd></div>
+              <div><dt>Deposits</dt><dd data-vault-deposits>0</dd></div>
+              <div><dt>Next draw</dt><dd class="dd-small" data-vault-next>Starts at launch</dd></div>
+            </dl>
+          </div>
+        </div>
       </div>
-      <a class="open" href="claude/" target="_blank" rel="noopener">Open <span class="sr-only">Climb to the Torch</span>&nbsp;↗</a>
+
+      <div class="assets">
+        <div class="assets-head">
+          <h3>What could go in</h3>
+          <p>Examples from the concept, not a confirmed list. Tap one to see what it is.</p>
+        </div>
+        <div class="asset-chips" role="group" aria-label="Example assets" data-asset-chips></div>
+        <p class="asset-detail" data-asset-detail aria-live="polite"></p>
+      </div>
     </div>
-    <div class="frame-box"><iframe src="claude/" title="Climb to the Torch, take B, by Claude" loading="eager"></iframe></div>
+  </section>
+
+  <!-- inside the copper: how it works -->
+  <section class="lvl inside" id="inside" data-ft="200" aria-labelledby="inside-title">
+    <div class="inside-bg" aria-hidden="true"></div>
+    <div class="wrap">
+      <p class="level-tag level-tag-light">Level 2 · Inside the copper</p>
+      <h2 id="inside-title">Green outside. Copper inside.</h2>
+      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The ten-minute rhythm is a proposed rule, not a running timer.</p>
+      <ol class="stairs">
+        <li class="stair">
+          <span class="stair-n" aria-hidden="true">01</span>
+          <h3>Bring your dust</h3>
+          <p>Send an allow-listed tokenized asset to the vault on <span data-rule="network">Robinhood Chain</span>. No account, no sign-up. Connecting a wallet is optional, only for your own stats.</p>
+        </li>
+        <li class="stair">
+          <span class="stair-n" aria-hidden="true">02</span>
+          <h3>Get weighted entries</h3>
+          <p>A Finnhub-backed oracle prices your deposit and locks its USD value the moment it lands. A <span data-rule="fee">2%</span> protocol fee comes off. What's left, the net USD value, is your entry weight.</p>
+        </li>
+        <li class="stair">
+          <span class="stair-n" aria-hidden="true">03</span>
+          <h3>Draw and share out</h3>
+          <p>Every <span data-rule="interval">10 minutes</span> (proposed), <span data-rule="winners">10</span> different wallets win. Each winner gets a percentage of every asset in the vault, paid in kind. Nothing is swapped into one currency.</p>
+        </li>
+      </ol>
+      <p class="inside-sign">Copper hands. Warm heart.</p>
+    </div>
+  </section>
+
+  <!-- the tablet: interactive example -->
+  <section class="lvl tablet-lvl" id="tablet" data-ft="225" aria-labelledby="tablet-title">
+    <div class="wrap tablet-grid">
+      <div class="tablet-copy">
+        <p class="level-tag">Level 3 · The tablet</p>
+        <h2 id="tablet-title">Carve an example.</h2>
+        <p>Type a pretend deposit value to see the arithmetic. This is an illustration only: it isn't connected to the vault above, and the net value is an entry weight, not a ticket count or a chance of winning.</p>
+        <p class="fine">Rounding to the cent is illustrative. The real precision rule isn't decided.</p>
+      </div>
+      <form class="tablet" data-calc novalidate>
+        <span class="tablet-rivet r1" aria-hidden="true"></span><span class="tablet-rivet r2" aria-hidden="true"></span>
+        <p class="tablet-head">Illustration · not a deposit</p>
+        <label class="calc-label" for="calc-amount">Pretend deposit value (USD)</label>
+        <div class="calc-input">
+          <span class="calc-prefix" aria-hidden="true">$</span>
+          <input id="calc-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" value="100" aria-describedby="calc-error calc-help">
+        </div>
+        <p class="calc-help" id="calc-help">Between $1.00 and $1,000,000.00.</p>
+        <p class="calc-error" id="calc-error" data-calc-error aria-live="polite"></p>
+        <dl class="calc-out" data-calc-out aria-live="polite" aria-atomic="true">
+          <div><dt>Protocol fee (<span data-rule="fee">2%</span>)</dt><dd data-calc-fee>$2.00</dd></div>
+          <div class="calc-net"><dt>Net entry value</dt><dd data-calc-net>$98.00</dd></div>
+        </dl>
+        <p class="calc-roman" data-calc-roman aria-hidden="true">XCVIII</p>
+        <p class="calc-roman-note" data-calc-roman-note>Carved in Roman numerals, for the tablet. Romans didn't do cents.</p>
+        <button class="btn btn-copper" type="button" data-calc-carry>Take <span data-calc-carry-amt>$98.00</span> to the practice round</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- 260 ft: the crown and the prizes -->
+  <section class="lvl crown" id="crown" data-ft="260" aria-labelledby="crown-title">
+    <div class="crown-bg" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="crown-panel">
+        <p class="level-tag">Level 4 · The crown · 260 ft</p>
+        <div class="crown-head">
+          <h2 id="crown-title">Win a slice of every asset.</h2>
+          <p>Ten winners per round, one prize per wallet. Prizes are paid in kind: the vault never swaps your assets.</p>
+        </div>
+        <div class="split-card">
+          <div class="split-title">
+            <h3>Draft payout split</h3>
+            <p class="draft-badge">Draft · totals <span data-split-total>96</span>% · <span data-split-rest>4</span>% to be confirmed</p>
+          </div>
+          <div class="steps-chart" role="group" aria-label="Payout ranks, pick one" data-split-steps></div>
+          <div class="split-detail" data-split-detail aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 305 ft: the torch -->
+  <section class="lvl torch" id="torch" data-ft="305" aria-labelledby="torch-title">
+    <div class="torch-bg" aria-hidden="true"></div>
+    <div class="wrap">
+      <p class="level-tag level-tag-light">Level 5 · The torch · 305 ft</p>
+      <div class="torch-head">
+        <h2 id="torch-title">Practice round. Pigeons only.</h2>
+        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners with <strong>one possible method</strong>: weighted picks, one prize per wallet. The real randomness and selection rules aren't decided.</p>
+      </div>
+
+      <div class="practice" data-practice>
+        <div class="practice-vault">
+          <p class="pv-label">Pretend vault</p>
+          <ul class="pv-list" data-pv-list></ul>
+          <p class="pv-note">Made-up amounts. Nothing real is held.</p>
+        </div>
+
+        <ul class="flock" data-flock aria-label="Practice entrants"></ul>
+
+        <div class="practice-controls">
+          <button class="btn btn-mint" type="button" data-draw>Light the practice torch</button>
+          <button class="btn btn-outline-light" type="button" data-simulate>Run 1,000 practice rounds</button>
+          <button class="btn btn-text-light" type="button" data-reset disabled>Reset</button>
+        </div>
+        <p class="practice-status" data-practice-status role="status" aria-live="polite"></p>
+
+        <div class="results" data-results hidden>
+          <h3 class="results-title">Winners and what they'd get</h3>
+          <div class="results-scroll">
+            <table class="results-table">
+              <caption class="sr-only">Practice round winners with their share of each pretend asset</caption>
+              <thead data-results-head></thead>
+              <tbody data-results-body></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="sim-out" data-sim-out aria-live="polite"></p>
+      </div>
+
+      <div class="launch" aria-labelledby="launch-title">
+        <div class="launch-copy">
+          <h2 id="launch-title">The torch has been closed to visitors since 1916. Ours opens at launch.</h2>
+          <p>There is no deposit address yet, so we don't show one. No wallet connect, no copy button, nothing to sign.</p>
+        </div>
+        <div class="launch-grid">
+          <div class="launch-card">
+            <p class="launch-state"><span class="dot dot-copper" aria-hidden="true"></span>Not live yet</p>
+            <p class="launch-addr">Deposit address: <span>none yet</span></p>
+            <h3>Proposed rules</h3>
+            <dl class="params" data-params></dl>
+          </div>
+          <div class="launch-card">
+            <h3>Still to decide before deposits open</h3>
+            <ul class="todo" data-todo></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="lvl faq" id="faq" aria-labelledby="faq-title">
+    <div class="wrap faq-grid">
+      <div class="faq-side">
+        <img src="assets/pigeon.webp" width="512" height="512" alt="" loading="lazy">
+        <h2 id="faq-title">Questions the pigeon asked.</h2>
+        <p>He asked them all. Loudly. On the windowsill.</p>
+      </div>
+      <div class="faq-list">
+        <details>
+          <summary>What's an RWA?</summary>
+          <p>A tokenized real-world asset: a token on a blockchain that stands for something off-chain, like a share of a company or a fund. AAPLx, for example, tracks Apple shares.</p>
+        </details>
+        <details>
+          <summary>Which assets can go in?</summary>
+          <p>AAPLx, NVDAx, TSLAx and SPYx are examples from the concept. The real list of supported tokens and their addresses isn't decided, and nothing can go in yet.</p>
+        </details>
+        <details>
+          <summary>Why is the vault empty?</summary>
+          <p>Because it doesn't exist yet. There's no deployed contract, no deposit address and no deposits. Zeros are the honest number.</p>
+        </details>
+        <details>
+          <summary>How is my entry value worked out?</summary>
+          <p>The oracle values your deposit in USD and locks that value when it lands. The 2% protocol fee comes off, and the net USD value is your entry weight. It isn't a ticket count, and your share of the total weight isn't the same as your chance of winning when ten prizes go to ten different wallets.</p>
+        </details>
+        <details>
+          <summary>What do winners get?</summary>
+          <p>A percentage of every asset in the vault, in kind. If the vault holds four kinds of token, a winner gets their percentage of each of the four. Nothing is swapped.</p>
+        </details>
+        <details>
+          <summary>Why is the payout split a draft?</summary>
+          <p>The reference split adds up to 96%. Where the remaining 4% goes hasn't been decided, so the page says so instead of quietly rounding it away.</p>
+        </details>
+        <details>
+          <summary>Is this financial advice?</summary>
+          <p>No. I'm a pigeon. She's a statue.</p>
+        </details>
+      </div>
+    </div>
   </section>
 </main>
-<p class="foot">Community concept for a proposed RWA raffle. Nothing is live, nothing can be deposited. Not affiliated with Torchpad, Robinhood or any token issuer.</p>
 
-<style>.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
-<script>
-(function () {
-  "use strict";
-  var DESKTOP_W = 1360, PHONE_W = 390;
-  var view = "desktop", sync = true;
-  var boxes = Array.prototype.slice.call(document.querySelectorAll(".frame-box"));
-  var frames = boxes.map(function (b) { return b.querySelector("iframe"); });
-  var narrow = window.matchMedia("(max-width: 900px)");
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-story">
+      <a class="brand brand-light" href="#harbor">
+        <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
+        <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
+      </a>
+      <p>Born copper in 1886, burned green by time. Lady Liberty grew out of the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Everything that burns becomes greater.</p>
+      <p class="fine">$LIBERTY and TORCH are the community's roots. They are not raffle deposits.</p>
+    </div>
+    <div class="aging">
+      <div class="aging-portrait">
+        <img src="assets/liberty-avatar.webp" width="640" height="640" alt="Portrait of Lady Liberty" data-aging-img loading="lazy">
+      </div>
+      <div class="aging-control">
+        <label for="aging">Watch her turn green</label>
+        <input id="aging" type="range" min="1886" max="2026" step="1" value="2026" aria-describedby="aging-out">
+        <output id="aging-out" for="aging" data-aging-out>2026: full patina</output>
+      </div>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <p>Community concept. Not affiliated with Torchpad, Robinhood or any token issuer. Not financial advice. I'm a statue.</p>
+    <a class="elevator" href="#top">Take the elevator down <span aria-hidden="true">↑</span></a>
+  </div>
+</footer>
 
-  function layout() {
-    var mode = narrow.matches ? "mobile" : view;
-    boxes.forEach(function (box, i) {
-      var f = frames[i];
-      var bw = box.clientWidth, bh = box.clientHeight;
-      box.classList.toggle("is-mobile", mode === "mobile" && !narrow.matches);
-      if (mode === "desktop") {
-        var s = bw / DESKTOP_W;
-        f.style.width = DESKTOP_W + "px";
-        f.style.height = Math.ceil(bh / s) + "px";
-        f.style.left = "0px";
-        f.style.top = "0px";
-        f.style.transform = "scale(" + s + ")";
-      } else if (narrow.matches) {
-        f.style.width = bw + "px";
-        f.style.height = bh + "px";
-        f.style.left = "0px";
-        f.style.top = "0px";
-        f.style.transform = "none";
-      } else {
-        var pad = 20;
-        var ph = Math.min(844, bh - pad * 2);
-        var sc = Math.min(1, (bw - pad * 2) / PHONE_W, (bh - pad * 2) / ph);
-        f.style.width = PHONE_W + "px";
-        f.style.height = Math.floor((bh - pad * 2) / sc) + "px";
-        f.style.left = Math.round((bw - PHONE_W * sc) / 2) + "px";
-        f.style.top = pad + "px";
-        f.style.transform = "scale(" + sc + ")";
-      }
-    });
-  }
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="mark" viewBox="0 0 64 58">
+      <g fill="currentColor">
+        <polygon points="3.47,26.73 13.78,27.35 12.18,32.29"/>
+        <polygon points="9.71,15.93 18.88,20.69 15.40,24.55"/>
+        <polygon points="19.8,8.6 26.24,16.66 21.48,18.78"/>
+        <polygon points="32,4.5 34.6,16 29.4,16"/>
+        <polygon points="44.2,8.6 42.52,18.78 37.76,16.66"/>
+        <polygon points="54.29,15.93 48.60,24.55 45.12,20.69"/>
+        <polygon points="60.53,26.73 51.82,32.29 50.22,27.35"/>
+        <circle cx="32" cy="37" r="18"/>
+      </g>
+      <path fill="var(--flame, #6EE786)" transform="translate(32 38.5) scale(0.56) translate(-32 -32)" d="M32 6C35.5 12 41 17.5 40.6 24.5C40.3 27.5 38.8 29.6 37 31C37.6 25 35.6 19 32 15.5C28.6 20.5 24.5 25 22.6 30.5C21.8 33 21.5 36 21.5 39.5C21.5 45 26 49.5 31.5 49.5C37 49.5 41.5 45 41.5 39.5C41.5 36.5 42.3 33.5 43 31.5C46 34.5 47.5 38.5 47.5 43C47.5 51 40.5 57.8 32 57.8C23.2 57.8 16.5 51.5 16.5 43.5C16.5 31 26 19 32 6Z"/>
+    </symbol>
+  </defs>
+</svg>
 
-  function press(group, attr, val) {
-    document.querySelectorAll("[" + attr + "]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute(attr) === val)); });
-  }
-  document.querySelectorAll("[data-view]").forEach(function (b) {
-    b.addEventListener("click", function () { view = b.dataset.view; press(null, "data-view", view); layout(); });
-  });
-  document.querySelectorAll("[data-sync]").forEach(function (b) {
-    b.addEventListener("click", function () { sync = b.dataset.sync === "on"; press(null, "data-sync", b.dataset.sync); });
-  });
-  document.querySelectorAll("[data-show]").forEach(function (b) {
-    b.addEventListener("click", function () {
-      var which = b.dataset.show;
-      press(null, "data-show", which);
-      document.querySelectorAll("[data-take]").forEach(function (t) { t.hidden = t.dataset.take !== which; });
-      layout();
-    });
-  });
-  narrow.addEventListener("change", function () {
-    if (!narrow.matches) document.querySelectorAll("[data-take]").forEach(function (t) { t.hidden = false; });
-    else document.querySelector("[data-show][aria-pressed='true']").click();
-    layout();
-  });
-
-  // Linked scroll: both frames are on this origin, so keep them at the same scroll ratio.
-  var lead = null, leadTimer = null;
-  function ratioOf(w) {
-    var d = w.document.documentElement;
-    var max = Math.max(1, d.scrollHeight - w.innerHeight);
-    return Math.min(1, Math.max(0, w.scrollY / max));
-  }
-  function hook(i) {
-    var w;
-    try { w = frames[i].contentWindow; w.document; } catch (e) { return; }
-    w.addEventListener("scroll", function () {
-      if (!sync || narrow.matches) return;
-      if (lead !== null && lead !== i) return;
-      lead = i;
-      clearTimeout(leadTimer);
-      leadTimer = setTimeout(function () { lead = null; }, 160);
-      var other = frames[1 - i].contentWindow;
-      try {
-        var od = other.document.documentElement;
-        var max = Math.max(1, od.scrollHeight - other.innerHeight);
-        other.scrollTo({ top: ratioOf(w) * max, behavior: "instant" });
-      } catch (e) {}
-    }, { passive: true });
-  }
-  frames.forEach(function (f, i) { f.addEventListener("load", function () { hook(i); }); });
-
-  window.addEventListener("resize", layout);
-  layout();
-})();
-</script>
+<script src="js/config.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-"""Turn selected raw renders into web assets for site/claude/assets.
+"""Turn selected raw renders into web assets for site/assets.
 
 Usage: py -3.12 design/tools/optimize.py
 Edit PICKS to change which raw render feeds which asset. Transparent assets are trimmed to
@@ -11,11 +11,11 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "design" / "raw"
 REF = ROOT / "design" / "ref"
-OUT = ROOT / "site" / "claude" / "assets"
+OUT = ROOT / "site" / "assets"
 
 # asset name: (source, kind, max width)
 PICKS = {
-    "liberty-hero": (RAW / "01-hero-2.png", "alpha", 1024),
+    "liberty-hero": (RAW / "05-hero-clean-2.png", "alpha", 1024),
     "harbor-dawn": (RAW / "02-places-a-1.png", "bg", 1672),
     "crown-view": (RAW / "02-places-a-3.png", "bg", 1672),
     "copper-interior": (RAW / "03-places-b-1.png", "bg", 1672),
