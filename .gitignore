@@ -9,7 +9,6 @@ node_modules/
 .env
 .env.local
 .env.production
-.vercel/
 next-env.d.ts
 *.mp3
 *.mp4
@@ -20,3 +19,4 @@ artifacts/
 cache/
 typechain-types/
 frontend/node_modules/
+code/node_modules/
