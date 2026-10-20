@@ -36,7 +36,6 @@
   $$("[data-rule='min-liberty']").forEach(function (n) { n.textContent = (rules.minLibertyUsdCents / 100).toFixed(0); });
   $$("[data-rule='max-wallets']").forEach(function (n) { n.textContent = rules.maxLinkedWallets; });
   $$("[data-rule='min-dust']").forEach(function (n) { n.textContent = (rules.minDustUsdCents / 100).toFixed(2); });
-  $$("[data-rule='bonus-dust']").forEach(function (n) { n.textContent = (rules.bonusDustUsdCents / 100).toFixed(0); });
   $$("[data-rule='min-pool']").forEach(function (n) { n.textContent = (rules.minPoolUsdCents / 100).toFixed(0); });
   $$("[data-rule='cooldown']").forEach(function (n) { n.textContent = rules.cooldownHours; });
 
@@ -385,7 +384,7 @@
     ["Network", rules.network],
     ["Eligibility", "Hold $" + (rules.minLibertyUsdCents / 100).toFixed(0) + " in $LIBERTY for 1 base entry"],
     ["Linked wallets", "Up to " + rules.maxLinkedWallets + " secondary wallets for RWA dust"],
-    ["Min dust", "$" + (rules.minDustUsdCents / 100).toFixed(2) + " qualifies; $" + (rules.bonusDustUsdCents / 100).toFixed(0) + "+ earns +1 bonus entry"],
+    ["Min dust", "$" + (rules.minDustUsdCents / 100).toFixed(2) + " minimum; 1 entry per wallet per cycle"],
     ["Protocol fee", rules.feeBps / 100 + "% on each deposit"],
     ["Draw interval", "Checked every " + rules.drawIntervalMinutes + " minutes; drawing if pool ≥ $" + (rules.minPoolUsdCents / 100).toFixed(0)],
     ["Winners", rules.winnersPerRound + " per round, one prize per wallet"],

@@ -1,6 +1,6 @@
 /* Lady Liberty: wallet ledger — link secondary wallets, sign to prove control,
    credit dust contributions to your primary $LIBERTY account.
-   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, $5→bonus entry,
+   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, 1 entry per wallet per cycle,
    24h cooldown after winning. */
 (function () {
   "use strict";
@@ -51,10 +51,8 @@
   function dustEntries() {
     var total = 0;
     state.linked.forEach(function (l) {
-      var contrib = l.contributed || 0;
-      if (contrib < RULES.minDustUsdCents) return; // below $0.50
-      total++; // qualifying contribution = 1 entry
-      total += Math.floor(contrib / RULES.bonusDustUsdCents); // +1 per $5
+      // One entry per qualifying wallet per cycle
+      if ((l.contributed || 0) >= RULES.minDustUsdCents) total++;
     });
     return total;
   }
@@ -167,10 +165,8 @@
     var msg = "Deposited $" + R.formatUsd(usd) + " in " + asset.symbol + " from " + shortAddr(addr);
     if (usd < RULES.minDustUsdCents) {
       msg += ". Below $" + (RULES.minDustUsdCents / 100).toFixed(2) + " minimum — no entry earned.";
-    } else if (usd >= RULES.bonusDustUsdCents) {
-      msg += ". Qualifying + bonus: " + usd + " dust entries now.";
     } else {
-      msg += ". Qualifying: 1 dust entry earned.";
+      msg += ". 1 dust entry for this wallet this cycle.";
     }
 
     var p = $(".ledger-toast");
@@ -213,8 +209,7 @@
       '<div class="rules-grid">' +
         '<div class="rules-item"><strong>1 base entry</strong>Hold $' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ in $LIBERTY</div>' +
         '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets for RWA dust</div>' +
-        '<div class="rules-item"><strong>$' + (RULES.minDustUsdCents / 100).toFixed(2) + '+ dust</strong>Qualifying contribution = 1 entry</div>' +
-        '<div class="rules-item"><strong>$' + (RULES.bonusDustUsdCents / 100).toFixed(0) + '+ dust</strong>Each $' + (RULES.bonusDustUsdCents / 100).toFixed(0) + ' in one deposit = +1 bonus entry</div>' +
+        '<div class="rules-item"><strong>$' + (RULES.minDustUsdCents / 100).toFixed(2) + '+ dust</strong>1 entry per qualifying wallet per cycle</div>' +
         '<div class="rules-item"><strong>Hourly draws</strong>Prize pool must reach $' + (RULES.minPoolUsdCents / 100).toFixed(0) + ' to trigger a drawing</div>' +
         '<div class="rules-item"><strong>' + RULES.cooldownHours + 'h cooldown</strong>Winners excluded for ' + RULES.cooldownHours + ' hours after a win</div>' +
       '</div>';
@@ -262,14 +257,14 @@
         '</div>' +
         '<p class="ledger-blurb">Link secondary wallets holding RWA dust. Sign a message to prove control — no gas, no transaction. Every qualifying contribution earns entries toward your primary raffle account.' +
         (slotsLeft > 0 ? ' <strong>' + slotsLeft + ' slot' + (slotsLeft !== 1 ? 's' : '') + ' remaining</strong>.</p>' : '') +
-        '<p class="ledger-note">Min contribution: $' + (RULES.minDustUsdCents / 100).toFixed(2) + '. Bonus: +1 entry per $' + (RULES.bonusDustUsdCents / 100).toFixed(0) + ' in a single deposit.</p>';
+        '<p class="ledger-note">Min contribution: $' + (RULES.minDustUsdCents / 100).toFixed(2) + '. One entry per qualifying wallet per cycle.</p>';
 
       if (state.linked.length) {
         var list = el("ul", { class: "linked-list" });
         state.linked.forEach(function (l) {
           var item = el("li", { class: "linked-item" });
           var c = l.contributed || 0;
-          var dEntries = c >= RULES.minDustUsdCents ? (1 + Math.floor(c / RULES.bonusDustUsdCents)) : 0;
+          var dEntries = c >= RULES.minDustUsdCents ? 1 : 0;
           item.innerHTML =
             '<div class="linked-info">' +
               '<code class="linked-addr">' + shortAddr(l.address) + '</code>' +

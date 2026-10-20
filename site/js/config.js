@@ -13,7 +13,7 @@ window.LIBERTY_CONFIG = {
 
     // Dust contribution rules
     minDustUsdCents: 50,          // $0.50 minimum qualifying contribution
-    bonusDustUsdCents: 500,       // $5+ earns an additional bonus entry
+    // One dust entry per linked wallet per cycle (no stacking)
 
     // Draw mechanics
     drawIntervalMinutes: 60,      // checks every hour
@@ -87,9 +87,7 @@ window.LIBERTY_CONFIG = {
 
   openDecisions: [
     "Where the remaining 4% of the payout split goes",
-    "Maximum bonus entries per primary account",
     "Duration of dust-earned entries before expiry",
-    "Exact $5 bonus-entry threshold behaviour",
     "Rules for drawings with fewer than 10 eligible participants",
     "Who receives the 2% protocol fee and how it is accounted",
     "Entry-weight precision and rounding",
