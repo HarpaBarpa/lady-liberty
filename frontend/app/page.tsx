@@ -41,6 +41,7 @@ export default function HomePage() {
           <a href="#about" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>About</a>
           <a href="#token" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>Token</a>
           <a href="#community" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>Community</a>
+          <a href="/whitepaper" style={{ color: "#6EE786", textDecoration: "none", fontSize: "0.9rem", fontWeight: 700 }}>Whitepaper</a>
           <a
             href="#waitlist"
             style={{
