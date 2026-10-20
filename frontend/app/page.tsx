@@ -40,6 +40,7 @@ export default function HomePage() {
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <a href="#about" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>About</a>
           <a href="#token" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>Token</a>
+          <a href="#raffle" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>Raffle</a>
           <a href="#community" style={{ color: "#DCF5EB", textDecoration: "none", fontSize: "0.9rem", fontWeight: 500 }}>Community</a>
           <a href="/whitepaper" style={{ color: "#6EE786", textDecoration: "none", fontSize: "0.9rem", fontWeight: 700 }}>Whitepaper</a>
           <a
@@ -256,11 +257,11 @@ export default function HomePage() {
           }}>
             {[
               ["Supply", "1,000,000,000", "Fixed — no mint"],
-              ["Buy Tax", "4%", "Only on buys"],
+              ["Buy Tax", "3%", "Only on buys"]
               ["Sell Tax", "0%", "Torch never taxes sells"],
               ["Liquidity", "Locked Forever", "Via Torch launchpad"],
               ["Pair Asset", "$TORCH", "Fuel the torch"],
-              ["Launch Fee", "0.00015 ETH", "~$0.50 USD"],
+
             ].map(([label, value, sub]) => (
               <div key={String(label)} style={{ textAlign: "center" }}>
                 <p style={{ fontSize: "0.7rem", color: "#3F6466", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>{label}</p>
@@ -279,64 +280,39 @@ export default function HomePage() {
             textAlign: "center",
           }}>
             <p style={{ fontSize: "0.85rem", color: "#DCF5EB", opacity: 0.8 }}>
-              💡 <strong style={{ color: "#6EE786" }}>No dev tax. No team allocation. No vesting.</strong> The community owns the float.
+              💡 3% buy tax: Torch 0.90% · Buyback &amp; Burn 0.50% · Raffle Vault 1.35% · Dev/Marketing 0.25% · Sell tax: 0%
             </p>
           </div>
         </div>
       </section>
 
-      {/* CLIMB THE STATUE */}
-      <section style={{
-        background: "#174C4F",
-        padding: "80px 24px",
-        textAlign: "center",
-      }}>
-        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
-          <p style={{
-            fontSize: "0.75rem",
-            color: "#6EE786",
-            fontWeight: 700,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            marginBottom: "16px",
-          }}>
-            The Concept
+      {/* RAFFLE */}
+      <section
+        id="raffle"
+        style={{ background: "#174C4F", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
+          <p style={{ fontSize: "0.75rem", color: "#6EE786", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "16px" }}>The Utility</p>
+          <h2 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(1.8rem, 4vw, 3rem)", fontWeight: 900, marginBottom: "20px", color: "#F7FFFB" }}>Hold to Enter.<br />Dust to Boost.</h2>
+          <p style={{ fontSize: "1rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.85, marginBottom: "40px", maxWidth: "580px", margin: "0 auto 40px" }}>
+            Every hour, three winners split the ETH vault. Hold $LIBERTY to be eligible. Send any dust token to boost your entries. The more dust you send, the higher your weight.
           </p>
-          <h2 style={{
-            fontFamily: "Georgia, serif",
-            fontSize: "clamp(1.6rem, 4vw, 2.8rem)",
-            fontWeight: 900,
-            marginBottom: "24px",
-            color: "#F7FFFB",
-          }}>
-            Climb from the harbor to the torch.
-          </h2>
-          <p style={{
-            fontSize: "1rem",
-            color: "#DCF5EB",
-            lineHeight: 1.8,
-            opacity: 0.85,
-            marginBottom: "40px",
-          }}>
-            The landing page is a climb up the statue — from the harbor at 0 ft to the torch at 305 ft. Every section is a step closer to the light. Concept preview coming soon.
-          </p>
-          <a
-            href="https://github.com/HarpaBarpa/lady-liberty"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-block",
-              border: "1px solid rgba(223,245,235,0.3)",
-              color: "#DCF5EB",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              padding: "12px 28px",
-              borderRadius: "999px",
-              textDecoration: "none",
-            }}
-          >
-            View the Concept →
-          </a>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", textAlign: "left", maxWidth: "720px", margin: "0 auto" }}>
+            {[
+              ["Hourly draws", "Every hour, automatically. No sign-up needed."],
+              ["3 winners", "1st: 50% · 2nd: 30% · 3rd: 20% of the vault"],
+              ["Hold to enter", "Any $LIBERTY holding qualifies you. No minimum."],
+              ["Dust boost", "Send any ERC-20 token to the vault to increase your weight"],
+              ["ETH prizes", "Sent directly to your wallet. No conversion. No swap."],
+              ["Vault funded", "1.35% of every $LIBERTY buy + dust deposits"],
+            ].map(([title, desc]) => (
+              <div key={String(title)} style={{ background: "rgba(10,31,33,0.4)", border: "1px solid rgba(223,245,235,0.15)", borderRadius: "16px", padding: "20px" }}>
+                <p style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "6px", color: "#F7FFFB" }}>{title}</p>
+                <p style={{ fontSize: "0.85rem", color: "#DCF5EB", opacity: 0.7 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{ marginTop: "32px", fontSize: "0.9rem", color: "#DCF5EB", opacity: 0.6 }}>Full mechanics: <a href="/whitepaper#raffle" style={{ color: "#6EE786", textDecoration: "none" }}>read the whitepaper →</a></p>
         </div>
       </section>
 
