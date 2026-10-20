@@ -1,0 +1,8 @@
+IMAGE 1 of 3: the empty pedestal vault, transparent.
+A small charming illustration of a granite pedestal block (like the statue pedestal, simple classical moldings) seen three-quarter from slightly above. Set into its front is a round copper vault door with a riveted rim and a small mint flame emblem stamped in the middle (the house flame shape). The door is swung half open and the vault inside is completely EMPTY, softly lit mint from within, nothing inside at all. One plump gray pigeon sits inside the empty vault looking out at the viewer with a deadpan, slightly judging expression. Square 1:1. Fully transparent background (real alpha) around the whole object, 10 percent padding, no ground shadow, no background circle.
+
+IMAGE 2 of 3: the pigeon, standing, transparent.
+The Lady Liberty pigeon on its own (the attached avatar shows it on her shoulder): a plump, round, small gray city pigeon with an iridescent green-violet neck, coral feet, a tiny beak and one slightly raised unimpressed eyebrow. Standing, side three-quarter view facing left, full body. Characterful, cute but grounded, inked cel style. Square 1:1. Fully transparent background (real alpha), 12 percent padding, no shadow.
+
+IMAGE 3 of 3: the pigeon, celebrating, transparent.
+The same pigeon (same colours, same face) mid-flap with both wings up in a happy little celebration hop, beak open in a coo, a few small loose feathers. Facing left, full body. Square 1:1. Fully transparent background (real alpha), 12 percent padding, no shadow.
