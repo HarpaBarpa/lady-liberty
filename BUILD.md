@@ -1,8 +1,8 @@
-# Liberty — Build Instructions
+# LibertyTorch — Build Instructions
 ## Launching $LIBERTY on Torch (Robinhood Chain)
 
 **Token:** $LIBERTY  
-**Tagline:** RWAFFLE × Lady Liberty 🗽🔥  
+**Brand:** LibertyTorch 🗽🔥  
 **Platform:** Torch Launchpad on **Robinhood Chain**
 
 ---
