@@ -1,3 +1,4 @@
+/* Minimal reset — public/index.html provides all site styles */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -7,48 +8,14 @@ html {
 }
 
 body {
-  font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0A1F21;
-}
-::-webkit-scrollbar-thumb {
-  background: #3F6466;
-  border-radius: 3px;
-}
-
-/* Selection */
-::selection {
-  background: rgba(110, 231, 134, 0.3);
-  color: #F7FFFB;
-}
-
-/* Focus */
 :focus-visible {
-  outline: 2px solid #6EE786;
-  outline-offset: 2px;
-}
-
-/* Form inputs */
-input[type="email"],
-input[type="text"] {
-  outline: none;
-}
-input[type="email"]:focus,
-input[type="text"]:focus {
-  border-color: #6EE786 !important;
-}
-
-/* Buttons */
-a[style*="cursor: pointer"] {
-  cursor: pointer;
+  outline: 3px solid #0E6B5C;
+  outline-offset: 3px;
+  border-radius: 6px;
 }

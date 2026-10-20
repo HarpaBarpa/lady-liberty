@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whitepaper · LibertyTorch</title>
+<meta name="description" content="LibertyTorch whitepaper — $LIBERTY community token on Torch, Robinhood Chain. Hold to enter. Dust to boost. Hourly draws.">
+<meta name="theme-color" content="#174C4F">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: #F7FFFB;
+    color: #174C4F;
+    font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #5FB59B; }
+  a:hover { color: #174C4F; }
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(247, 255, 251, 0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(23, 76, 79, 0.12);
+  }
+  .bar {
+    max-width: 800px; margin: 0 auto;
+    padding: 0 24px;
+    height: 60px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #174C4F; }
+  .mark { width: 36px; height: 32px; }
+  .brand-name { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-weight: 700; font-size: 1.2rem; }
+  .brand-sub { font-size: 0.75rem; color: #3F6466; margin-top: 1px; }
+  .back { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: rgba(23,76,79,0.08); color: #174C4F; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  .back:hover { background: rgba(23,76,79,0.14); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px 96px; }
+  .wp-title { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 680; color: #174C4F; line-height: 1; margin: 0 0 12px; }
+  .wp-sub { font-size: 0.9rem; color: #3F6466; margin-bottom: 48px; }
+  .wp-tag { display: inline-block; background: rgba(110,231,134,0.15); border: 1px solid rgba(110,231,134,0.3); border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; color: #174C4F; margin-bottom: 32px; }
+
+  h2 { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 640; color: #174C4F; margin: 48px 0 16px; }
+  h3 { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-size: 1.2rem; font-weight: 640; color: #174C4F; margin: 32px 0 12px; }
+  p { margin: 0 0 16px; max-width: 60em; }
+  ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; color: #174C4F; }
+
+  .flywheel { margin: 32px 0; padding: 24px; background: #174C4F; border-radius: 16px; color: #DCF5EB; }
+  .flywheel h3 { color: #DCF5EB; margin-top: 0; }
+  .flywheel ol { margin-bottom: 0; }
+  .flywheel li { margin-bottom: 10px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.95rem; }
+  th { text-align: left; padding: 10px 14px; background: #174C4F; color: #DCF5EB; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(23,76,79,0.1); }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; color: #174C4F; }
+
+  .disclaimer { margin-top: 48px; padding: 24px; background: rgba(23,76,79,0.05); border: 1px solid rgba(23,76,79,0.12); border-radius: 16px; font-size: 0.9rem; color: #3F6466; }
+  .disclaimer p { margin-bottom: 10px; }
+  .disclaimer p:last-child { margin-bottom: 0; }
+
+  .footer { border-top: 1px solid rgba(23,76,79,0.1); padding: 28px 24px; text-align: center; color: #3F6466; font-size: 0.85rem; }
+  .footer a { color: #5FB59B; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="3.47,26.73 13.78,27.35 12.18,32.29" fill="#B8733A"/>
+        <polygon points="9.71,15.93 18.88,20.69 15.40,24.55" fill="#B8733A"/>
+        <polygon points="19.8,8.6 26.24,16.66 21.48,18.78" fill="#5FB59B"/>
+        <polygon points="32,4.5 34.6,16 29.4,16" fill="#5FB59B"/>
+        <polygon points="44.2,8.6 42.52,18.78 37.76,16.66" fill="#5FB59B"/>
+        <polygon points="54.29,15.93 48.60,24.55 45.12,20.69" fill="#5FB59B"/>
+        <polygon points="60.53,26.73 51.82,32.29 50.22,27.35" fill="#B8733A"/>
+        <circle cx="32" cy="37" r="18" fill="#5FB59B"/>
+        <path transform="translate(32 38.5) scale(0.56) translate(-32 -32)" d="M32 6C35.5 12 41 17.5 40.6 24.5C40.3 27.5 38.8 29.6 37 31C37.6 25 35.6 19 32 15.5C28.6 20.5 24.5 25 22.6 30.5C21.8 33 21.5 36 21.5 39.5C21.5 45 26 49.5 31.5 49.5C37 49.5 41.5 45 41.5 39.5C41.5 36.5 42.3 33.5 43 31.5C46 34.5 47.5 38.5 47.5 43C47.5 51 40.5 57.8 32 57.8C23.2 57.8 16.5 51.5 16.5 43.5C16.5 31 26 19 32 6Z" fill="#6EE786"/>
+      </svg>
+      <div>
+        <div class="brand-name">Lady Liberty</div>
+        <div class="brand-sub">LIBERTY TORCH</div>
+      </div>
+    </a>
+    <a class="back" href="/">← Back to the site</a>
+  </div>
+</header>
+
+<article class="wrap">
+  <p class="wp-tag">🔥 $LIBERTY · Torch · Robinhood Chain</p>
+  <h1 class="wp-title">LibertyTorch<br>Whitepaper</h1>
+  <p class="wp-sub">Last updated: 2026-10-20 · v1.0</p>
+
+  <h2>1. Abstract</h2>
+  <p>LibertyTorch is a community token built on Torch, deployed on Robinhood Chain. Its brand is Lady Liberty — the Statue of Liberty reimagined as a friendly character, torch raised high, mint green flame burning bright.</p>
+  <p>The core utility is a community raffle. The 3% buy tax funds an ETH prize vault. Holding $LIBERTY makes you eligible. Sending dust coins to the vault boosts your entries. Every hour, three winners share the vault.</p>
+  <p>There are no team tokens, no vesting schedules, no hidden allocations. The community owns the float from day one.</p>
+
+  <h2>2. The Brand — Lady Liberty</h2>
+  <p>Lady Liberty is the Statue of Liberty reimagined as a friendly anime character. She has always stood for something: the tired, the poor, the huddled masses yearning to breathe free. LibertyTorch carries that forward — a token for the underdogs, the overlooked.</p>
+
+  <h3>Visual Identity</h3>
+  <ul>
+    <li><strong>Style:</strong> Hand-inked anime editorial illustration</li>
+    <li><strong>Hair:</strong> Short sculptural sea-green bob</li>
+    <li><strong>Features:</strong> Copper freckles, kind teal eyes</li>
+    <li><strong>Crown:</strong> Seven-ray patina crown</li>
+    <li><strong>Attire:</strong> Seafoam toga</li>
+    <li><strong>Flame:</strong> Mint green #6EE786 — the single light source</li>
+    <li><strong>Palette:</strong> Teal · Seafoam · Porcelain · Patina · Copper</li>
+  </ul>
+
+  <h2>3. Technology</h2>
+  <p>Torch is a token launchpad on Robinhood Chain — handles the full token lifecycle in one transaction, no custom Solidity needed. Every Torch token address ends in 1111. Robinhood Chain is EVM-compatible, uses ETH for gas.</p>
+  <p>Contract is immutable: no owner, no pause, no blacklist, no mint. Liquidity locked forever via Torch launchpad.</p>
+
+  <h3>Key Addresses</h3>
+  <table>
+    <tr><th>Asset</th><th>Address</th></tr>
+    <tr><td>$TORCH</td><td><code>0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111</code></td></tr>
+    <tr><td>Torch Launchpad</td><td><code>0x7891eA889899928aFE637e4Cca8106188427776a</code></td></tr>
+    <tr><td>$LIBERTY</td><td><code>0x___________1111</code> (assigned at launch)</td></tr>
+    <tr><td>Explorer</td><td>robinhoodchain.io</td></tr>
+  </table>
+
+  <h2>4. The Token — $LIBERTY</h2>
+  <table>
+    <tr><td>Name</td><td>LIBERTY</td></tr>
+    <tr><td>Ticker</td><td>$LIBERTY</td></tr>
+    <tr><td>Network</td><td>Robinhood Chain</td></tr>
+    <tr><td>Standard</td><td>ERC-20</td></tr>
+    <tr><td>Supply</td><td>1,000,000,000 (fixed, no mint)</td></tr>
+    <tr><td>Launchpad</td><td>Torch (Quick Launch)</td></tr>
+  </table>
+
+  <h2>5. Tokenomics</h2>
+  <p>Total buy tax: <strong>3.00%</strong> — on every buy, fixed forever. Sell tax: <strong>0%</strong> (Torch never taxes sells).</p>
+
+  <h3>Tax Breakdown</h3>
+  <table>
+    <tr><th>Allocation</th><th>Tax</th><th>Per $100K Volume</th></tr>
+    <tr><td>Torch Protocol</td><td>0.90%</td><td>$900</td></tr>
+    <tr><td>$LIBERTY Buyback &amp; Burn</td><td>0.50%</td><td>$500</td></tr>
+    <tr><td>RWA Raffle Funding</td><td>1.35%</td><td>$1,350</td></tr>
+    <tr><td>Development / Marketing</td><td>0.25%</td><td>$250</td></tr>
+    <tr><td><strong>TOTAL</strong></td><td><strong>3.00%</strong></td><td><strong>$3,000</strong></td></tr>
+  </table>
+
+  <p>· <strong>Torch Protocol 0.90%</strong> — Keeps the Torch ecosystem running.</p>
+  <p>· <strong>$LIBERTY Buyback &amp; Burn 0.50%</strong> — Automated buyback and burn. Deflationary with every trade.</p>
+  <p>· <strong>RWA Raffle Funding 1.35%</strong> — Funds the hourly community raffle — LibertyTorch's core utility.</p>
+  <p>· <strong>Development / Marketing 0.25%</strong> — Site maintenance, social presence, community growth.</p>
+
+  <p>Launch preset: <strong>Launch (2.5 ETH)</strong>. "Launch Complete" at 10x = 25 ETH market cap. Dev buy: 2% of supply (~20M tokens) at launch, no tax — skin in the game, not a cash grab.</p>
+
+  <h2 id="raffle">6. The Raffle — Hold to Enter</h2>
+  <p>Hold $LIBERTY to be eligible. Send dust coins to boost your entries. Every hour, three winners split the vault.</p>
+
+  <table>
+    <tr><td>Eligibility</td><td>Hold any amount of $LIBERTY</td></tr>
+    <tr><td>Entry boost</td><td>Send any ERC-20 token to the vault — USD value (via oracle) increases entry weight</td></tr>
+    <tr><td>Draw frequency</td><td>Hourly</td></tr>
+    <tr><td>Winners per draw</td><td>3</td></tr>
+    <tr><td>Prize split</td><td>1st: 50% · 2nd: 30% · 3rd: 20%</td></tr>
+    <tr><td>Prize currency</td><td>ETH — sent directly to winners' wallets</td></tr>
+    <tr><td>Vault funding</td><td>1.35% buy tax + dust coin deposits</td></tr>
+  </table>
+
+  <h3>How to boost your entries</h3>
+  <p>Send any amount of any ERC-20 token to the LibertyTorch vault address. The USD value of your deposit is calculated via live oracle pricing — that USD value becomes your entry weight. The more dust you send, the higher your weight. Gas is paid by the project where possible — you should not need to spend ETH to enter.</p>
+
+  <h3>Vault funding — two streams</h3>
+  <p><strong>Tax stream:</strong> 1.35% of every $LIBERTY buy automatically flows into the vault — on-chain, every trade.</p>
+  <p><strong>Dust stream:</strong> deposited tokens are held in the vault, contributing to the pool. More dust = bigger vault = bigger prizes.</p>
+
+  <h2>7. The Flywheel</h2>
+  <div class="flywheel">
+    <ol>
+      <li><strong>Buyers pay 3% tax</strong><br>0.90% to Torch, 0.50% buyback, 1.35% vault, 0.25% dev/marketing</li>
+      <li><strong>Vault grows</strong><br>1.35% tax + dust deposits accumulate in the ETH prize vault</li>
+      <li><strong>Prizes attract holders</strong><br>The raffle makes holding $LIBERTY valuable. People buy and hold to be eligible</li>
+      <li><strong>Dust depositors boost entries</strong><br>Users send any token — USD valued via oracle — boosting their entry weight</li>
+      <li><strong>Volume compounds</strong><br>More holders = more community = more trading = more tax = LOOP</li>
+    </ol>
+  </div>
+
+  <h2>8. FAQ</h2>
+
+  <h3>Is this affiliated with Torch, Robinhood, or the Statue of Liberty?</h3>
+  <p>No. LibertyTorch is a community project. $LIBERTY is not issued by, endorsed by, or affiliated with Torch, Robinhood Markets, Inc., or the National Park Service.</p>
+
+  <h3>Where can I buy $LIBERTY?</h3>
+  <p>After launch, through the Torch trading interface or any DEX on Robinhood Chain.</p>
+
+  <h3>What's the anti-snipe protection?</h3>
+  <p>Torch applies an 80% tax on the first 15–30 seconds of trading, then normalizes.</p>
+
+  <h3>Can the tax rate change?</h3>
+  <p>No. The 3% buy tax is set at launch and fixed forever.</p>
+
+  <h3>How do I enter the raffle?</h3>
+  <p>Hold $LIBERTY. To boost your entries, send any ERC-20 token to the LibertyTorch vault address.</p>
+
+  <h3>What can I send as dust?</h3>
+  <p>Any ERC-20 token. USD value is calculated via oracle pricing.</p>
+
+  <h3>How are winners chosen?</h3>
+  <p>Entry weight = $LIBERTY holdings + USD value of dust deposits. Draw is random, weighted by total score.</p>
+
+  <h3>What are prizes paid in?</h3>
+  <p>ETH, sent directly to winning wallets. No conversion, no swap.</p>
+
+  <h3>How often are draws?</h3>
+  <p>Hourly. Three winners per draw: 50% / 30% / 20%.</p>
+
+  <h3>Where do I get ETH for Robinhood Chain?</h3>
+  <p>Robinhood Crypto supports ETH purchases, or bridge from another network.</p>
+
+  <h2>9. Risk Disclosure</h2>
+  <ul>
+    <li><strong>Smart contract risk:</strong> Torch contracts are immutable and audited, but always exercise caution with any on-chain interaction.</li>
+    <li><strong>Robinhood Chain risk:</strong> Newer network — liquidity, tooling, and ecosystem depth may be lower than established chains.</li>
+    <li><strong>Token price risk:</strong> $LIBERTY may have low liquidity at launch. Do not invest more than you can afford to lose.</li>
+    <li><strong>Raffle risk:</strong> Prize amounts depend entirely on trading volume and dust deposits.</li>
+    <li><strong>Regulatory risk:</strong> Community tokens may attract regulatory attention depending on jurisdiction.</li>
+    <li><strong>No financial advice:</strong> Nothing in this whitepaper is financial advice. Always DYOR.</li>
+    <li><strong>No refunds:</strong> On-chain transactions are irreversible.</li>
+  </ul>
+
+  <div class="disclaimer">
+    <p><strong>Disclaimer:</strong> $LIBERTY is a community token. It is not a security, commodity, or investment contract. This whitepaper does not constitute an offer to sell or solicitation to buy any security. LibertyTorch is not affiliated with, endorsed by, or connected to Torch, Robinhood Markets, Inc., the Statue of Liberty National Monument, the National Park Service, or any government entity. All trading happens at your own risk.</p>
+  </div>
+</article>
+
+<footer class="footer">
+  <p>LibertyTorch 🗽🔥 &nbsp;·&nbsp; Built on Robinhood Chain &nbsp;·&nbsp; Powered by Torch</p>
+  <p style="margin-top:6px">Not affiliated with Torch, Robinhood, or any token issuer.</p>
+</footer>
+
+</body>
+</html>
