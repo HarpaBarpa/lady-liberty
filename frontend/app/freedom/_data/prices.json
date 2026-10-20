@@ -1,0 +1,786 @@
+{
+ "generatedAt": "2026-10-20T16:32:48.878835849Z",
+ "source": "https://api.robinhood.com/rhj/prices",
+ "quotes": {
+  "0xd95B44124e475743a7589e68F3D74008A5536D44": {
+   "bid": "240.43",
+   "halted": false
+  },
+  "0x1Cdad396DB64BDa184d5182A97Dd9B3C62100b7D": {
+   "bid": "126.68",
+   "halted": false
+  },
+  "0x44f6D488021f8233B9416294d1FE9b1fEe28382d": {
+   "bid": "344.23",
+   "halted": false
+  },
+  "0xbBD09F72b025360FeE5C928053Dca6248d35be54": {
+   "bid": "75.72",
+   "halted": false
+  },
+  "0xb8DBf92F9741c9ac1c32115E78581f23509916FD": {
+   "bid": "19.56",
+   "halted": false
+  },
+  "0x5F604fBA1162193A4388A5DFa56F556f3E133cC2": {
+   "bid": "62.77",
+   "halted": false
+  },
+  "0x5B97476b922F3305131B8f0B9D333172E87f4aaE": {
+   "bid": "219.67",
+   "halted": false
+  },
+  "0xC583c60aeF9Dc401Da72cEC1B404743a93cea1Cc": {
+   "bid": "11.86",
+   "halted": false
+  },
+  "0x95052ddcd5DC25641657424A8Cf04834997E1730": {
+   "bid": "86.16",
+   "halted": false
+  },
+  "0x93Dbb1d2Dc5D63F4abACFF30485273f538Df68Ac": {
+   "bid": "1404.17",
+   "halted": false
+  },
+  "0xC93f4d80e268AB922e871bd169156C3CC41894e6": {
+   "bid": "267.86",
+   "halted": false
+  },
+  "0xc01aA1fECeC0605b13bc84874ff7256C0f5F562a": {
+   "bid": "32.17",
+   "halted": false
+  },
+  "0x941AE714EC6D8130c7B75d67160Ca08f1e7d11Dd": {
+   "bid": "463.84",
+   "halted": false
+  },
+  "0x48961813349333209994750ffA89b3c5C22eC969": {
+   "bid": "75.82",
+   "halted": false
+  },
+  "0x756Bc80af765C82da966a788858d65aDF14f3793": {
+   "bid": "7.52",
+   "halted": false
+  },
+  "0x82DA4646242e1D962e96e932269Dc644c94a9CaA": {
+   "bid": "201.93",
+   "halted": false
+  },
+  "0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa": {
+   "bid": "147.35",
+   "halted": false
+  },
+  "0x2D427692E928fa156ec22acfaBaFA0447C5805B7": {
+   "bid": "15.93",
+   "halted": false
+  },
+  "0xea72Ecca2d0f6bFA1394DBBCff85b52CD4233931": {
+   "bid": "226.22",
+   "halted": false
+  },
+  "0x156E175DD063a8cE274C50654eF40e0032b3fbcF": {
+   "bid": "335.31",
+   "halted": false
+  },
+  "0x117cc2133c37B721F49dE2A7a74833232B3B4C0C": {
+   "bid": "769.12",
+   "halted": false
+  },
+  "0x9651342CeA770aE9a2969Ba2A52611523146aef9": {
+   "bid": "27.32",
+   "halted": false
+  },
+  "0xC9a981FEE1F9DEc688bb123ccDeCc63D0deBFC4e": {
+   "bid": "377.94",
+   "halted": false
+  },
+  "0xBa0CAB75495255d0cB58E22B648bFED4ECD1F47E": {
+   "bid": "320.91",
+   "halted": false
+  },
+  "0xa48F22A46C0F1C46CA7D111CB6c137c271987180": {
+   "bid": "795.26",
+   "halted": false
+  },
+  "0x4189F0c66EBBB0bfeF1C31f763131361EF32f77C": {
+   "bid": "24.74",
+   "halted": false
+  },
+  "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68": {
+   "bid": "718.97",
+   "halted": false
+  },
+  "0x9e7ABD3C9139D14E4c86DcE0e455AAB7A0C2FB3E": {
+   "bid": "11.63",
+   "halted": false
+  },
+  "0xBEF75684C43c4ea7BD18Dd532a2244674Ee8b926": {
+   "bid": "12.96",
+   "halted": false
+  },
+  "0x63b814DDBd6BF339f25Fed8c36158a008D5B373e": {
+   "bid": "297.94",
+   "halted": false
+  },
+  "0xF6589F11Bc40b669e584073F428B05562F568733": {
+   "bid": "6.4",
+   "halted": false
+  },
+  "0x84CAb63bc87912E71ad199ff14A0bA45de68FeF8": {
+   "bid": "140.35",
+   "halted": false
+  },
+  "0x5c90450Bbb4273D7b2f17CF6917AEB237A569679": {
+   "bid": "122.54",
+   "halted": false
+  },
+  "0xeB30663bDFf0622Ef4e4E5cBb4E975F19f33f51D": {
+   "bid": "105.88",
+   "halted": false
+  },
+  "0x58FfE4a942d3885bAa22D7520691F611EF09e7AA": {
+   "bid": "427.4",
+   "halted": false
+  },
+  "0x408c14038a04f7bD235329E26d2bf569ee20e250": {
+   "bid": "15.36",
+   "halted": false
+  },
+  "0xc72b96e0E48ecd4DC75E1e45396e26300BC39681": {
+   "bid": "93.19",
+   "halted": false
+  },
+  "0xe93237C50D904957Cf27E7B1133b510C669c2e74": {
+   "bid": "531.96",
+   "halted": false
+  },
+  "0xFDE6b5d9BB419B10C23268c74e369AbFF39C0460": {
+   "bid": "4.64",
+   "halted": false
+  },
+  "0x284358abc07F9359f19f4b5b4aC91901Be2597Ba": {
+   "bid": "11.76",
+   "halted": false
+  },
+  "0x5e81213613b6B86EaB4c6c50d718d34359459786": {
+   "bid": "205.39",
+   "halted": false
+  },
+  "0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35": {
+   "bid": "690.11",
+   "halted": false
+  },
+  "0x6006ed4B2F94110851ff7509D97D034f0EeD9226": {
+   "bid": "200.09",
+   "halted": false
+  },
+  "0x89776d4Cd68193597A2fC132cfaC1fDe36CCeA8a": {
+   "bid": "184.63",
+   "halted": false
+  },
+  "0x05b37Fb53A299a1b874A619e1c4C404D52C36F4C": {
+   "bid": "156.92",
+   "halted": false
+  },
+  "0x7c04E6A3368F2A1DE3874f0e80d2e0A1a9915da6": {
+   "bid": "132.43",
+   "halted": false
+  },
+  "0xf23250dac154D05Bb671CB0d0eBEf3c635c79CE2": {
+   "bid": "98.71",
+   "halted": false
+  },
+  "0xB039597eD45CBa7B6E2fb9E8BE51802969CEe5Be": {
+   "bid": "341.03",
+   "halted": false
+  },
+  "0x48d60243c66437c6ac3c2495Be94747aEd5Dfe25": {
+   "bid": "248.67",
+   "halted": false
+  },
+  "0x03BC731Ffb162cdd7B98D3C6542bFC291126075d": {
+   "bid": "16.39",
+   "halted": false
+  },
+  "0xB90A19fF0Af67f7779afF50A882A9CfF42446400": {
+   "bid": "1381.91",
+   "halted": false
+  },
+  "0x4D21483a44Bf67a86b77E3dA301411880797D452": {
+   "bid": "191.11",
+   "halted": false
+  },
+  "0x56d23beE5f41A7120170b0c603Dae30128e460e9": {
+   "bid": "334.58",
+   "halted": false
+  },
+  "0x39EC44Bee4F6A116c6F9B8De566848a985C53C60": {
+   "bid": "114.38",
+   "halted": false
+  },
+  "0x12f190a9F9d7D37a250758b26824B97CE941bF54": {
+   "bid": "262.62",
+   "halted": false
+  },
+  "0xE0444EF8BF4eD74f74FD73686e2ddF4C1c5591E8": {
+   "bid": "69.56",
+   "halted": false
+  },
+  "0xdF0992E440dD0be65BD8439b609d6D4366bf1CB5": {
+   "bid": "85.47",
+   "halted": false
+  },
+  "0xd917B029C761D264c6A312BBbcDA868658eF86a6": {
+   "bid": "10.15",
+   "halted": false
+  },
+  "0x561e2a49212b7cCF47f2744Ccb83e200722fADBc": {
+   "bid": "150.06",
+   "halted": false
+  },
+  "0xF543967EEBB6f1917992eF0E68De63ab07a5a0dA": {
+   "bid": "106.17",
+   "halted": false
+  },
+  "0x9ECe29A4A2397C0a35fb5fA8EE2b9509130a98cc": {
+   "bid": "48.07",
+   "halted": false
+  },
+  "0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3": {
+   "bid": "341.43",
+   "halted": false
+  },
+  "0x48E39E56aCdbA37b09020C0b734A613C9a2f100A": {
+   "bid": "8.68",
+   "halted": false
+  },
+  "0xa4f319104089FE321dc8093C6E707d4fE190A988": {
+   "bid": "60.41",
+   "halted": false
+  },
+  "0x141eEa040c2250eEc0314e336975e81f85f6585e": {
+   "bid": "57.22",
+   "halted": false
+  },
+  "0xc6Cbad1016b38B797610c25E1dc7D95988B1f362": {
+   "bid": "149.28",
+   "halted": false
+  },
+  "0x4e62068525Ab11FE768e29dfD00ef909B9803016": {
+   "bid": "98.53",
+   "halted": false
+  },
+  "0x329fcACEb9AD6F9580DD5F643fed0646900D043c": {
+   "bid": "547.77",
+   "halted": false
+  },
+  "0xB853bC83a753342a4f8320ea680b4B1E84118D21": {
+   "bid": "8.75",
+   "halted": false
+  },
+  "0x92FD66527192E3e61d4DDd13322Aa222DE86F9B5": {
+   "bid": "100.6",
+   "halted": false
+  },
+  "0x40E7a279850e443f582059ae5dC1c3b6563E6395": {
+   "bid": "29.2",
+   "halted": false
+  },
+  "0xF0AB0c93bE6F41369d302e55db1A96b3c430212D": {
+   "bid": "27.02",
+   "halted": false
+  },
+  "0x43B07D15cE533bEc5476d70C22a78a1B2B662155": {
+   "bid": "235.75",
+   "halted": false
+  },
+  "0x57b0030166DB0C31690d1A5aA167e2e26e2C29a4": {
+   "bid": "264.53",
+   "halted": false
+  },
+  "0x2F62fC9fAbb470C690f141c28340eD832bB27020": {
+   "bid": "70.66",
+   "halted": false
+  },
+  "0xaE517A2903E68bd929Dfd15be875F8369D53e94a": {
+   "bid": "260.57",
+   "halted": false
+  },
+  "0x748c32c3ca24eDf31ea597Db1F3d330a7a6DA3Dc": {
+   "bid": "288.42",
+   "halted": false
+  },
+  "0xB1CC0EC7Db69Cf43539119814df40071b9d61793": {
+   "bid": "68.65",
+   "halted": false
+  },
+  "0xceF9027c7d6985b85f0BA431125073529A947A68": {
+   "bid": "6.08",
+   "halted": false
+  },
+  "0xcF364ea52787e289De6F32077834056E3E70D6A8": {
+   "bid": "421.46",
+   "halted": false
+  },
+  "0x62200915e7DEab1eC7f79fb246daDbB80eACdDd0": {
+   "bid": "4.75",
+   "halted": false
+  },
+  "0xad25Ac6C84D497db898fa1E8387bf6Af3532a1c4": {
+   "bid": "108.65",
+   "halted": false
+  },
+  "0x77E655E37F4d913fB9540e0d541D824171a60e81": {
+   "bid": "215.02",
+   "halted": false
+  },
+  "0xF52597345A8Edf418bc4071b4a35112472277D3e": {
+   "bid": "360.21",
+   "halted": false
+  },
+  "0xcBB95BBF36099d34dA091dc6Fa6F49EfA257Cee3": {
+   "bid": "8.66",
+   "halted": false
+  },
+  "0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A": {
+   "bid": "194.69",
+   "halted": false
+  },
+  "0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD": {
+   "bid": "912.23",
+   "halted": false
+  },
+  "0x1AF6446f07eb1d97c546AFC8c9544cBDF3AD5137": {
+   "bid": "41.53",
+   "halted": false
+  },
+  "0x237c16D66590F67B886d978ACD362EAeaD8B18c7": {
+   "bid": "166.98",
+   "halted": false
+  },
+  "0x0594134DF3f171a354D9C85eBD65b7A6148F6D09": {
+   "bid": "377.16",
+   "halted": false
+  },
+  "0x3b14C39E89D60D627b42a1A4CA45b5bb45Fc12e2": {
+   "bid": "51.44",
+   "halted": false
+  },
+  "0x2778C5024D5cA2CdB0f8eAD671ffc69963AdCD9C": {
+   "bid": "337.68",
+   "halted": false
+  },
+  "0x5f10A1C971B69e47e059e1dC91901B59b3fB49C3": {
+   "bid": "62.78",
+   "halted": false
+  },
+  "0xBf449977089c718C004a66C554B26B94ef3Ad4De": {
+   "bid": "304.54",
+   "halted": false
+  },
+  "0x41F4267525a8AFf329540eF24fD83d9044758B33": {
+   "bid": "22.76",
+   "halted": false
+  },
+  "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC": {
+   "bid": "542.52",
+   "halted": false
+  },
+  "0x7f0aBeF0C07280F82c6a08ead09dEd6BAE2C13Fc": {
+   "bid": "154.61",
+   "halted": false
+  },
+  "0x285b231728c7E4333799183DF1094d775246a535": {
+   "bid": "11.54",
+   "halted": false
+  },
+  "0x4D67253bc223e6b0e104F1084c1fb2b669dDC41b": {
+   "bid": "174.53",
+   "halted": false
+  },
+  "0x072f979c2CAc8e1391B0162a87Fee094bF8744a0": {
+   "bid": "549.49",
+   "halted": false
+  },
+  "0xFA78C12E6488814A0262E4e802749a4a737d5fB7": {
+   "bid": "204.69",
+   "halted": false
+  },
+  "0x0C3260aF4B8f13a69c4c2dFb84fD667890CDFa14": {
+   "bid": "148.37",
+   "halted": false
+  },
+  "0x15Cd20759CE7F3285c29A319dE2D1A2e098c6f43": {
+   "bid": "186.01",
+   "halted": false
+  },
+  "0x99D9D8663545151603863C5AcbD6FC3218899009": {
+   "bid": "63.84",
+   "halted": false
+  },
+  "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC": {
+   "bid": "216.96",
+   "halted": false
+  },
+  "0xb334C5cE741B80B5B671F47F5C269Cb193fe8E24": {
+   "bid": "4.7",
+   "halted": false
+  },
+  "0x59818904ab4cE163b3cE4FfB64f2D6Ca02c434B4": {
+   "bid": "6.56",
+   "halted": false
+  },
+  "0xa30FA36Db767ad9eD3f7a60fC79526fB4d56D344": {
+   "bid": "160.17",
+   "halted": false
+  },
+  "0x9Ab02Ead789b6903c3c44d0ED32F9c707CDF12FD": {
+   "bid": "599.81",
+   "halted": false
+  },
+  "0x25C288E6D899b9BC30160965aD9644c67e73bE0C": {
+   "bid": "12.04",
+   "halted": false
+  },
+  "0x7dc013eB55e436f30d7ED1AFE4E36d6e45e3c3f7": {
+   "bid": "214.41",
+   "halted": false
+  },
+  "0x6330D8C3178a418788dF01a47479c0ce7CCF450b": {
+   "bid": "171.25",
+   "halted": false
+  },
+  "0xf9B46d3D1B22199D4D1025a9cEDB540A33F1a2d5": {
+   "bid": "176.74",
+   "halted": false
+  },
+  "0x9D9c6684F596F66a64C030B93A886D51Fd4D7931": {
+   "bid": "170.2",
+   "halted": false
+  },
+  "0xBE274710Bf3d9567e1B290eF6a5F9f90ca016FD8": {
+   "bid": "81.29",
+   "halted": false
+  },
+  "0x1Eebee7F74517e0279dFb09d25B0407bEEc3FDd6": {
+   "bid": "5.58",
+   "halted": false
+  },
+  "0x6E3Dfd9f7e1649BaA14D25cac18C94d62dB10A54": {
+   "bid": "4.71",
+   "halted": false
+  },
+  "0xcf6B2D875361be807EAfa57458c80f28521F9333": {
+   "bid": "5.59",
+   "halted": false
+  },
+  "0xA249BAF1063Af884807C1E1400AEf7784836917E": {
+   "bid": "274.3",
+   "halted": false
+  },
+  "0x521Cf887E6531c6F667b5BC4D896E5d9bfE8EB2E": {
+   "bid": "78.13",
+   "halted": false
+  },
+  "0x8eF20885F94e3D9bc7eB3080279188Bd5ED7c08C": {
+   "bid": "826.5",
+   "halted": false
+  },
+  "0xfAf9cb261B5FCC1f404Bb10CD39C5c6C1974E612": {
+   "bid": "240.52",
+   "halted": false
+  },
+  "0x7FD06a4d81cCfA3F351394E144d5191874C31313": {
+   "bid": "39.24",
+   "halted": false
+  },
+  "0x36046893810a7E7fCE501229d57dc3FC8c8716d0": {
+   "bid": "405.39",
+   "halted": false
+  },
+  "0x62fd0668e10D8B72339BE2DCF7643001688ff13B": {
+   "bid": "241.47",
+   "halted": false
+  },
+  "0xEAf2512dFC1bEAc608F8794B3793CD4E02894Aa6": {
+   "bid": "276.8",
+   "halted": false
+  },
+  "0x8005d266423c7ea827372c9c864491e5786600ea": {
+   "bid": "1295.18",
+   "halted": false
+  },
+  "0x0f17206447090e464C277571124dD2688E48AEA9": {
+   "bid": "175.32",
+   "halted": false
+  },
+  "0x03DfbBE0AC4E7bCDaFd08eD41A400326B77D8c80": {
+   "bid": "258.88",
+   "halted": false
+  },
+  "0x12e3c047bf9AeCAF9dDC98c05C31BFD1dd043993": {
+   "bid": "21.33",
+   "halted": false
+  },
+  "0x28bABD556b60E53663B8615036479a29c2CDd1Bf": {
+   "bid": "180.3",
+   "halted": false
+  },
+  "0x63D5a3b6939a33f1e75d8Bcd85759858239600DB": {
+   "bid": "67.87",
+   "halted": false
+  },
+  "0xAA4d64474c172010aB57719cb9951E6142a100d3": {
+   "bid": "13.39",
+   "halted": false
+  },
+  "0x558378E000D634A36593E338eBacdd6207640EfE": {
+   "bid": "31.57",
+   "halted": false
+  },
+  "0xb1969f6604CA1AE7a2cD3F1827876e914594CA2D": {
+   "bid": "2.58",
+   "halted": false
+  },
+  "0xF53F66751B1Eff985311b693531E3290F600c410": {
+   "bid": "174.43",
+   "halted": false
+  },
+  "0xbE6702d7b70315376dC48a3293f24f0982F86386": {
+   "bid": "8.79",
+   "halted": false
+  },
+  "0xfb2664f07B6Aadd29ea7a59D8859b1AeB8645cDa": {
+   "bid": "13.39",
+   "halted": false
+  },
+  "0x0E6e67Ba88e7b5d9B67636A215c76779B948dE79": {
+   "bid": "19.87",
+   "halted": false
+  },
+  "0xb0992820E760d836549ba69BC7598b4af75dEE03": {
+   "bid": "132.39",
+   "halted": false
+  },
+  "0x92F9F459F1a9a5AD266b182BE7Bffd1C6c666894": {
+   "bid": "233.38",
+   "halted": false
+  },
+  "0x94B8AAE43A1cCc08Aa64B7D1F29b4D920aF4a0C9": {
+   "bid": "900.3",
+   "halted": false
+  },
+  "0x373C06c4f7BDe527D7Dae4BA169E42b55E393CeD": {
+   "bid": "5.12",
+   "halted": false
+  },
+  "0x980dcf6766FA79f5Cf0c4AAdb3ab477ff15a9619": {
+   "bid": "239.52",
+   "halted": false
+  },
+  "0xf7181b63Fdb858558A74ba96BC42732684cd7965": {
+   "bid": "25.8",
+   "halted": false
+  },
+  "0xf1953DAB6FaD537488d5A022361FfAa8B4c95eC6": {
+   "bid": "55",
+   "halted": false
+  },
+  "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9": {
+   "bid": "340.66",
+   "halted": false
+  },
+  "0x05a3d1Cd21d0C88145E82600E62e7E496e0F222B": {
+   "bid": "3.03",
+   "halted": false
+  },
+  "0xB1BF26c1D20ff267A4f93550d1E0d06ac40a114B": {
+   "bid": "12.45",
+   "halted": false
+  },
+  "0x1b0E319c6A659F002271B69dB8A7df2F911c153E": {
+   "bid": "26.21",
+   "halted": false
+  },
+  "0x52D50D0280AD1054b43f052bD70a49a212A1b128": {
+   "bid": "1270.06",
+   "halted": false
+  },
+  "0x9b23573b156B52565012F5cE02CDF60AFBaa70Be": {
+   "bid": "56.49",
+   "halted": false
+  },
+  "0x116F00968269B7bfbaD4109cE591d6E74c0601d4": {
+   "bid": "294.59",
+   "halted": false
+  },
+  "0xd63ABB2C13d7a8421a8017a712802053568e3C1D": {
+   "bid": "34.6",
+   "halted": false
+  },
+  "0xa5D4968421bA94814Be3B136b15cf422101aC1a3": {
+   "bid": "10.62",
+   "halted": false
+  },
+  "0xec262a75e413fAfD0dF80480274532C79D42da09": {
+   "bid": "144.16",
+   "halted": false
+  },
+  "0x3139D77Ace0cbAA5bDfD38bD1F1911a794AF0B0e": {
+   "bid": "11.68",
+   "halted": false
+  },
+  "0xC27dBD474aF5181c5A8777903690D8D262D12648": {
+   "bid": "397.41",
+   "halted": false
+  },
+  "0x322F0929c4625eD5bAd873c95208D54E1c003b2d": {
+   "bid": "373.86",
+   "halted": false
+  },
+  "0x1c690498150252222C275A5CEd69d3A6b1f52D5E": {
+   "bid": "107.34",
+   "halted": false
+  },
+  "0x3FB8976980d486084b2eb4a404BD12e72823958f": {
+   "bid": "170.53",
+   "halted": false
+  },
+  "0x59dd09d4900C2E4B5F75b7c0d4E6796fcc234Cb1": {
+   "bid": "56.28",
+   "halted": false
+  },
+  "0x26dCbfb34FC83CAbD6990f449674efDc6097fF85": {
+   "bid": "59.9",
+   "halted": false
+  },
+  "0x232B8ed6377BE97813853B0Ac104c4Cda8378d1B": {
+   "bid": "254.72",
+   "halted": false
+  },
+  "0xA8eB3BCcbf2017eE7CBfb652eB51CF2E1B153289": {
+   "bid": "2.83",
+   "halted": false
+  },
+  "0x27c99fBde9D0d2AA4f4Bfb4943f237843DdF6958": {
+   "bid": "255.48",
+   "halted": false
+  },
+  "0x92Ef19E82bD8fF36661DE838D5eaE7e5CEF0EfFE": {
+   "bid": "8.37",
+   "halted": false
+  },
+  "0x822CC93fFD030293E9842c30BBD678F530701867": {
+   "bid": "223.26",
+   "halted": false
+  },
+  "0x1D11f0496982706C5e14A514D4E79F2e6BdE4516": {
+   "bid": "6.45",
+   "halted": false
+  },
+  "0x8B2f88497f15A18E9D4FFa1a8fFB8538399aE774": {
+   "bid": "27.59",
+   "halted": false
+  },
+  "0x44c4F142009036cF477eD2d09932051843137CF1": {
+   "bid": "97.74",
+   "halted": false
+  },
+  "0x282e87451E10fA6679BC7D76C69BE44cD3fC777C": {
+   "bid": "6.06",
+   "halted": false
+  },
+  "0x411eFb0E7f985935DAec3D4C3ebaEa0d0AD7D89f": {
+   "bid": "52.16",
+   "halted": false
+  },
+  "0x98E75885157C80992A8D41b696D8c9C6Fb30A926": {
+   "bid": "14.81",
+   "halted": false
+  },
+  "0xc02f12B9fe9E707079EC0d546f3050d3F6C1F8bD": {
+   "bid": "99.86",
+   "halted": false
+  },
+  "0x348Be1A8663f15edDe5CDf8A96BB69078f7aB6Fd": {
+   "bid": "12.26",
+   "halted": false
+  },
+  "0x4EA005168D7F09a7A0Ba9D1DEf21a479950E44C2": {
+   "bid": "994.14",
+   "halted": false
+  },
+  "0x0b5fb4031cae9163db10B169Ee72685F0EdC8545": {
+   "bid": "12.6",
+   "halted": false
+  },
+  "0xAEa445c5F3DB1a462998ccC422A875A361ee5d99": {
+   "bid": "208.69",
+   "halted": false
+  },
+  "0xCceE82fE024c36fA15E1005edE3E9e4787e23D09": {
+   "bid": "29.79",
+   "halted": false
+  },
+  "0x8cF07C5A878945185d327aAa6e33FAa95F95e7bF": {
+   "bid": "29.89",
+   "halted": false
+  },
+  "0xF0C4BF4C582cb3836e98394b1d4e7B7281101bE8": {
+   "bid": "51.88",
+   "halted": false
+  },
+  "0xAd622320e520de39e72d41EF07438C3Fd3354875": {
+   "bid": "142.34",
+   "halted": false
+  },
+  "0xDd356AA38F40A7b7076755aC854B6FBb1F0D305B": {
+   "bid": "41.94",
+   "halted": false
+  },
+  "0x8ff63eAeEe3fE54Ba450c4F5538064Ec5A893Aef": {
+   "bid": "222.9",
+   "halted": false
+  },
+  "0x75742c18BC1f1C5c5f448f4C9D9C6F66dafAAa38": {
+   "bid": "504.63",
+   "halted": false
+  },
+  "0x47F93d52cBeC7C6D2CfC080e154002370a60dAEA": {
+   "bid": "1637.83",
+   "halted": false
+  },
+  "0xEB61c0Ed490A367d4E3631cCf8a74B3bfc7E775D": {
+   "bid": "270.23",
+   "halted": false
+  },
+  "0xF6290b5e7C26502e2dA514C31509849718EA76A5": {
+   "bid": "118.32",
+   "halted": false
+  },
+  "0xACEF2e09adb47aD6aBeBAD9fF06689E60615C2B6": {
+   "bid": "47.77",
+   "halted": false
+  },
+  "0xDdf2266b79abf0B48898959B0ed6E6adf512be74": {
+   "bid": "359.25",
+   "halted": false
+  },
+  "0x7066A64c24e4206CD62E83bf198c1E7EB361F51e": {
+   "bid": "30.11",
+   "halted": false
+  },
+  "0x96b933C74eCB4A0926b9210cef7b743EF46be2E9": {
+   "bid": "162.19",
+   "halted": false
+  },
+  "0xE674C5c071821f48BB2d12CAdb83617Eff438f9e": {
+   "bid": "33.71",
+   "halted": false
+  },
+  "0x7c148F74ac7445D1F28366b7FcDC6792a9Fcd0Cf": {
+   "bid": "8.86",
+   "halted": false
+  }
+ }
+}
