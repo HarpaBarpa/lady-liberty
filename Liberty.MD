@@ -91,16 +91,17 @@ Single-page scroll from harbor (0 ft) to torch (305 ft). Sections: Harbor → Va
 ## Launch Checklist
 
 ### Before Launch
-- [ ] Register `libertytorch.com` (or similar) — **Martin buying**
+- [x] Register `libertytorch.online` — Martin, Namecheap
 - [ ] Finalize tokenomics: buy tax %, tax destination, pair asset
 - [ ] Create Lady Liberty artwork for Torch token page
 - [ ] Deposit ETH on Robinhood Chain
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
-- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` on Vercel
+- [ ] Deploy landing page to Vercel → point `libertytorch.online` at it
 
 ### After Token Launch
 - [ ] Get Robinhood Chain RPC URL + chain ID
 - [ ] Deploy landing page to Vercel → point domain at it
+- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` on Vercel
 - [ ] Social launch: Twitter/X, Telegram
 - [ ] CoinGecko listing application
 
