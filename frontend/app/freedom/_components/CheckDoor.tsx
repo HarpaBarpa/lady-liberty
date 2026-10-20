@@ -43,7 +43,7 @@ export default function CheckDoor({ registry, onConnectInstead }: { registry: Re
   return (
     <div>
       <section className={s.section} aria-labelledby="check-heading">
-        <StepHeading id="check-heading" focus={false}>
+        <StepHeading id="check-heading" focus={false} tag="Step 2 · Read-only check">
           Check an address
         </StepHeading>
         <p className={s.p}>

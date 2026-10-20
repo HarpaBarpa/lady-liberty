@@ -40,15 +40,28 @@ export function useAnnounce() {
 
 // A step heading that takes focus when its step appears, so keyboard and screen reader
 // users land on the new content instead of being left behind.
-export function StepHeading({ children, focus = true, id }: { children: ReactNode; focus?: boolean; id?: string }) {
+export function StepHeading({
+  children,
+  focus = true,
+  id,
+  tag,
+}: {
+  children: ReactNode;
+  focus?: boolean;
+  id?: string;
+  tag?: string;
+}) {
   const ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (focus) ref.current?.focus({ preventScroll: false });
   }, [focus]);
   return (
-    <h2 ref={ref} id={id} tabIndex={-1} className={s.h2}>
-      {children}
-    </h2>
+    <>
+      {tag && <p className={s.levelTag}>{tag}</p>}
+      <h2 ref={ref} id={id} tabIndex={-1} className={s.h2}>
+        {children}
+      </h2>
+    </>
   );
 }
 

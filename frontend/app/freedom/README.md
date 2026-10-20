@@ -5,6 +5,10 @@ and lets the person send the ones they choose to the raffle vault. It follows th
 "Dust detection and one click sweep" (plain ERC-20 transfers only, Robinhood's registry as the
 allow-list, one Multicall3 scan, two doors).
 
+The look follows the live site in `site/` ("Climb to the Torch"): its tokens, Fraunces, Bricolage
+Grotesque and DM Mono, the crown-and-flame mark, the granite pedestal band and the copper-ringed
+plaque. `public/freedom/` holds the two site assets it reuses (vault art and favicon).
+
 The vault does not exist yet, so every send action is disabled and the page says
 "Vault not deployed yet". Nothing in this folder deploys a contract or sends a transaction.
 

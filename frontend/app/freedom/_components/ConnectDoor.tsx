@@ -99,7 +99,7 @@ function ConnectPanel({ onCheckInstead }: { onCheckInstead: () => void }) {
 
   return (
     <section className={s.section} aria-labelledby="connect-heading">
-      <StepHeading id="connect-heading">Connect a wallet</StepHeading>
+      <StepHeading id="connect-heading" tag="Step 2 · Connect">Connect a wallet</StepHeading>
       <p className={s.p}>
         Connecting only shares your address. Nothing can move without a separate confirmation in your wallet, and this
         app never asks for approvals, permits or signatures.
@@ -202,6 +202,7 @@ function Connected({
       <section className={s.section} aria-labelledby="wallet-heading">
         <div className={s.connectedHead}>
           <div style={{ minWidth: 0 }}>
+            <p className={s.levelTag}>Step 2 · Connected</p>
             <h2 id="wallet-heading" className={s.h2}>
               Your wallet
             </h2>

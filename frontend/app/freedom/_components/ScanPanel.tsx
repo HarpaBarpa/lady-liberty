@@ -112,7 +112,7 @@ export default function ScanPanel({ registry, address, continueLabel, onContinue
 
   return (
     <section className={s.section} aria-labelledby="scan-heading">
-      <StepHeading id="scan-heading">What this address holds</StepHeading>
+      <StepHeading id="scan-heading" tag="Step 3 · The scan">What this address holds</StepHeading>
 
       {phase === "scanning" && (
         <p className={s.progress}>

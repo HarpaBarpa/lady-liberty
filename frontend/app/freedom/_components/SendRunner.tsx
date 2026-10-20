@@ -332,7 +332,7 @@ export function RunView({
 
   return (
     <section className={s.section} aria-labelledby="run-heading">
-      <StepHeading id="run-heading">{done ? `Sent ${sentCount} of ${n}` : "Sending"}</StepHeading>
+      <StepHeading id="run-heading" tag="Step 5 · Send">{done ? `Sent ${sentCount} of ${n}` : "Sending"}</StepHeading>
 
       {!done && st.mode === "sequential" && current !== null && st.statuses[current]?.kind === "prompting" && (
         <p className={s.p}>

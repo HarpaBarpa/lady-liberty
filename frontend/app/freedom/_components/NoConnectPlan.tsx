@@ -67,7 +67,7 @@ export default function NoConnectPlan({ registry, address, items, onBack, onConn
 
   return (
     <section className={s.section} aria-labelledby="plan-heading">
-      <StepHeading id="plan-heading">Send from your own wallet</StepHeading>
+      <StepHeading id="plan-heading" tag="Step 4 · Send from your wallet">Send from your own wallet</StepHeading>
       <p className={s.p}>
         A link or QR code can only carry one token, so this plan has {n} short step{n === 1 ? "" : "s"}: one send per
         token, each approved in your own wallet app.

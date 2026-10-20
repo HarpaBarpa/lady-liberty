@@ -84,7 +84,7 @@ export default function ReviewSends({ owner, picked, scan, chainOk, switching, o
 
   return (
     <section className={s.section} aria-labelledby="review-heading">
-      <StepHeading id="review-heading">Review before anything is sent</StepHeading>
+      <StepHeading id="review-heading" tag="Step 4 · Review">Review before anything is sent</StepHeading>
       <p className={s.p}>Check every line. Nothing leaves your wallet until you press send here and then confirm in your wallet.</p>
 
       {phase === "checking" && (
