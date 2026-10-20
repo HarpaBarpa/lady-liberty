@@ -32,15 +32,19 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 **Key facts:**
 - Supply: 1,000,000,000 fixed (no mint function)
-- Buy tax: 4% (only on buys, fixed forever — Torch enforces this)
+- Buy tax: 3% (only on buys, fixed forever — Torch enforces this)
 - Sell tax: 0% (Torch never taxes sells)
 - Liquidity: locked forever via Torch launchpad
 - No owner, no pause, no blacklist
 - Address ends in `1111` (signature of a real Torch launch)
 
-**Tokenomics (proposed):**
-- Tax destination: Creator → community wallet → community decisions
-- Pair asset: $TORCH (fuels the torch narrative)
+**Tokenomics (finalized):**
+- **Buy tax: 3% total**, split:
+  - 0.90% → Torch Protocol (30% of tax)
+  - 0.50% → $LIBERTY Buyback & Burn (creator split)
+  - 1.35% → RWA Raffle Vault (creator split — core utility)
+  - 0.25% → Development / Marketing (creator split)
+- Pair asset: $TORCH ("fuel the torch" narrative)
 - Dev buy: 2% of supply (~0.05 ETH at launch)
 - Anti-snipe: ON
 
@@ -48,7 +52,29 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 - 30% of all tax goes to Torch
 - 70% of all tax goes to creator wallet
 - Starting MC options: Degen (1 ETH) / Launch (2.5 ETH) / Steady (5 ETH)
-- Recommended: Launch (2.5 ETH)
+- Recommended: **Launch (2.5 ETH)**
+
+---
+
+## Raffle — The Core Utility
+
+**Hold to Enter. Dust to Boost. Every Hour.**
+
+Every hour, three winners split the ETH prize vault.
+
+| Parameter | Value |
+|---|---|
+| **Eligibility** | Hold any amount of $LIBERTY |
+| **Entry boost** | Send any ERC-20 token to vault → USD value (oracle) → extra entry weight |
+| **Draw frequency** | Hourly |
+| **Winners per draw** | 3 |
+| **Prize split** | 1st: 50% · 2nd: 30% · 3rd: 20% |
+| **Prize currency** | ETH — sent directly to winners' wallets |
+| **Vault funding** | 1.35% buy tax (auto) + dust coin deposits |
+
+- Gas for dust deposits: paid by project where possible (frictionless entry)
+- Vault has two funding streams: (1) 1.35% of every buy tax, (2) dust token deposits
+- Prizes paid in ETH — no conversion, no swap
 
 ---
 
@@ -66,10 +92,10 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 ## What's Built
 
-- **Frontend** (`frontend/`) — Next.js 16 app. Landing page with: hero, tokenomics, about, waitlist, community sections. Built for LibertyTorch. Set up for Vercel deployment.
-- **Landing page** (`site/`) — static HTML "Climb to the Torch" concept. Run with `python tools/serve.py` locally.
+- **Frontend** (`frontend/`) — Next.js 16 app. Landing page with: hero, tokenomics, raffle section, waitlist, community, footer. Whitepaper at `/whitepaper`. Live at `libertytorch.online`.
+- **Landing page** (`site/`) — static HTML "Climb to the Torch" concept page. Run with `python tools/serve.py` locally.
 - **Launch artwork** (`design/artwork/`) — 8 social media formats in the Lady Liberty anime style. Pigeon-free.
-- **Tokenomics analysis** (`TOKENOMICS.md`) — full breakdown: flywheel, tax revenue projections, decisions.
+- **Tokenomics analysis** (`TOKENOMICS.md`) — breakdown: flywheel, tax revenue projections, decisions.
 - **Launch instructions** (`BUILD.md`) — step-by-step Torch launch guide.
 - **Architecture spec** (`SPEC.md`) — system design for the full LibertyTorch ecosystem.
 
@@ -78,14 +104,13 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 ## Deployment Status
 
 - **Domain:** `libertytorch.online` registered on Namecheap ✅
-- **Frontend:** Built and pushed to GitHub, ready for Vercel import
-- **Vercel:** Not yet connected — repo is private under HarpaBarpa account
-
-**To get Vercel connected (ACTION NEEDED):**
-1. Make the repo public: https://github.com/HarpaBarpa/lady-liberty → Settings → Danger Zone → Change visibility → Public
-2. Or: go to Settings → Access Management → add Vercel's GitHub App access to the repo
-3. Then import to Vercel: vercel.com/new → Import `HarpaBarpa/lady-liberty` → set root directory to `frontend`
-4. Add domain `libertytorch.online` in Vercel → Domains
+- **Frontend:** Built and live at `libertytorch.online` via Vercel ✅
+- **GitHub repos:**
+  - `HarpaBarpa/lady-liberty` — public, primary repo
+  - `MJ1804/libertytorch` — public, Vercel-connected (auto-deploys on push)
+- **Vercel project:** `libertytorch` under `mj1804s-projects` team ✅
+- **NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS:** set as `PENDING_LAUNCH` in Vercel env vars ✅
+- **$LIBERTY:** not launched yet
 
 ---
 
@@ -93,16 +118,18 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 ### Before Launch
 - [x] Register `libertytorch.online` — Martin, Namecheap
-- [ ] Make GitHub repo public OR add Vercel GitHub App access
-- [ ] Import frontend to Vercel → point `libertytorch.online` at it
-- [ ] Finalize tokenomics: buy tax %, tax destination, pair asset
-- [ ] Create Lady Liberty artwork for Torch token page
-- [ ] Deposit ETH on Robinhood Chain
+- [x] Deploy frontend to Vercel — `libertytorch.online` live
+- [x] Write and publish whitepaper — `libertytorch.online/whitepaper`
+- [x] Add `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var to Vercel
+- [x] Finalize tokenomics: 3% buy tax, Torch 0.90% / Buyback 0.50% / Raffle 1.35% / Dev 0.25%
+- [x] Finalize raffle mechanics: hold-to-enter, dust boosts, hourly, 3 winners, 50/30/20, ETH prizes
+- [ ] Deposit ETH on Robinhood Chain (~0.00015 ETH for launch fee)
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
 
 ### After Token Launch
-- [ ] Set `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var on Vercel
-- [ ] Get Robinhood Chain RPC URL + chain ID
+- [ ] Update `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var on Vercel with real address
+- [ ] Redeploy on Vercel
+- [ ] Set up dust deposit vault address + oracle integration (post-launch)
 - [ ] Social launch: Twitter/X, Telegram
 - [ ] CoinGecko listing application
 
@@ -110,24 +137,26 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 ## Open Decisions
 
-- Final tokenomics (tax %, destination, pair asset)
-- Who controls the creator wallet / community fund
-- Social accounts: Twitter/X handle, Telegram group
-- Community building strategy
+- [x] Final tokenomics: 3% buy tax, split confirmed
+- [x] Raffle mechanics: hold-to-enter + dust boost, hourly, 3 winners, ETH prizes
+- [x] Raffle vault address: TBD (post-launch build)
+- [x] Social accounts: Twitter/X handle, Telegram group
+- [ ] Robinhood Chain RPC URL + chain ID
+- [ ] Dust deposit vault smart contract + oracle (CoinGecko pricing)
 
 ---
 
 ## Open Questions (Torch / Robinhood Chain)
 
-- Robinhood Chain RPC URL + chain ID
-- Current $TORCH price (for USD revenue estimates)
+- Robinhood Chain RPC URL + chain ID — need for dust vault contract deployment
+- Current $TORCH price — to estimate actual USD revenue projections
 - Where to buy ETH on Robinhood Chain
 
 ---
 
 ## What's NOT (RWAFFLE is gone)
 
-The original concept included RWAFFLE — a custom raffle system where users sent crypto dust to earn raffle tickets. That direction is abandoned. LibertyTorch is the token + brand only. RWAFFLE smart contracts in `code/` are not being pursued.
+The original concept included RWAFFLE — a custom raffle system where users sent crypto dust to earn raffle tickets. **That direction is abandoned.** LibertyTorch is the token + brand + on-site raffle utility. RWAFFLE smart contracts in `code/` are not being pursued.
 
 ---
 
