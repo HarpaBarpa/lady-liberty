@@ -17,8 +17,12 @@ async function main() {
 
   // ── 2. Deploy LibertyVault ────────────────────────────────────
   console.log("\n2/3 Deploying LibertyVault...");
-  // Replace with real addresses before mainnet deployment
-  const LIBERTY_TOKEN = process.env.LIBERTY_TOKEN || ethers.ZeroAddress;
+  const LIBERTY_TOKEN = process.env.LIBERTY_TOKEN;
+  if (!LIBERTY_TOKEN) {
+    console.error("❌ Set LIBERTY_TOKEN env var before deploying to mainnet.");
+    console.error("   Example: LIBERTY_TOKEN=0x... npx hardhat run scripts/deploy.ts --network robinhood");
+    process.exit(1);
+  }
   const PROTOCOL_FEE_RECIPIENT = process.env.PROTOCOL_FEE_RECIPIENT || deployer.address;
   const USD_FEED = process.env.USD_FEED || ethers.ZeroAddress; // address(0) = $1 fallback
 
