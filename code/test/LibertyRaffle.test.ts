@@ -251,8 +251,11 @@ describe("LibertyVault", function () {
   });
 
   it("takes 2% protocol fee on deposit", async function () {
-    const { vault, owner, dusty, dust } = await deploySystem();
+    const { vault, owner, dusty, dust, linkRegistry, linkRegistryAddr } = await deploySystem();
     await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
+    // dusty must be linked to owner before dusty can deposit dust for owner
+    const sig = await buildLinkSig(dusty, owner.address, dusty.address, 0, TS, linkRegistryAddr);
+    await linkRegistry.connect(owner).linkWallet(owner.address, dusty.address, TS, sig);
     const amount = ethers.parseEther("100");
     await dust.connect(dusty).approve(await vault.getAddress(), amount);
     const ownerBalBefore = await dust.balanceOf(owner.address);
@@ -301,17 +304,20 @@ describe("LibertyVault", function () {
   it("unlinked wallet earns no entries", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, bob, dust } = await deploySystem();
     await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
+    // dusty is linked to alice
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
+    // dusty deposits — works fine
     const deposit = ethers.parseEther("10");
     await dust.connect(dusty).approve(await vault.getAddress(), deposit);
     await vault.connect(dusty).depositDust(alice.address, await dust.getAddress(), deposit);
-    // bob deposits but is not linked
+    expect(await vault.getDustEntries(alice.address)).to.equal(5n); // dusty only
+    // bob deposits with alice as primary but bob is not linked to alice → reverts
     await dust.mint(bob.address, ethers.parseEther("10"));
     await dust.connect(bob).approve(await vault.getAddress(), deposit);
-    await vault.connect(bob).depositDust(alice.address, await dust.getAddress(), deposit);
-    expect(await vault.getDustEntries(alice.address)).to.equal(5n); // dusty only
-    expect(await vault.getDustEntries(bob.address)).to.equal(0n);
+    await expect(
+      vault.connect(bob).depositDust(alice.address, await dust.getAddress(), deposit)
+    ).to.be.revertedWith("wallet not linked");
   });
 
   it("entries reset at new cycle", async function () {

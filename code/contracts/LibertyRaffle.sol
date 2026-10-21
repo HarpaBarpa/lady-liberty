@@ -424,8 +424,9 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @param  to      Recipient
     /// @param  amount  Amount
     function sweepToken(IERC20 token, address to, uint256 amount) external onlyOwner {
-        // Only sweep tokens that aren't the prize pool asset
-        // In production, track a dedicated prize asset. For multi-asset, this is a safeguard.
+        // Block native ETH from being swept — it belongs to the prize pool.
+        // Only ERC-20s that aren't the vault's dust tokens can be rescued.
+        if (address(token) == address(0)) revert ZeroAddress();
         token.safeTransfer(to, amount);
     }
 
@@ -571,11 +572,13 @@ contract LibertyRaffle is Ownable, Pausable {
             uint256 target = random % runningTotal;
             uint256 cumulative;
             address winner;
+            uint256 winnerIdx;
 
             for (uint256 i = 0; i < eligibleCount; i++) {
                 cumulative += remaining[i];
                 if (cumulative > target) {
                     winner = eligibleAddrs[i];
+                    winnerIdx = i;
                     remaining[i] = 0; // remove from pool for next pick
                     break;
                 }
@@ -599,7 +602,8 @@ contract LibertyRaffle is Ownable, Pausable {
             }
 
             winnerCount++;
-            runningTotal -= entries[slot];
+            // Subtract winner's actual index weight from runningTotal
+            runningTotal -= entries[winnerIdx];
         }
 
         // Reset pool

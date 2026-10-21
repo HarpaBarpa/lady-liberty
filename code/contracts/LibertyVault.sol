@@ -359,12 +359,15 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     }
 
     /// @dev Resolves which primary wallet owns a secondary's deposits.
+    ///      Requires a valid hint that is confirmed in the LinkRegistry.
+    ///      Reverts if hint is not linked — prevents a secondary from
+    ///      accidentally attributing dust to the wrong primary.
     function _resolvePrimary(address secondary, address hint)
         internal view returns (address)
     {
-        if (hint != address(0) && LINK_REGISTRY.isLinkedTo(hint, secondary)) {
-            return hint;
-        }
+        // Hint must be provided and confirmed in the registry
+        require(hint != address(0), "primary hint required");
+        require(LINK_REGISTRY.isLinkedTo(hint, secondary), "wallet not linked");
         return hint;
     }
 }
