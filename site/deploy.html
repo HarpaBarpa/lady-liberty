@@ -225,13 +225,13 @@
 
     <div class="field">
       <label>RPC URL</label>
-      <input type="text" id="rpcUrl" placeholder="https://rpc.robinhoodchain.io" />
+      <input type="text" id="rpcUrl" placeholder="https://rpc.mainnet.chain.robinhood.com" />
       <div class="input-hint">Robinhood Chain RPC endpoint</div>
     </div>
 
     <div class="field">
       <label>Chain ID</label>
-      <input type="number" id="chainId" placeholder="1122" />
+      <input type="number" id="chainId" placeholder="4663" />
       <div class="input-hint">EVM chain ID for Robinhood Chain</div>
     </div>
 
@@ -324,7 +324,6 @@
         }
 
         // Get signer
-        signer = new ethers.SalletSigner(window.ethereum, accounts[0], provider);
         // Get signer (ethers v6)
         const browserProvider = new ethers.BrowserProvider(window.ethereum);
         signer = await browserProvider.getSigner();
@@ -347,7 +346,7 @@
     async function deployAll() {
       const btn = document.getElementById('connectBtn');
       const libertyToken = document.getElementById('libertyToken').value.trim();
-      const protocolFeeRecipient = (await signer).getAddress();
+      const protocolFeeRecipient = await signer.getAddress();
 
       if (!libertyToken || !libertyToken.startsWith('0x')) {
         alert('Enter the $LIBERTY token address first.');
