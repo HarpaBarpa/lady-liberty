@@ -1,7 +1,7 @@
 /* Lady Liberty: the single source for every product parameter shown on the page.
    Change a fee, interval or payout draft here and every section follows. */
 window.LIBERTY_CONFIG = {
-  status: "not-live",
+  status: "live",
 
   rules: {
     network: "Robinhood Chain",
@@ -38,6 +38,25 @@ window.LIBERTY_CONFIG = {
 
     walletConnection: "Optional, for tracking your entries and linked wallets"
   },
+
+
+  // Deployed contract addresses (chain: Robinhood Chain, chainId: 4663)
+  contracts: {
+    LIBERTY_TOKEN: "PENDING_TOKEN_ADDRESS",
+    LINK_REGISTRY: "0x6AeE4702002a768B3e9c626030D8d1370904CCCB",
+    LIBERTY_VAULT: "PENDING_VAULT_ADDRESS",
+    LIBERTY_RAFFLE: "PENDING_RAFFLE_ADDRESS",
+    TORCH:        "0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111",
+    CHAIN_ID:     4663,
+  },
+
+  // Token info
+  token: {
+    symbol: "$LIBERTY",
+    name:   "Liberty",
+    decimals: 18,
+  },
+
 
   // Real vault state. Stays at zero until a vault is actually deployed.
   vault: { valueCents: 0, participants: 0, deposits: 0, nextDraw: "Starts at launch" },

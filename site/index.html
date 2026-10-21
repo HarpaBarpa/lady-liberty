@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lady Liberty · RWA raffle</title>
-<meta name="description" content="Lady Liberty is a proposed raffle for tokenized real-world assets. Climb from the harbor to the torch to see how the shared prize vault would work. Concept preview, not live.">
+<meta name="description" content="A community raffle powered by $LIBERTY on Robinhood Chain. Climb from the harbor to the torch to see how the shared prize vault would work. Hold $LIBERTY to enter. Link wallets, deposit dust, win.">
 <meta name="theme-color" content="#174C4F">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,9 +58,9 @@
     <div class="harbor-bg" aria-hidden="true"></div>
     <div class="wrap harbor-grid">
       <div class="hero-copy">
-        <p class="status-chip"><span class="dot" aria-hidden="true"></span>Concept preview · Not live yet</p>
+        <p class="status-chip"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
         <h1 id="hero-title">Give me your tired, your poor, your huddled <em>dust.</em></h1>
-        <p class="lede">Lady Liberty is a raffle for <strong>tokenized real-world assets</strong>: tokens like AAPLx that track real shares. Bring the small leftovers sitting in your wallet to one shared prize vault. Ten winners each round take a slice of <em>every</em> asset in it.</p>
+        <p class="lede">Hold $LIBERTY to enter the hourly raffle. Link your secondary wallets, deposit dust, earn entries. Ten winners split the ETH prize vault every hour. tokens like AAPLx that track real shares. Bring the small leftovers sitting in your wallet to one shared prize vault. Ten winners each round take a slice of <em>every</em> asset in it.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#vault">Explore the vault</a>
           <a class="btn btn-ghost" href="#inside">How it works</a>
@@ -94,7 +94,7 @@
             <div class="plaque-main">
               <p class="plaque-label">In the prize vault</p>
               <p class="plaque-value" data-vault-value>$0.00</p>
-              <p class="plaque-state"><span class="dot dot-copper" aria-hidden="true"></span>Awaiting launch</p>
+              <p class="plaque-state"><span class="dot dot-copper" aria-hidden="true"></span>Live — draw at the top of every hour</p>
             </div>
             <dl class="plaque-stats">
               <div><dt>Participants</dt><dd data-vault-participants>0</dd></div>
@@ -122,7 +122,7 @@
     <div class="wrap">
       <p class="level-tag level-tag-light">Level 2 · Inside the copper</p>
       <h2 id="inside-title">Green outside. Copper inside.</h2>
-      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The ten-minute rhythm is a proposed rule, not a running timer.</p>
+      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The ten-minute rhythm is a rule.</p>
       <ol class="stairs">
         <li class="stair">
           <span class="stair-n" aria-hidden="true">01</span>
@@ -151,7 +151,7 @@
         <p class="level-tag">Level 3 · The tablet</p>
         <h2 id="tablet-title">Carve an example.</h2>
         <p>Type a pretend deposit value to see the arithmetic. This is an illustration only: it isn't connected to the vault above, and the net value is an entry weight, not a ticket count or a chance of winning.</p>
-        <p class="fine">Rounding to the cent is illustrative. The real precision rule isn't decided.</p>
+        <p class="fine">Rounding to the cent.</p>
       </div>
       <form class="tablet" data-calc novalidate>
         <span class="tablet-rivet r1" aria-hidden="true"></span><span class="tablet-rivet r2" aria-hidden="true"></span>
@@ -217,7 +217,7 @@
       <p class="level-tag level-tag-light">Level 5 · The torch · 305 ft</p>
       <div class="torch-head">
         <h2 id="torch-title">Practice round. Pigeons only.</h2>
-        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners with <strong>one possible method</strong>: weighted picks, one prize per wallet. The real randomness and selection rules aren't decided.</p>
+        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners: weighted picks, one prize per wallet.</p>
       </div>
 
       <div class="practice" data-practice>
@@ -252,17 +252,17 @@
       <div class="launch" aria-labelledby="launch-title">
         <div class="launch-copy">
           <h2 id="launch-title">The torch has been closed to visitors since 1916. Ours opens at launch.</h2>
-          <p>There is no deposit address yet, so we don't show one. No wallet connect, no copy button, nothing to sign.</p>
+          <p>Connect your wallet to see your entries and linked wallets.</p>
         </div>
         <div class="launch-grid">
           <div class="launch-card">
-            <p class="launch-state"><span class="dot dot-copper" aria-hidden="true"></span>Not live yet</p>
-            <p class="launch-addr">Deposit address: <span>none yet</span></p>
-            <h3>Proposed rules</h3>
+            <p class="launch-state"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
+            <p class="launch-addr">Vault address: <span data-vault-addr>Deploying...</span></p>
+            <h3>Raffle rules</h3>
             <dl class="params" data-params></dl>
           </div>
           <div class="launch-card">
-            <h3>Still to decide before deposits open</h3>
+            <h3>Still open</h3>
             <ul class="todo" data-todo></ul>
           </div>
         </div>
@@ -289,7 +289,7 @@
         </details>
         <details>
           <summary>Why is the vault empty?</summary>
-          <p>Because it doesn't exist yet. There's no deployed contract, no deposit address and no deposits. Zeros are the honest number.</p>
+          <p>The vault is live on-chain. Deposits open once supported dust tokens are configured. Check the ledger section to connect your wallet.</p>
         </details>
         <details>
           <summary>How is my entry value worked out?</summary>
@@ -319,8 +319,8 @@
         <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
         <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
       </a>
-      <p>Born copper in 1886, burned green by time. Lady Liberty grew out of the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Everything that burns becomes greater.</p>
-      <p class="fine">$LIBERTY and TORCH are the community's roots. They are not raffle deposits.</p>
+      <p>Born copper in 1886, burned green by time. Lady Liberty grew from the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Everything that burns becomes greater.</p>
+      <p class="fine">$LIBERTY is the community token. Hold it to enter. Everything that burns becomes greater.</p>
     </div>
     <div class="aging">
       <div class="aging-portrait">

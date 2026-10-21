@@ -47,6 +47,15 @@
   $("[data-vault-deposits]").textContent = C.vault.deposits;
   $("[data-vault-next]").textContent = C.vault.nextDraw;
 
+  /* Vault address from config */
+  var vaultAddr = C.contracts && C.contracts.LIBERTY_VAULT;
+  var vaultAddrEl = $("[data-vault-addr]");
+  if (vaultAddrEl && vaultAddr && !vaultAddr.startsWith("PENDING")) {
+    vaultAddrEl.textContent = vaultAddr;
+  } else if (vaultAddrEl) {
+    vaultAddrEl.textContent = "Deploying...";
+  }
+
   /* Mobile navigation */
   var menuBtn = $(".menu-btn");
   var nav = $("#site-nav");
