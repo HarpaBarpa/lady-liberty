@@ -558,5 +558,56 @@ button { font: inherit; color: inherit; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 .plaque-stats dd.dd-small { font-size: 1.15rem; line-height: 1.25; }
+
+/* ── Live data states ──────────────────────────────────── */
+.live-loading { opacity: 0.5; }
+.live-error   { color: var(--copper); }
+.live-ok      { color: var(--harbor); }
+
+/* ── Burn display ─────────────────────────────────────── */
+.burn-display {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(23,76,79,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+.burn-stat {
+  background: var(--porcelain);
+  padding: 14px 16px;
+  text-align: center;
+}
+.burn-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.burn-amount {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--harbor);
+}
+.burn-pct {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--copper);
+}
+.burn-supply {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--harbor);
+}
 .mark { color: var(--harbor); }
 .brand-light .mark { color: var(--seafoam); --flame: var(--harbor); }

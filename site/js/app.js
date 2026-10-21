@@ -476,4 +476,102 @@
   window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(updateAlt); } }, { passive: true });
   window.addEventListener("resize", updateAlt);
   updateAlt();
+
+  /* ── Live on-chain data ─────────────────────────────────── */
+  (function () {
+    var LIVE = window.LibertyData;
+    if (!LIVE) return;
+
+    var POLL_MS = 30000;
+
+    var poolEl      = $("[data-live='pool']");
+    var stateEl     = $("[data-live-state-text]");
+    var partEl      = $("[data-live='participants']");
+    var nextEl      = $("[data-live='next-draw']");
+    var raffleEl    = $("[data-live='raffle-id']");
+    var burnEl      = $("[data-live='burn-amount']");
+    var burnPctEl   = $("[data-live='burn-pct']");
+    var burnTotalEl = $("[data-live='total-supply']");
+    var burnSecEl   = $("[data-live='burn-section']");
+    var vaultAddrEl = $("[data-vault-addr]");
+    var stateDot    = $("[data-live-state] .dot");
+
+    function setLive(el, text) { if (el) el.textContent = text; }
+
+    function showError(msg) {
+      if (stateEl) setLive(stateEl, msg || "Error reading chain");
+      if (stateDot) stateDot.className = "dot";
+      if (poolEl) poolEl.classList.add("live-error");
+    }
+
+    async function poll() {
+      if (LIVE.NOT_DEPLOYED) {
+        if (stateEl) setLive(stateEl, "Contracts deploying — check back soon");
+        if (vaultAddrEl) setLive(vaultAddrEl, "—");
+        return;
+      }
+
+      try {
+        var data = await LIVE.read();
+
+        /* ── Raffle pool ─── */
+        if (data.raffle) {
+          var pool = Number(data.raffle.poolCents || 0);
+          setLive(poolEl, LIVE.fmtUsd(pool));
+          if (poolEl) poolEl.classList.remove("live-error");
+
+          var until = Number(data.raffle.untilNext || 0);
+          setLive(nextEl, until > 0 ? LIVE.fmtTimeUntil(until) : "Draw now!");
+          setLive(raffleEl, "#" + data.raffle.raffleId);
+
+          if (pool >= 5000) {
+            setLive(stateEl, "Pool funded — draw imminent");
+            if (stateDot) stateDot.className = "dot dot-mint";
+          } else if (pool > 0) {
+            setLive(stateEl, "Accumulating — $" + (pool / 100).toFixed(0) + " so far");
+            if (stateDot) stateDot.className = "dot dot-copper";
+          } else {
+            setLive(stateEl, "Waiting for deposits");
+            if (stateDot) stateDot.className = "dot dot-copper";
+          }
+        } else if (data.raffleError) {
+          showError("Raffle: " + (data.raffleError || "unknown error"));
+        }
+
+        /* ── Supported tokens ─── */
+        if (data.vault && data.vault.supportedCount != null) {
+          setLive(partEl, String(data.vault.supportedCount));
+        }
+
+        /* ── Token burn ─── */
+        if (data.token) {
+          if (burnSecEl) burnSecEl.style.display = "";
+          var sym = data.token.symbol || "$LIBERTY";
+          setLive(burnEl,   LIVE.fmtTokens(data.token.burned, 18) + " " + sym);
+          setLive(burnPctEl,  Number(data.token.burnPct || 0).toFixed(2) + "%");
+          setLive(burnTotalEl, LIVE.fmtTokens(data.token.totalSupply, 18) + " " + sym);
+        } else if (data.tokenError) {
+          if (burnSecEl) burnSecEl.style.display = "";
+          setLive(burnEl, "—");
+          setLive(burnPctEl, "—");
+        }
+
+        /* ── Vault address ─── */
+        if (vaultAddrEl && LIVE.VAULT && !LIVE.VAULT.startsWith("PENDING")) {
+          vaultAddrEl.textContent = LIVE.VAULT;
+          vaultAddrEl.onclick = function () {
+            navigator.clipboard && navigator.clipboard.writeText(LIVE.VAULT);
+          };
+        }
+
+      } catch (e) {
+        showError("Error: " + (e.message || e));
+      }
+    }
+
+    poll(); // run immediately
+    var pollInterval = setInterval(poll, POLL_MS);
+    window.LibertyRefresh = poll;
+
+  })();
 })();

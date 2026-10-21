@@ -48,6 +48,7 @@ window.LIBERTY_CONFIG = {
     LIBERTY_RAFFLE: "PENDING_RAFFLE_ADDRESS",
     TORCH:        "0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111",
     CHAIN_ID:     4663,
+    RPC_URL:       "https://rpc.mainnet.chain.robinhood.com",
   },
 
   // Token info

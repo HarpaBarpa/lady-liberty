@@ -80,6 +80,7 @@
   </section>
 
   <!-- 154 ft: the pedestal and the vault -->
+  
   <section class="lvl pedestal" id="vault" data-ft="154" aria-labelledby="vault-title">
     <div class="wrap">
       <p class="level-tag">Level 1 · The pedestal · 154 ft</p>
@@ -89,40 +90,62 @@
         </figure>
         <div class="vault-copy">
           <h2 id="vault-title">The vault lives in the pedestal. Right now it's empty.</h2>
-          <p>No deposits, no participants, no prize. Everything here stays at zero until a real vault is deployed. No placeholder numbers, no fake countdown.</p>
-          <div class="plaque" role="group" aria-label="Prize vault status">
+          <p>The prize vault holds ETH contributions from the hourly raffle. When the pool hits $50+, ten winners split it in kind. Scroll down to connect your wallet.</p>
+
+          <div class="plaque" role="group" aria-label="Prize vault live stats">
             <div class="plaque-main">
-              <p class="plaque-label">In the prize vault</p>
-              <p class="plaque-value" data-vault-value>$0.00</p>
-              <p class="plaque-state"><span class="dot dot-copper" aria-hidden="true"></span>Live — draw at the top of every hour</p>
+              <p class="plaque-label">Prize pool</p>
+              <p class="plaque-value" data-live="pool">—</p>
+              <p class="plaque-state" data-live-state>
+                <span class="dot" aria-hidden="true"></span>
+                <span data-live-state-text>Connecting to chain…</span>
+              </p>
             </div>
             <dl class="plaque-stats">
-              <div><dt>Participants</dt><dd data-vault-participants>0</dd></div>
-              <div><dt>Deposits</dt><dd data-vault-deposits>0</dd></div>
-              <div><dt>Next draw</dt><dd class="dd-small" data-vault-next>Starts at launch</dd></div>
+              <div><dt>Participants</dt><dd data-live="participants">—</dd></div>
+              <div><dt>Next draw</dt><dd class="dd-small" data-live="next-draw">—</dd></div>
+              <div><dt>Raffle</dt><dd class="dd-small" data-live="raffle-id">—</dd></div>
             </dl>
+          </div>
+
+          <p class="launch-addr">
+            Vault: <span data-vault-addr class="addr-placeholder">—</span>
+          </p>
+
+          <div class="burn-display" id="burn-display" style="display:none">
+            <div class="burn-stat">
+              <span class="burn-label">$LIBERTY burned</span>
+              <span class="burn-amount" data-live="burn-amount">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Burn rate</span>
+              <span class="burn-pct" data-live="burn-pct">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Total supply</span>
+              <span class="burn-supply" data-live="total-supply">—</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="assets">
         <div class="assets-head">
-          <h3>What could go in</h3>
-          <p>Examples from the concept, not a confirmed list. Tap one to see what it is.</p>
+          <h3>Supported dust tokens</h3>
+          <p>These tokens are accepted as dust contributions to the prize vault.</p>
         </div>
         <div class="asset-chips" role="group" aria-label="Example assets" data-asset-chips></div>
         <p class="asset-detail" data-asset-detail aria-live="polite"></p>
       </div>
     </div>
   </section>
-
-  <!-- inside the copper: how it works -->
+<!-- inside the copper: how it works -->
   <section class="lvl inside" id="inside" data-ft="200" aria-labelledby="inside-title">
     <div class="inside-bg" aria-hidden="true"></div>
     <div class="wrap">
       <p class="level-tag level-tag-light">Level 2 · Inside the copper</p>
       <h2 id="inside-title">Green outside. Copper inside.</h2>
-      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The ten-minute rhythm is a rule.</p>
+      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The hourly draw is on-chain and automatic.</p>
       <ol class="stairs">
         <li class="stair">
           <span class="stair-n" aria-hidden="true">01</span>
@@ -257,7 +280,7 @@
         <div class="launch-grid">
           <div class="launch-card">
             <p class="launch-state"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
-            <p class="launch-addr">Vault address: <span data-vault-addr>Deploying...</span></p>
+            <p class="launch-addr">Vault address: <span data-vault-addr class="addr-placeholder">—</span></p>
             <h3>Raffle rules</h3>
             <dl class="params" data-params></dl>
           </div>
@@ -267,6 +290,16 @@
           </div>
         </div>
       </div>
+
+          <!-- Burn display --><div class="burn-stat">
+              <span class="burn-label">Burn rate</span>
+              <span class="burn-pct" data-live="burn-pct">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Total supply</span>
+              <span class="burn-supply" data-live="total-supply">—</span>
+            </div>
+          </div>
     </div>
   </section>
 
@@ -359,6 +392,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/contracts.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/wallet.js"></script>
 <script src="js/app.js"></script>
