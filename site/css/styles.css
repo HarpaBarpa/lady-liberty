@@ -611,3 +611,114 @@ button { font: inherit; color: inherit; }
 }
 .mark { color: var(--harbor); }
 .brand-light .mark { color: var(--seafoam); --flame: var(--harbor); }
+
+/* === Liberty Bell section === */
+.bell-lvl {
+  background: var(--copper);
+  color: var(--harbor);
+  padding: 4rem 0;
+}
+.bell-lvl .level-tag {
+  color: var(--harbor);
+  opacity: 0.7;
+}
+.bell-head {
+  margin-bottom: 2.5rem;
+}
+.bell-head h2 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin-bottom: 1rem;
+}
+.bell-head p {
+  font-size: 1.05rem;
+  opacity: 0.9;
+  max-width: 680px;
+}
+.bell-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.bell-card {
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.bell-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+.bell-card h3 {
+  font-size: 1rem;
+  font-family: var(--font-display);
+  margin-bottom: 0.5rem;
+  color: var(--harbor);
+}
+.bell-card p {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+.bell-odds {
+  background: rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+}
+.bell-odds h3 {
+  font-size: 1.1rem;
+  font-family: var(--font-display);
+  margin-bottom: 1rem;
+  color: var(--harbor);
+}
+.odds-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+.odds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.odds-table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.odds-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.odds-table tr:last-child td {
+  border-bottom: none;
+}
+.odds-note {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+.bell-lady {
+  background: rgba(0,0,0,0.15);
+  border-left: 4px solid var(--harbor);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 8px 8px 0;
+}
+.lady-quote {
+  font-size: 1rem;
+  font-style: italic;
+  margin-bottom: 0.4rem;
+  line-height: 1.55;
+}
+.lady-attr {
+  font-size: 0.82rem;
+  opacity: 0.6;
+  font-family: var(--font-display);
+}

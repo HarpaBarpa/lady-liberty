@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lady Liberty · RWA raffle</title>
-<meta name="description" content="Lady Liberty is a proposed raffle for tokenized real-world assets. Climb from the harbor to the torch to see how the shared prize vault would work. Concept preview, not live.">
+<meta name="description" content="LibertyTorch — a multi-asset crypto raffle on Robinhood Chain. Hold $LIBERTY to enter. Deposit dust from any supported token to earn bonus entries. Hourly draws, 10 winners.">
 <meta name="theme-color" content="#174C4F">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +28,7 @@
         <li><a href="#crown">Prizes</a></li>
         <li><a href="#torch">Practice round</a></li>
         <li><a href="#faq">FAQ</a></li>
+        <li><a href="#bell">Liberty Bell</a></li>
       </ul>
       <a class="btn btn-primary nav-cta" href="#vault">Explore the vault</a>
     </nav>
@@ -46,6 +47,7 @@
     <li><a href="#tablet" data-level="tablet"><span class="alt-dot"></span><span class="alt-label">Tablet</span></a></li>
     <li><a href="#inside" data-level="inside"><span class="alt-dot"></span><span class="alt-label">Inside</span></a></li>
     <li><a href="#vault" data-level="vault"><span class="alt-dot"></span><span class="alt-label">Pedestal <span class="alt-h">154 ft</span></span></a></li>
+    <li><a href="#bell" data-level="bell"><span class="alt-dot"></span><span class="alt-label">Liberty Bell <span class="alt-h">305 ft</span></span></a></li>
     <li><a href="#harbor" data-level="harbor"><span class="alt-dot"></span><span class="alt-label">Harbor <span class="alt-h">0 ft</span></span></a></li>
   </ol>
   <span class="alt-fill" aria-hidden="true"></span>
@@ -58,9 +60,9 @@
     <div class="harbor-bg" aria-hidden="true"></div>
     <div class="wrap harbor-grid">
       <div class="hero-copy">
-        <p class="status-chip"><span class="dot" aria-hidden="true"></span>Concept preview · Not live yet</p>
+        <p class="status-chip"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
         <h1 id="hero-title">Give me your tired, your poor, your huddled <em>dust.</em></h1>
-        <p class="lede">Lady Liberty is a raffle for <strong>tokenized real-world assets</strong>: tokens like AAPLx that track real shares. Bring the small leftovers sitting in your wallet to one shared prize vault. Ten winners each round take a slice of <em>every</em> asset in it.</p>
+        <p class="lede">Hold $LIBERTY to enter the hourly raffle. Link your wallets, deposit crypto dust from <strong>any supported token</strong>, and earn bonus entries. Ten winners take a slice of the ETH prize vault every hour.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#vault">Explore the vault</a>
           <a class="btn btn-ghost" href="#inside">How it works</a>
@@ -80,6 +82,7 @@
   </section>
 
   <!-- 154 ft: the pedestal and the vault -->
+  
   <section class="lvl pedestal" id="vault" data-ft="154" aria-labelledby="vault-title">
     <div class="wrap">
       <p class="level-tag">Level 1 · The pedestal · 154 ft</p>
@@ -89,55 +92,77 @@
         </figure>
         <div class="vault-copy">
           <h2 id="vault-title">The vault lives in the pedestal. Right now it's empty.</h2>
-          <p>No deposits, no participants, no prize. Everything here stays at zero until a real vault is deployed. No placeholder numbers, no fake countdown.</p>
-          <div class="plaque" role="group" aria-label="Prize vault status">
+          <p>The prize vault holds ETH contributions from the hourly raffle. When the pool hits $50+, ten winners split it in kind. Scroll down to connect your wallet.</p>
+
+          <div class="plaque" role="group" aria-label="Prize vault live stats">
             <div class="plaque-main">
-              <p class="plaque-label">In the prize vault</p>
-              <p class="plaque-value" data-vault-value>$0.00</p>
-              <p class="plaque-state"><span class="dot dot-copper" aria-hidden="true"></span>Awaiting launch</p>
+              <p class="plaque-label">Prize pool</p>
+              <p class="plaque-value" data-live="pool">—</p>
+              <p class="plaque-state" data-live-state>
+                <span class="dot" aria-hidden="true"></span>
+                <span data-live-state-text>Connecting to chain…</span>
+              </p>
             </div>
             <dl class="plaque-stats">
-              <div><dt>Participants</dt><dd data-vault-participants>0</dd></div>
-              <div><dt>Deposits</dt><dd data-vault-deposits>0</dd></div>
-              <div><dt>Next draw</dt><dd class="dd-small" data-vault-next>Starts at launch</dd></div>
+              <div><dt>Participants</dt><dd data-live="participants">—</dd></div>
+              <div><dt>Next draw</dt><dd class="dd-small" data-live="next-draw">—</dd></div>
+              <div><dt>Raffle</dt><dd class="dd-small" data-live="raffle-id">—</dd></div>
             </dl>
+          </div>
+
+          <p class="launch-addr">
+            Vault: <span data-vault-addr class="addr-placeholder">—</span>
+          </p>
+
+          <div class="burn-display" id="burn-display" style="display:none">
+            <div class="burn-stat">
+              <span class="burn-label">$LIBERTY burned</span>
+              <span class="burn-amount" data-live="burn-amount">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Burn rate</span>
+              <span class="burn-pct" data-live="burn-pct">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Total supply</span>
+              <span class="burn-supply" data-live="total-supply">—</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="assets">
         <div class="assets-head">
-          <h3>What could go in</h3>
-          <p>Examples from the concept, not a confirmed list. Tap one to see what it is.</p>
+          <h3>Supported dust tokens</h3>
+          <p>These tokens are accepted as dust contributions to the prize vault.</p>
         </div>
         <div class="asset-chips" role="group" aria-label="Example assets" data-asset-chips></div>
         <p class="asset-detail" data-asset-detail aria-live="polite"></p>
       </div>
     </div>
   </section>
-
-  <!-- inside the copper: how it works -->
+<!-- inside the copper: how it works -->
   <section class="lvl inside" id="inside" data-ft="200" aria-labelledby="inside-title">
     <div class="inside-bg" aria-hidden="true"></div>
     <div class="wrap">
       <p class="level-tag level-tag-light">Level 2 · Inside the copper</p>
       <h2 id="inside-title">Green outside. Copper inside.</h2>
-      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The ten-minute rhythm is a proposed rule, not a running timer.</p>
+      <p class="inside-sub">Small holdings, one shared prize vault, three steps up. The hourly draw is on-chain and automatic.</p>
       <ol class="stairs">
         <li class="stair">
           <span class="stair-n" aria-hidden="true">01</span>
           <h3>Bring your dust</h3>
-          <p>Send an allow-listed tokenized asset to the vault on <span data-rule="network">Robinhood Chain</span>. No account, no sign-up. Connecting a wallet is optional, only for your own stats.</p>
+          <p>Hold at least <strong>$<span data-rule="min-liberty">10</span> in $LIBERTY</strong> for your base entry. Then link up to <strong><span data-rule="max-wallets">5</span> secondary wallets</strong> holding RWA dust. Sign a message to prove control — no gas, no transaction.</p>
         </li>
         <li class="stair">
           <span class="stair-n" aria-hidden="true">02</span>
-          <h3>Get weighted entries</h3>
-          <p>A Finnhub-backed oracle prices your deposit and locks its USD value the moment it lands. A <span data-rule="fee">2%</span> protocol fee comes off. What's left, the net USD value, is your entry weight.</p>
+          <h3>Earn entries</h3>
+          <p>Every <strong>$<span data-rule="dust-step">0.50</span></strong> in dust from <strong>any supported token</strong> earns 1 entry. Each token gets its own live price feed. Maximum <strong><span data-rule="dust-max">5</span> entries</strong> per linked wallet per cycle. A <span data-rule="fee">2%</span> protocol fee comes off each deposit.</p>
         </li>
         <li class="stair">
           <span class="stair-n" aria-hidden="true">03</span>
           <h3>Draw and share out</h3>
-          <p>Every <span data-rule="interval">10 minutes</span> (proposed), <span data-rule="winners">10</span> different wallets win. Each winner gets a percentage of every asset in the vault, paid in kind. Nothing is swapped into one currency.</p>
+          <p>Every <span data-rule="interval">hour</span>, if the prize pool has at least <strong>$<span data-rule="min-pool">50</span></strong>, <span data-rule="winners">10</span> unique wallets win. If the pool is below the threshold the drawing is skipped and funds roll over. Winners are excluded for <strong><span data-rule="cooldown">24</span> hours</strong>.</p>
         </li>
       </ol>
       <p class="inside-sign">Copper hands. Warm heart.</p>
@@ -151,7 +176,7 @@
         <p class="level-tag">Level 3 · The tablet</p>
         <h2 id="tablet-title">Carve an example.</h2>
         <p>Type a pretend deposit value to see the arithmetic. This is an illustration only: it isn't connected to the vault above, and the net value is an entry weight, not a ticket count or a chance of winning.</p>
-        <p class="fine">Rounding to the cent is illustrative. The real precision rule isn't decided.</p>
+        <p class="fine">Rounding to the cent.</p>
       </div>
       <form class="tablet" data-calc novalidate>
         <span class="tablet-rivet r1" aria-hidden="true"></span><span class="tablet-rivet r2" aria-hidden="true"></span>
@@ -171,6 +196,20 @@
         <p class="calc-roman-note" data-calc-roman-note>Carved in Roman numerals, for the tablet. Romans didn't do cents.</p>
         <button class="btn btn-copper" type="button" data-calc-carry>Take <span data-calc-carry-amt>$98.00</span> to the practice round</button>
       </form>
+    </div>
+  </section>
+
+  <!-- the ledger: link wallets, credit dust -->
+  <section class="lvl ledger-lvl" id="ledger" data-ft="240" aria-labelledby="ledger-title">
+    <div class="wrap">
+      <p class="level-tag">Level 3.5 · The ledger</p>
+      <div class="ledger-head">
+        <h2 id="ledger-title">One account. Every wallet counts.</h2>
+        <p>Your main wallet holds $LIBERTY and is your raffle identity. Link secondary wallets holding RWA dust — sign a message to prove control, no gas, no transaction. Every contribution credits your primary account.</p>
+      </div>
+      <p class="ledger-error" aria-live="polite"></p>
+      <div data-ledger></div>
+      <div class="ledger-toast" aria-live="polite"></div>
     </div>
   </section>
 
@@ -196,6 +235,65 @@
     </div>
   </section>
 
+  <!-- Liberty Bell: the jackpot -->
+  <section class="lvl bell-lvl" id="bell" data-ft="305" aria-labelledby="bell-title">
+    <div class="wrap">
+      <p class="level-tag">Level 5 · The Liberty Bell · 305 ft</p>
+      <div class="bell-head">
+        <h2 id="bell-title">When the Bell Tolls, Somebody Gets Paid.</h2>
+        <p>The Liberty Bell receives <strong>4% of every funded raffle</strong> into a growing RWA jackpot. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the Bell rings and one lucky holder takes the pot.</p>
+      </div>
+
+      <div class="bell-grid">
+        <div class="bell-card">
+          <div class="bell-icon" aria-hidden="true">🔔</div>
+          <h3>Independent Trigger</h3>
+          <p>The Bell tests a fixed 1-in-72 probability at every eligible hourly check. The number of participants does not change the odds.</p>
+        </div>
+        <div class="bell-card">
+          <div class="bell-icon" aria-hidden="true">📈</div>
+          <h3>Always Growing</h3>
+          <p>4% of every funded raffle rolls into the jackpot. Even on quiet days it keeps building.</p>
+        </div>
+        <div class="bell-card">
+          <div class="bell-icon" aria-hidden="true">⚖️</div>
+          <h3>Shared Cooldown</h3>
+          <p>Bell winners share the same 24-hour cooldown as regular raffle winners. A recent regular winner cannot immediately win the jackpot, and vice versa.</p>
+        </div>
+        <div class="bell-card">
+          <div class="bell-icon" aria-hidden="true">🔗</div>
+          <h3>On-Chain &amp; Automatic</h3>
+          <p>The trigger is verified on-chain. Lady Liberty does not promise what she cannot keep.</p>
+        </div>
+      </div>
+
+      <div class="bell-odds">
+        <h3>Odds Reference</h3>
+        <div class="odds-table-wrap">
+          <table class="odds-table">
+            <caption class="sr-only">Liberty Bell odds at various draw intervals</caption>
+            <thead>
+              <tr><th>Chance per check</th><th>Avg. wait</th><th>Chance within 7 days</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1 in 24</td><td>1 day</td><td>99.9%</td></tr>
+              <tr><td>1 in 48</td><td>2 days</td><td>97.1%</td></tr>
+              <tr><td>1 in 72</td><td>3 days</td><td>90.4%</td></tr>
+              <tr><td>1 in 96</td><td>4 days</td><td>82.7%</td></tr>
+              <tr><td>1 in 168</td><td>7 days</td><td>63.3%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="odds-note">Statistical averages — a 1-in-72 jackpot could ring twice in one day or go more than a week without hitting. These odds are independent of the number of participants.</p>
+      </div>
+
+      <div class="bell-lady">
+        <p class="lady-quote">"The Liberty Bell is coming. Could be tomorrow. Could be next week. Unlike your favorite influencer, the Bell doesn't make promises it can't keep."</p>
+        <p class="lady-attr">— Lady Liberty</p>
+      </div>
+    </div>
+  </section>
+
   <!-- 305 ft: the torch -->
   <section class="lvl torch" id="torch" data-ft="305" aria-labelledby="torch-title">
     <div class="torch-bg" aria-hidden="true"></div>
@@ -203,7 +301,7 @@
       <p class="level-tag level-tag-light">Level 5 · The torch · 305 ft</p>
       <div class="torch-head">
         <h2 id="torch-title">Practice round. Pigeons only.</h2>
-        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners with <strong>one possible method</strong>: weighted picks, one prize per wallet. The real randomness and selection rules aren't decided.</p>
+        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners: weighted picks, one prize per wallet.</p>
       </div>
 
       <div class="practice" data-practice>
@@ -238,21 +336,31 @@
       <div class="launch" aria-labelledby="launch-title">
         <div class="launch-copy">
           <h2 id="launch-title">The torch has been closed to visitors since 1916. Ours opens at launch.</h2>
-          <p>There is no deposit address yet, so we don't show one. No wallet connect, no copy button, nothing to sign.</p>
+          <p>Connect your wallet to see your entries and linked wallets.</p>
         </div>
         <div class="launch-grid">
           <div class="launch-card">
-            <p class="launch-state"><span class="dot dot-copper" aria-hidden="true"></span>Not live yet</p>
-            <p class="launch-addr">Deposit address: <span>none yet</span></p>
-            <h3>Proposed rules</h3>
+            <p class="launch-state"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
+            <p class="launch-addr">Vault address: <span data-vault-addr class="addr-placeholder">—</span></p>
+            <h3>Raffle rules</h3>
             <dl class="params" data-params></dl>
           </div>
           <div class="launch-card">
-            <h3>Still to decide before deposits open</h3>
+            <h3>Still open</h3>
             <ul class="todo" data-todo></ul>
           </div>
         </div>
       </div>
+
+          <!-- Burn display --><div class="burn-stat">
+              <span class="burn-label">Burn rate</span>
+              <span class="burn-pct" data-live="burn-pct">—</span>
+            </div>
+            <div class="burn-stat">
+              <span class="burn-label">Total supply</span>
+              <span class="burn-supply" data-live="total-supply">—</span>
+            </div>
+          </div>
     </div>
   </section>
 
@@ -271,11 +379,11 @@
         </details>
         <details>
           <summary>Which assets can go in?</summary>
-          <p>AAPLx, NVDAx, TSLAx and SPYx are examples from the concept. The real list of supported tokens and their addresses isn't decided, and nothing can go in yet.</p>
+          <p>The vault accepts any ERC-20 token with a USD price feed. Each token has its own Chainlink oracle — AAPL, USDC, BTC, whatever has a live feed. Ask in the community channel for the current supported list.</p>
         </details>
         <details>
           <summary>Why is the vault empty?</summary>
-          <p>Because it doesn't exist yet. There's no deployed contract, no deposit address and no deposits. Zeros are the honest number.</p>
+          <p>The vault is live on-chain. Deposits open once supported dust tokens are configured. Check the ledger section to connect your wallet.</p>
         </details>
         <details>
           <summary>How is my entry value worked out?</summary>
@@ -287,7 +395,7 @@
         </details>
         <details>
           <summary>What is the Liberty Bell jackpot?</summary>
-          <p>The reference split adds up to 96%. Where the remaining 4% goes hasn't been decided, so the page says so instead of quietly rounding it away.</p>
+          <p>The Liberty Bell is a growing RWA jackpot that receives 4% of every funded raffle. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the bell rings and one lucky holder takes the pot. It is drawn automatically on-chain.</p>
         </details>
         <details>
           <summary>Is this financial advice?</summary>
@@ -305,8 +413,8 @@
         <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
         <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
       </a>
-      <p>Born copper in 1886, burned green by time. Lady Liberty grew out of the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Everything that burns becomes greater.</p>
-      <p class="fine">$LIBERTY and TORCH are the community's roots. They are not raffle deposits.</p>
+      <p>Born copper in 1886, burned green by time. Lady Liberty grew from the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Any token with real value can become dust — the vault prices it live.</p>
+      <p class="fine">$LIBERTY is the community token. Hold it to enter. Everything that burns becomes greater.</p>
     </div>
     <div class="aging">
       <div class="aging-portrait">
@@ -320,9 +428,8 @@
     </div>
   </div>
   <div class="wrap footer-base">
-    <p>Community concept. Not affiliated with Torchpad, Robinhood or any token issuer. Not financial advice. I'm a statue.</p>
+    <p>Lady Liberty is a community raffle protocol on Robinhood Chain. Not affiliated with Torchpad or any token issuer. Not financial advice.</p>
     <a class="elevator" href="#top">Take the elevator down <span aria-hidden="true">↑</span></a>
-    <a class="elevator" href="/whitepaper">Read the whitepaper <span aria-hidden="true">📄</span></a>
   </div>
 </footer>
 
@@ -344,8 +451,11 @@
   </defs>
 </svg>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/contracts.js"></script>
 <script src="js/rules.js"></script>
+<script src="js/wallet.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
