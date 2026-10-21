@@ -325,8 +325,9 @@
 
         // Get signer
         signer = new ethers.SalletSigner(window.ethereum, accounts[0], provider);
-        // ethers v6: use BrowserSigner
-        signer = await ethers.BrowserProvider.getSigner(provider);
+        // Get signer (ethers v6)
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        signer = await browserProvider.getSigner();
 
         const addr = accounts[0];
         log(`Wallet: ${shorten(addr)}`, 'ok');
