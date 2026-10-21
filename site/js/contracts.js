@@ -86,7 +86,8 @@
   var VAULT_ABI = [
     "function getSupportedTokens() view returns (address[])",
     "function getSupportedTokenCount() view returns (uint256)",
-    "function totalDustHeld() view returns (uint256)",
+    "function getTokenFeed(address) view returns (address)",
+    "function isSupported(address) view returns (bool)",
   ];
 
   var LINK_ABI = [
@@ -116,10 +117,21 @@
     if (VAULT && !VAULT.startsWith("PENDING")) {
       try {
         vaultContract = new ethers.Contract(VAULT, VAULT_ABI, s || provider);
+        var supportedTokens = await vaultContract.getSupportedTokens();
         r.vault = {
-          supportedTokens: await vaultContract.getSupportedTokens(),
-          supportedCount: await vaultContract.getSupportedTokenCount(),
+          supportedTokens: supportedTokens,
+          supportedCount: supportedTokens.length,
         };
+        // Fetch per-token price feeds (for off-chain display)
+        var tokenData = [];
+        for (var i = 0; i < supportedTokens.length; i++) {
+          var t = supportedTokens[i];
+          try {
+            var feed = await vaultContract.getTokenFeed(t);
+            tokenData.push({ token: t, feed: feed });
+          } catch (_) {}
+        }
+        r.vault.tokenDetails = tokenData;
       } catch (e) { r.vaultError = e.message; }
     }
 
