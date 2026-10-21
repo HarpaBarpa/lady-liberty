@@ -25,7 +25,6 @@ async function deploySystem() {
     await linkRegistry.getAddress(),
     await liberty.getAddress(),
     owner.address,
-    ethers.ZeroAddress
   );
   await vault.waitForDeployment();
 
@@ -245,7 +244,7 @@ describe("LibertyVault", function () {
 
   it("rejects zero amount", async function () {
     const { vault, alice, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     await expect(
       vault.connect(alice).depositDust(alice.address, await dust.getAddress(), 0)
     ).to.be.revertedWithCustomError(vault, "ZeroAmount");
@@ -253,7 +252,7 @@ describe("LibertyVault", function () {
 
   it("takes 2% protocol fee on deposit", async function () {
     const { vault, owner, dusty, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const amount = ethers.parseEther("100");
     await dust.connect(dusty).approve(await vault.getAddress(), amount);
     const ownerBalBefore = await dust.balanceOf(owner.address);
@@ -265,7 +264,7 @@ describe("LibertyVault", function () {
 
   it("linked secondary earns dust entries for primary", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
     const deposit = ethers.parseEther("10"); // 10 tokens @ $1 = 10 entries, capped at 5
@@ -276,7 +275,7 @@ describe("LibertyVault", function () {
 
   it("caps entries at 5 per wallet per cycle", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
     // $25 → 50 entries → capped at 5
@@ -288,7 +287,7 @@ describe("LibertyVault", function () {
 
   it("accumulates across multiple small deposits", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
     // 2 × $0.53 → post-fee ≈ $0.5194 = 51.94 cents each → 1 entry each → 2 total
@@ -301,7 +300,7 @@ describe("LibertyVault", function () {
 
   it("unlinked wallet earns no entries", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, bob, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
     const deposit = ethers.parseEther("10");
@@ -317,7 +316,7 @@ describe("LibertyVault", function () {
 
   it("entries reset at new cycle", async function () {
     const { vault, linkRegistry, linkRegistryAddr, alice, dusty, dust } = await deploySystem();
-    await vault.addSupportedToken(await dust.getAddress());
+    await vault.addSupportedToken(await dust.getAddress(), ethers.ZeroAddress);
     const sig = await buildLinkSig(dusty, alice.address, dusty.address, 0, TS, linkRegistryAddr);
     await linkRegistry.connect(alice).linkWallet(alice.address, dusty.address, TS, sig);
     const deposit = ethers.parseEther("5");
@@ -331,16 +330,16 @@ describe("LibertyVault", function () {
   it("owner can add/remove supported tokens", async function () {
     const { vault, owner, dust } = await deploySystem();
     const addr = await dust.getAddress();
-    await vault.connect(owner).addSupportedToken(addr);
-    expect(await vault.supportedToken(addr)).to.be.true;
+    await vault.connect(owner).addSupportedToken(addr, ethers.ZeroAddress);
+    expect(await vault.isSupported(addr)).to.be.true;
     await vault.connect(owner).removeSupportedToken(addr);
-    expect(await vault.supportedToken(addr)).to.be.false;
+    expect(await vault.isSupported(addr)).to.be.false;
   });
 
   it("non-owner cannot add supported tokens", async function () {
     const { vault, alice, dust } = await deploySystem();
     await expect(
-      vault.connect(alice).addSupportedToken(await dust.getAddress())
+      vault.connect(alice).addSupportedToken(await dust.getAddress(), ethers.ZeroAddress)
     ).to.be.revertedWithCustomError(vault, "OwnableUnauthorizedAccount");
   });
 });
