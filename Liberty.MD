@@ -22,13 +22,13 @@ The Torch platform powers everything: the token launch, the liquidity, the tradi
 
 **Style:** Hand-inked anime editorial illustration — confident ink contours, selective flat cel shadows, matte surfaces, subtle gouache and paper grain.
 
-**No pigeons.** The original RWAFFLE pigeon mascot is gone.
+**No pigeons.**
 
 ---
 
 ## $LIBERTY Token
 
-Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom Solidity needed.
+Launched via Torch Launchpad on Robinhood Chain in one transaction.
 
 **Key facts:**
 - Supply: 1,000,000,000 fixed (no mint function)
@@ -38,14 +38,14 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 - No owner, no pause, no blacklist
 - Address ends in `1111` (signature of a real Torch launch)
 
-**Tokenomics (finalized):**
+**Tokenomics:**
 - **Buy tax: 3% total**, split:
-  - 0.90% → Torch Protocol (30% of tax)
-  - 0.50% → $LIBERTY Buyback & Burn (creator split)
-  - 1.35% → RWA Raffle Vault (creator split — core utility)
-  - 0.25% → Development / Marketing (creator split)
-- Pair asset: $TORCH ("fuel the torch" narrative)
-- Dev buy: 2% of supply (~0.05 ETH at launch)
+  - 0.90% → Torch Protocol
+  - 0.50% → $LIBERTY Buyback & Burn
+  - 1.35% → Raffle Vault (core utility)
+  - 0.25% → Development / Marketing
+- Pair asset: $TORCH
+- Dev buy: 2% of supply
 - Anti-snipe: ON
 
 **Torch constraints (non-negotiable):**
@@ -60,21 +60,46 @@ Launched via Torch Launchpad on Robinhood Chain in one transaction. No custom So
 
 **Hold to Enter. Dust to Boost. Every Hour.**
 
-Every hour, three winners split the ETH prize vault.
+Every hour, up to 10 unique winners split the ETH prize vault.
 
 | Parameter | Value |
 |---|---|
-| **Eligibility** | Hold any amount of $LIBERTY |
-| **Entry boost** | Send any ERC-20 token to vault → USD value (oracle) → extra entry weight |
+| **Eligibility** | Hold ≥$10 of $LIBERTY |
+| **Base entry** | 1 per eligible wallet |
+| **Entry boost** | Deposit ERC-20 dust via site → $0.50 increments → extra entries |
+| **Max dust entries** | 5 per linked wallet per cycle (25 max from dust) |
+| **Max total entries** | 26 per primary account (1 base + 25 dust) |
+| **Max linked wallets** | 5 per primary |
 | **Draw frequency** | Hourly |
-| **Winners per draw** | 3 |
-| **Prize split** | 1st: 50% · 2nd: 30% · 3rd: 20% |
+| **Winners per draw** | Up to 10 unique (no repeats) |
+| **Prize split** | 35 / 20 / 12 / 8 / 6 / 5 / 4 / 3 / 2 / 1 (total = 96%) |
+| **Pool floor** | $50 minimum — draws skip if below, funds roll over |
+| **Cooldown** | 24h per wallet after winning |
 | **Prize currency** | ETH — sent directly to winners' wallets |
-| **Vault funding** | 1.35% buy tax (auto) + dust coin deposits |
 
-- Gas for dust deposits: paid by project where possible (frictionless entry)
-- Vault has two funding streams: (1) 1.35% of every buy tax, (2) dust token deposits
-- Prizes paid in ETH — no conversion, no swap
+**How it works:**
+1. Hold ≥$10 $LIBERTY → you have 1 base entry
+2. Link up to 5 secondary wallets via on-chain signing
+3. Deposit dust (any ERC-20) through the site → credited to your primary
+4. Each $0.50 of dust = 1 extra entry (max 5 entries per linked wallet)
+5. On-chain draw runs hourly — winners + all their linked wallets enter 24h cooldown
+6. Prizes arrive in your wallet automatically
+
+The vault contract (`LibertyVault`) tracks dust per cycle. The raffle contract (`LibertyRaffle`) runs the draw. Wallet linking is handled by `LinkRegistry` using EIP-712 signatures.
+
+---
+
+## Smart Contracts
+
+All on Robinhood Chain. Source in `code/contracts/`.
+
+| Contract | Purpose |
+|---|---|
+| `LinkRegistry.sol` | EIP-712 wallet linking (primary ↔ secondary signing) |
+| `LibertyVault.sol` | Dust deposits, entry computation, 2% protocol fee |
+| `LibertyRaffle.sol` | Prize pool, hourly draw, cooldown, ETH prize claims |
+
+**Toolchain:** Hardhat 2.29.1, Solidity ^0.8.24, OpenZeppelin ^5.6.1, ethers v6, EVM Cancun target. **35 tests passing.**
 
 ---
 
@@ -92,24 +117,24 @@ Every hour, three winners split the ETH prize vault.
 
 ## What's Built
 
-- **Frontend** (`frontend/`) — Next.js 16 app. Landing page with: hero, tokenomics, raffle section, waitlist, community, footer. Whitepaper at `/whitepaper`. Live at `libertytorch.online`.
-- **Landing page** (`site/`) — static HTML "Climb to the Torch" concept page. Run with `python tools/serve.py` locally.
-- **Launch artwork** (`design/artwork/`) — 8 social media formats in the Lady Liberty anime style. Pigeon-free.
-- **Tokenomics analysis** (`TOKENOMICS.md`) — breakdown: flywheel, tax revenue projections, decisions.
-- **Launch instructions** (`BUILD.md`) — step-by-step Torch launch guide.
-- **Architecture spec** (`SPEC.md`) — system design for the full LibertyTorch ecosystem.
+- **`site/`** — Production static site. Single source of truth for the live site. `js/config.js` holds all raffle params. Deployed to Vercel.
+- **`code/`** — Hardhat project with 3 Solidity contracts + test suite (35 passing). Deploy scripts in `scripts/deploy.ts`.
+- **`design/artwork/`** — 8 social media formats in the Lady Liberty anime style.
+- **`TOKENOMICS.md`** — Flywheel, tax revenue projections, decisions.
+- **`BUILD.md`** — Step-by-step Torch launch guide.
+- **`code/docs/ARCHITECTURE.md`** — Full system architecture doc.
 
 ---
 
 ## Deployment Status
 
 - **Domain:** `libertytorch.online` registered on Namecheap ✅
-- **Frontend:** Built and live at `libertytorch.online` via Vercel ✅
-- **GitHub repos:**
-  - `HarpaBarpa/lady-liberty` — public, primary repo
-  - `MJ1804/libertytorch` — public, Vercel-connected (auto-deploys on push)
-- **Vercel project:** `libertytorch` under `mj1804s-projects` team ✅
-- **NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS:** set as `PENDING_LAUNCH` in Vercel env vars ✅
+- **Site (production):** Live at `https://libertytorch.online` via Vercel ✅
+- **GitHub repo:** `HarpaBarpa/lady-liberty` (public, primary) ✅
+- **Vercel project:** `prj_E7IASpe9aFe0cgQQmEmwIIwje03` under `mj1804s-projects` team ✅
+- **Whitepaper:** `https://libertytorch.online/whitepaper` ✅
+- **Contracts:** All 3 written, compiled, 35/35 tests passing ✅
+- **`NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS`:** set as `PENDING_LAUNCH` in Vercel env vars ✅
 - **$LIBERTY:** not launched yet
 
 ---
@@ -118,18 +143,21 @@ Every hour, three winners split the ETH prize vault.
 
 ### Before Launch
 - [x] Register `libertytorch.online` — Martin, Namecheap
-- [x] Deploy frontend to Vercel — `libertytorch.online` live
+- [x] Deploy static site to Vercel — `libertytorch.online` live
 - [x] Write and publish whitepaper — `libertytorch.online/whitepaper`
-- [x] Add `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var to Vercel
-- [x] Finalize tokenomics: 3% buy tax, Torch 0.90% / Buyback 0.50% / Raffle 1.35% / Dev 0.25%
-- [x] Finalize raffle mechanics: hold-to-enter, dust boosts, hourly, 3 winners, 50/30/20, ETH prizes
-- [ ] Deposit ETH on Robinhood Chain (~0.00015 ETH for launch fee)
+- [x] Add `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var to Vercel (placeholder)
+- [x] Finalize tokenomics: 3% buy tax, confirmed splits
+- [x] Finalize raffle mechanics: 10 winners, payout draft, $50 floor, 24h cooldown, dust boost
+- [x] Write and test all 3 smart contracts (35 tests passing)
+- [ ] Deposit ~0.00015 ETH on Robinhood Chain for Torch launch fee
 - [ ] Launch $LIBERTY via Torch → save address (ends `1111`)
 
 ### After Token Launch
 - [ ] Update `NEXT_PUBLIC_LIBERTY_TOKEN_ADDRESS` env var on Vercel with real address
 - [ ] Redeploy on Vercel
-- [ ] Set up dust deposit vault address + oracle integration (post-launch)
+- [ ] Deploy contracts to Robinhood Chain (LinkRegistry first, then Vault, then Raffle)
+- [ ] Wire vault address into site frontend
+- [ ] Set up wallet linking UI + dust deposit flow on site
 - [ ] Social launch: Twitter/X, Telegram
 - [ ] CoinGecko listing application
 
@@ -138,26 +166,44 @@ Every hour, three winners split the ETH prize vault.
 ## Open Decisions
 
 - [x] Final tokenomics: 3% buy tax, split confirmed
-- [x] Raffle mechanics: hold-to-enter + dust boost, hourly, 3 winners, ETH prizes
-- [x] Raffle vault address: TBD (post-launch build)
-- [x] Social accounts: Twitter/X handle, Telegram group
-- [ ] Robinhood Chain RPC URL + chain ID
-- [ ] Dust deposit vault smart contract + oracle (CoinGecko pricing)
+- [x] Raffle mechanics: 10 winners, payout draft [35/20/12/8/6/5/4/3/2/1], hourly, $50 floor, ETH prizes
+- [x] Raffle vault + LinkRegistry + LibertyRaffle contracts: written and tested
+- [x] Wallet linking: EIP-712 on-chain registry
+- [ ] 4% development allocation use — treasury or further burn?
+- [ ] Dust entry expiry: do entries expire at end of cycle or carry?
+- [ ] Rules if <10 eligible participants at draw time
+- [ ] Whether primary wallet may also contribute its own dust
 
 ---
 
-## Open Questions (Torch / Robinhood Chain)
+## Torch / Robinhood Chain Notes
 
-- Robinhood Chain RPC URL + chain ID — need for dust vault contract deployment
-- Current $TORCH price — to estimate actual USD revenue projections
-- Where to buy ETH on Robinhood Chain
-
----
-
-## What's NOT (RWAFFLE is gone)
-
-The original concept included RWAFFLE — a custom raffle system where users sent crypto dust to earn raffle tickets. **That direction is abandoned.** LibertyTorch is the token + brand + on-site raffle utility. RWAFFLE smart contracts in `code/` are not being pursued.
+- **Chain ID:** 1337 (dev) / production TBD
+- **RPC:** `https://rpc.robinhoodchain.io` (or get from Torch docs)
+- **Explorer:** `robinhoodchain.io`
+- **Where to buy ETH on Robinhood Chain:** Through the Torch DEX after launch, or bridge from another chain
 
 ---
 
-*Last updated: 2026-10-20*
+## Next Session Instructions
+
+When resuming LibertyTorch work, start by reading this file (`Liberty.MD`) and then:
+
+1. **For contract work:** `cd /root/.openclaw/workspace/projects/liberty/code/`
+   - Run tests: `npx hardhat test`
+   - Compile: `npx hardhat compile`
+   - Deploy to local: `npx hardhat run scripts/deploy.ts`
+   - Deploy to Robinhood: set `ROBINHOOD_RPC`, `CHAIN_ID`, `DEPLOYER_KEY` env vars, then `npx hardhat run scripts/deploy.ts --network robinhood`
+
+2. **For site changes:** `cd /root/.openclaw/workspace/projects/liberty/site/`
+   - Edit `js/config.js` for raffle params (single source of truth)
+   - Deploy: `vercel deploy . --token=<token> --project="prj_E7IASpe9aFe0cgQQmEmwIIwje03" --prod --yes`
+   - Or push to `HarpaBarpa/lady-liberty` main branch → Vercel auto-deploys
+
+3. **Git identity for contracts:** Always commit as `MJ1804 <mj1804@users.noreply.github.com>` in the `code/` directory (Vercel deploy key restriction).
+
+4. **Token launch:** Use `BUILD.md` step-by-step. Need: ~0.00015 ETH on Robinhood Chain + $TORCH pair liquidity.
+
+---
+
+*Last updated: 2026-10-21*
