@@ -25,12 +25,12 @@ interface IChainlinkFeed {
     function latestAnswer() external view returns (int256);
 }
 
-/// @title LibertyRaffle — Hourly 10-winner raffle for LibertyTorch
+/// @title LibertyRaffle — Hourly 10-winner raffle + Liberty Bell jackpot
 /// @notice Draws up to 10 unique winners every hour when the prize pool
 ///         is ≥ $50 USD. Weighted by entry count (1 base + dust entries).
 ///         24-hour cooldown per winner + all linked secondary wallets.
-/// @dev Prize pool is funded by external calls to fundPrizePoolETH/ERC20.
-///      In production, the 1.35% buy-tax stream from $LIBERTY also flows here.
+/// @dev The Liberty Bell jackpot receives 4% of every funded draw's pool
+///      and triggers independently at 1-in-72 odds per eligible hourly check.
 contract LibertyRaffle is Ownable, Pausable {
 
     // ─────────────────────────────────────────────────────────
@@ -53,6 +53,10 @@ contract LibertyRaffle is Ownable, Pausable {
     error ZeroAddress();
     error ZeroAmount();
     error InvalidRaffleId();
+    error JackpotNotTriggered();
+    error JackpotAlreadyClaimed();
+    error JackpotBelowFloor();
+    error JackpotTooSoon();
 
     // ─────────────────────────────────────────────────────────
     //  CONSTANTS
@@ -70,8 +74,20 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @notice Maximum winners per draw
     uint256 public constant MAX_WINNERS = 10;
 
-    /// @notice Winner cooldown period: 24 hours
+    /// @notice Winner cooldown period: 24 hours (shared with Liberty Bell)
     uint256 public constant COOLDOWN_PERIOD = 24 hours;
+
+    /// @notice Basis points denominator
+    uint256 public constant BPS = 10000;
+
+    /// @notice Liberty Bell: 4% of every funded draw goes to the jackpot
+    uint256 public constant JACKPOT_CONTRIBUTION_BPS = 400;
+
+    /// @notice Liberty Bell: 1-in-72 odds per eligible hourly check (~1.39%)
+    uint256 public constant JACKPOT_ODDS = 72;
+
+    /// @notice Minimum jackpot to pay out: $50
+    uint256 public constant MIN_JACKPOT_CENTS = 5000;
 
     /// @notice 10-winner payout draft in basis points (total = 96%)
     ///         [35, 20, 12, 8, 6, 5, 4, 3, 2, 1]
@@ -110,7 +126,7 @@ contract LibertyRaffle is Ownable, Pausable {
     address public immutable ETH_USD_FEED;
 
     // ─────────────────────────────────────────────────────────
-    //  STATE
+    //  STATE — REGULAR RAFFLE
     // ─────────────────────────────────────────────────────────
 
     /// @notice Running prize pool in cents. Funded by buy-tax stream + manual top-ups.
@@ -122,7 +138,7 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @notice Current raffle ID (increments each draw)
     uint256 public raffleId;
 
-    /// @notice Whether an account is in cooldown and until when
+    /// @notice Whether an account is in cooldown and until when (shared with Liberty Bell)
     mapping(address => uint256) public cooldownUntil;
 
     /// @notice (raffleId → winnerIndex → winner address)
@@ -134,7 +150,7 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @notice Whether a prize for a raffle/winner has been claimed
     mapping(uint256 => mapping(address => bool)) public prizeClaimed;
 
-    /// @notice Registered eligible accounts (set by indexer when base entry confirmed)
+    /// @notice Registered eligible accounts (set by watcher when base entry confirmed)
     mapping(address => bool) public isRegistered;
 
     /// @notice List of all registered accounts (for iteration)
@@ -147,12 +163,39 @@ contract LibertyRaffle is Ownable, Pausable {
     uint256 public drawInterval = DRAW_INTERVAL;
 
     // ─────────────────────────────────────────────────────────
-    //  EVENTS
+    //  STATE — LIBERTY BELL JACKPOT
+    // ─────────────────────────────────────────────────────────
+
+    /// @notice Accumulated jackpot pool in cents.
+    ///         Funded by 4% of every funded draw's prize pool.
+    uint256 public jackpotPoolCents;
+
+    /// @notice Block.timestamp of the last Liberty Bell check (or 0 if never)
+    uint256 public lastJackpotCheckTime;
+
+    /// @notice Current jackpot raffle ID (increments each trigger)
+    uint256 public jackpotId;
+
+    /// @notice (jackpotId → winner address → prize in cents)
+    mapping(uint256 => mapping(address => uint256)) public jackpotPrizes;
+
+    /// @notice (jackpotId → winner address → whether claimed)
+    mapping(uint256 => mapping(address => bool)) public jackpotClaimed;
+
+    /// @notice Whether the current jackpot has been triggered (winner selected)
+    bool public jackpotTriggered;
+
+    /// @notice The current jackpot winner
+    address public jackpotWinner;
+
+    // ─────────────────────────────────────────────────────────
+    //  EVENTS — REGULAR RAFFLE
     // ─────────────────────────────────────────────────────────
 
     event DrawExecuted(
         uint256 indexed raffleId,
         uint256 prizePoolCents,
+        uint256 jackpotContribution,
         uint256 winnerCount,
         uint256 timestamp
     );
@@ -204,6 +247,38 @@ contract LibertyRaffle is Ownable, Pausable {
     );
 
     // ─────────────────────────────────────────────────────────
+    //  EVENTS — LIBERTY BELL
+    // ─────────────────────────────────────────────────────────
+
+    event JackpotFunded(
+        uint256 amountCents,
+        uint256 newTotal,
+        uint256 timestamp
+    );
+
+    event JackpotTriggered(
+        uint256 indexed jackpotId,
+        address indexed winner,
+        uint256 prizeCents,
+        uint256 randomValue,
+        uint256 timestamp
+    );
+
+    event JackpotSkipped(
+        uint256 poolCents,
+        uint256 nextCheckTime,
+        uint256 timestamp
+    );
+
+    event JackpotPrizeClaimed(
+        uint256 indexed jackpotId,
+        address indexed winner,
+        uint256 amountCents,
+        address indexed token,
+        uint256 timestamp
+    );
+
+    // ─────────────────────────────────────────────────────────
     //  CONSTRUCTOR
     // ─────────────────────────────────────────────────────────
 
@@ -223,11 +298,39 @@ contract LibertyRaffle is Ownable, Pausable {
     }
 
     // ─────────────────────────────────────────────────────────
+    //  EXTERNAL — RECEIVE FUNDS
+    // ─────────────────────────────────────────────────────────
+
+    /// @notice Receive ETH to the regular prize pool.
+    receive() external payable {
+        uint256 cents = _ethToUsdCents(msg.value);
+        prizePoolCents += cents;
+        emit PoolFunded({ amountCents: cents, newTotal: prizePoolCents, funder: msg.sender, timestamp: block.timestamp });
+    }
+
+    /// @notice Add ETH to the regular prize pool explicitly.
+    function fundPrizePoolETH() external payable {
+        if (msg.value == 0) revert ZeroAmount();
+        uint256 cents = _ethToUsdCents(msg.value);
+        prizePoolCents += cents;
+        emit PoolFunded({ amountCents: cents, newTotal: prizePoolCents, funder: msg.sender, timestamp: block.timestamp });
+    }
+
+    /// @notice Add ERC-20 tokens to the regular prize pool (treated as $1 per token unit).
+    function fundPrizePoolERC20(IERC20 token, uint256 amount) external {
+        token.safeTransferFrom(msg.sender, address(this), amount);
+        // Placeholder: treat 1 token unit as $1. For production, integrate a price feed.
+        uint256 cents = amount / 1e16; // assumes 18-decimal token at $1 = 1e18 raw = 100 cents
+        prizePoolCents += cents;
+        emit PoolFunded({ amountCents: cents, newTotal: prizePoolCents, funder: msg.sender, timestamp: block.timestamp });
+    }
+
+    // ─────────────────────────────────────────────────────────
     //  EXTERNAL — DRAW
     // ─────────────────────────────────────────────────────────
 
     /// @notice Check state and execute a draw if conditions are met.
-    ///         Callable by anyone (frontend button, cron job, keeper).
+    ///         Callable by anyone.
     ///
     ///         Draw fires when ALL of:
     ///           - block.timestamp ≥ lastDrawTime + drawInterval
@@ -235,12 +338,13 @@ contract LibertyRaffle is Ownable, Pausable {
     ///           - not paused
     ///           - ≥ 1 eligible account
     ///
-    ///         If pool < $50: skips draw, rolls over funds, emits SkippedBelowFloor
+    ///         On success: 4% of pool → Liberty Bell jackpot. Remainder distributed.
+    ///         On skip (pool below floor): rolls over funds.
     function checkAndDraw() external whenNotPaused {
         if (block.timestamp < lastDrawTime + drawInterval) {
             emit RaffleStatus({
                 raffleId: raffleId,
-                status: 1,          // too soon
+                status: 1,
                 poolCents: prizePoolCents,
                 drawTimeRemaining: (lastDrawTime + drawInterval) - block.timestamp
             });
@@ -248,10 +352,7 @@ contract LibertyRaffle is Ownable, Pausable {
         }
 
         if (prizePoolCents < minPoolCents) {
-            // Skip: pool below floor. Roll over funds, update draw time, continue.
             uint256 nextCheck = lastDrawTime + drawInterval;
-            // If time has advanced enough to try again, just update lastDrawTime
-            // so the next call doesn't re-trigger the same skip.
             lastDrawTime = block.timestamp;
             emit DrawSkipped({
                 raffleId: raffleId,
@@ -266,19 +367,152 @@ contract LibertyRaffle is Ownable, Pausable {
     }
 
     /// @notice Force a draw even if pool is below floor (owner only).
-    ///         Useful for bootstrapping the first draw with a manual pool.
     function forceDraw() external onlyOwner whenNotPaused {
         if (block.timestamp < lastDrawTime + drawInterval) revert DrawTooSoon();
         _executeDraw();
     }
 
     // ─────────────────────────────────────────────────────────
+    //  EXTERNAL — JACKPOT (LIBERTY BELL)
+    // ─────────────────────────────────────────────────────────
+
+    /// @notice Check the Liberty Bell at the eligible hourly window.
+    ///         Callable by anyone. Tests a fixed 1-in-72 probability
+    ///         regardless of participant count.
+    ///
+    ///         Fires when:
+    ///           - block.timestamp ≥ lastJackpotCheckTime + drawInterval
+    ///           - jackpotPoolCents ≥ MIN_JACKPOT_CENTS ($50)
+    ///           - ≥ 1 eligible account (not in cooldown)
+    ///           - not paused
+    ///
+    /// @dev The trigger is independent of the regular draw interval.
+    ///      If the regular draw hasn't fired yet, this still checks.
+    ///      If the regular draw fires first, this still checks its own window.
+    function checkJackpot() external whenNotPaused {
+        uint256 interval = drawInterval;
+
+        if (block.timestamp < lastJackpotCheckTime + interval) {
+            revert JackpotTooSoon();
+        }
+
+        if (jackpotTriggered) {
+            // A winner is already pending — no new trigger until claimed
+            revert JackpotNotTriggered();
+        }
+
+        if (jackpotPoolCents < MIN_JACKPOT_CENTS) {
+            // Not enough in the pot — just advance the check window
+            lastJackpotCheckTime = block.timestamp;
+            emit JackpotSkipped({
+                poolCents: jackpotPoolCents,
+                nextCheckTime: block.timestamp + interval,
+                timestamp: block.timestamp
+            });
+            return;
+        }
+
+        uint256 eligible = _eligibleAccountCount();
+        if (eligible == 0) {
+            lastJackpotCheckTime = block.timestamp;
+            emit JackpotSkipped({
+                poolCents: jackpotPoolCents,
+                nextCheckTime: block.timestamp + interval,
+                timestamp: block.timestamp
+            });
+            return;
+        }
+
+        // ── Independent 1-in-72 probability ────────────────────
+        // Uses block attributes + jackpot pool seed.
+        // Not influenced by participant count — same 1-in-72 each check.
+        uint256 random = uint256(
+            keccak256(abi.encodePacked(
+                block.prevrandao,
+                block.timestamp,
+                block.number,
+                jackpotPoolCents,
+                jackpotId
+            ))
+        );
+
+        lastJackpotCheckTime = block.timestamp;
+
+        if ((random % JACKPOT_ODDS) != 0) {
+            // Bell didn't ring — advance window, roll over funds
+            emit JackpotSkipped({
+                poolCents: jackpotPoolCents,
+                nextCheckTime: block.timestamp + interval,
+                timestamp: block.timestamp
+            });
+            return;
+        }
+
+        // ── Bell rang — select one winner by weighted random ─────
+        address winner = _selectJackpotWinner(random);
+
+        jackpotTriggered = true;
+        jackpotWinner = winner;
+        jackpotId++;
+        jackpotPrizes[jackpotId][winner] = jackpotPoolCents;
+
+        // Set shared cooldown (same 24h as regular raffle)
+        cooldownUntil[winner] = block.timestamp + COOLDOWN_PERIOD;
+        address[] memory linked = LINK_REGISTRY.getLinkedWallets(winner);
+        for (uint256 k = 0; k < linked.length; k++) {
+            cooldownUntil[linked[k]] = block.timestamp + COOLDOWN_PERIOD;
+        }
+
+        emit JackpotTriggered({
+            jackpotId: jackpotId,
+            winner: winner,
+            prizeCents: jackpotPoolCents,
+            randomValue: random,
+            timestamp: block.timestamp
+        });
+
+        // Jackpot is cleared only when claimed
+        jackpotPoolCents = 0;
+    }
+
+    /// @notice Claim the Liberty Bell jackpot prize.
+    /// @param  token  The ERC-20 to receive (address(0) = ETH)
+    function claimJackpotPrize(address token) external {
+        if (msg.sender != jackpotWinner) revert NotWinner();
+        if (!jackpotTriggered) revert JackpotNotTriggered();
+        if (jackpotClaimed[jackpotId][msg.sender]) revert JackpotAlreadyClaimed();
+
+        uint256 prize = jackpotPrizes[jackpotId][msg.sender];
+        if (prize == 0) revert NothingToClaim();
+
+        jackpotClaimed[jackpotId][msg.sender] = true;
+        jackpotTriggered = false;
+        jackpotWinner = address(0);
+
+        if (token == address(0)) {
+            uint256 prizeEth = _centsToEthWei(prize);
+            (bool sent, ) = msg.sender.call{value: prizeEth}("");
+            if (!sent) revert();
+        } else {
+            IERC20(token).safeTransfer(msg.sender, prize);
+        }
+
+        emit JackpotPrizeClaimed({
+            jackpotId: jackpotId,
+            winner: msg.sender,
+            amountCents: prize,
+            token: token,
+            timestamp: block.timestamp
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
     //  EXTERNAL — PRIZE CLAIM
     // ─────────────────────────────────────────────────────────
 
-    /// @notice Claim your prize for a specific raffle. Paid in ETH equivalent.
+    /// @notice Claim your regular raffle prize for a specific raffle.
     /// @param  _raffleId  The raffle ID to claim from
-    /// @param  token      The ERC-20 token to receive (ETH = address(0))
+    /// @param  token      The ERC-20 to receive (ETH = address(0))
     function claimPrize(uint256 _raffleId, address token) external {
         if (_raffleId == 0 || _raffleId > raffleId) revert InvalidRaffleId();
 
@@ -289,7 +523,6 @@ contract LibertyRaffle is Ownable, Pausable {
         prizeClaimed[_raffleId][msg.sender] = true;
 
         if (token == address(0)) {
-            // Pay in ETH: convert prize (cents) back to wei for the call.value
             uint256 prizeEth = _centsToEthWei(prize);
             (bool sent, ) = msg.sender.call{value: prizeEth}("");
             if (!sent) revert();
@@ -307,58 +540,11 @@ contract LibertyRaffle is Ownable, Pausable {
     }
 
     // ─────────────────────────────────────────────────────────
-    //  EXTERNAL — FUNDING
-    // ─────────────────────────────────────────────────────────
-
-    /// @notice Add ETH to the prize pool. Converts ETH → cents using feed or $1 fallback.
-    receive() external payable {
-        uint256 cents = _ethToUsdCents(msg.value);
-        prizePoolCents += cents;
-        emit PoolFunded({
-            amountCents: cents,
-            newTotal: prizePoolCents,
-            funder: msg.sender,
-            timestamp: block.timestamp
-        });
-    }
-
-    /// @notice Add ERC-20 tokens to the prize pool (converted to cents at $1).
-    ///         For proper integration, the token price should be fetched off-chain.
-    /// @param  token   The ERC-20 to add
-    /// @param  amount  Amount in raw token units
-    function fundPrizePoolERC20(IERC20 token, uint256 amount) external {
-        token.safeTransferFrom(msg.sender, address(this), amount);
-        // Treat 1 token unit as $1.00 for simplicity (or fetch price off-chain)
-        // In production: call vault's price feed or indexer for real conversion
-        uint256 cents = amount / 1e16; // assumes 18-decimal token at $1 = 1e18 raw = 100 cents
-        prizePoolCents += cents;
-        emit PoolFunded({
-            amountCents: cents,
-            newTotal: prizePoolCents,
-            funder: msg.sender,
-            timestamp: block.timestamp
-        });
-    }
-
-    /// @notice Fund the prize pool with ETH. Converts at $1/wei (1 ETH = 1e18 wei = $1, = 100 cents).
-    function fundPrizePoolETH() external payable {
-        if (msg.value == 0) revert ZeroAmount();
-        uint256 cents = _ethToUsdCents(msg.value);
-        prizePoolCents += cents;
-        emit PoolFunded({
-            amountCents: cents,
-            newTotal: prizePoolCents,
-            funder: msg.sender,
-            timestamp: block.timestamp
-        });
-    }
-
-    // ─────────────────────────────────────────────────────────
-    //  EXTERNAL — ACCOUNT REGISTRATION (INDEXER)
+    //  EXTERNAL — ACCOUNT REGISTRATION (WATCHER)
     // ─────────────────────────────────────────────────────────
 
     /// @notice Register an account as eligible for base entry.
-    ///         Called by the indexer when $LIBERTY balance ≥ $10 confirmed.
+    ///         Called by the watcher when $LIBERTY balance ≥ $10 confirmed.
     /// @param  account  The wallet to register
     function registerAccount(address account) external onlyOwner {
         if (account == address(0)) revert ZeroAddress();
@@ -378,7 +564,7 @@ contract LibertyRaffle is Ownable, Pausable {
         }
     }
 
-    /// @notice Bulk register accounts (for indexer bootstrap).
+    /// @notice Bulk register accounts (for watcher bootstrap).
     /// @param  accounts  Array of wallet addresses to register
     function registerAccounts(address[] calldata accounts) external onlyOwner {
         for (uint256 i = 0; i < accounts.length; i++) {
@@ -395,75 +581,43 @@ contract LibertyRaffle is Ownable, Pausable {
     //  EXTERNAL — ADMIN
     // ─────────────────────────────────────────────────────────
 
-    /// @notice Adjust the minimum pool threshold.
-    /// @param  newMin  New minimum in cents
     function setMinPoolCents(uint256 newMin) external onlyOwner {
-        emit ConfigUpdated({
-            param: "minPoolCents",
-            oldValue: minPoolCents,
-            newValue: newMin,
-            timestamp: block.timestamp
-        });
+        emit ConfigUpdated({ param: "minPoolCents", oldValue: minPoolCents, newValue: newMin, timestamp: block.timestamp });
         minPoolCents = newMin;
     }
 
-    /// @notice Adjust the draw interval.
-    /// @param  newInterval  New interval in seconds
     function setDrawInterval(uint256 newInterval) external onlyOwner {
-        emit ConfigUpdated({
-            param: "drawInterval",
-            oldValue: drawInterval,
-            newValue: newInterval,
-            timestamp: block.timestamp
-        });
+        emit ConfigUpdated({ param: "drawInterval", oldValue: drawInterval, newValue: newInterval, timestamp: block.timestamp });
         drawInterval = newInterval;
     }
 
     /// @notice Withdraw ERC-20 tokens accidentally sent here (not prize pool).
-    /// @param  token   The token to recover
-    /// @param  to      Recipient
-    /// @param  amount  Amount
     function sweepToken(IERC20 token, address to, uint256 amount) external onlyOwner {
-        // Block native ETH from being swept — it belongs to the prize pool.
-        // Only ERC-20s that aren't the vault's dust tokens can be rescued.
         if (address(token) == address(0)) revert ZeroAddress();
         token.safeTransfer(to, amount);
     }
 
-    /// @notice Pause the raffle (blocks new draws). Resume with unpause().
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    /// @notice Unpause the raffle.
-    function unpause() external onlyOwner {
-        _unpause();
-    }
+    function pause() external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
 
     // ─────────────────────────────────────────────────────────
     //  EXTERNAL — VIEWS
     // ─────────────────────────────────────────────────────────
 
-    /// @notice Returns all registered eligible accounts.
     function getEligibleAccounts() external view returns (address[] memory) {
         return registeredAccounts;
     }
 
-    /// @notice Returns total entries for an account: 1 (base) + dust entries from vault.
-    /// @param  account  The account to query
-    /// @return Total entry count (0 if not registered or in cooldown)
     function getAccountEntries(address account) external view returns (uint256) {
         if (!isRegistered[account]) return 0;
         if (cooldownUntil[account] > block.timestamp) return 0;
         return 1 + VAULT.getDustEntries(account);
     }
 
-    /// @notice Returns the current prize pool size in cents.
     function getPrizePoolCents() external view returns (uint256) {
         return prizePoolCents;
     }
 
-    /// @notice Returns all 10 winners for a raffle (zeros if not yet drawn).
     function getWinners(uint256 _raffleId) external view returns (address[10] memory) {
         address[10] memory winners;
         for (uint256 i = 0; i < MAX_WINNERS; i++) {
@@ -472,17 +626,14 @@ contract LibertyRaffle is Ownable, Pausable {
         return winners;
     }
 
-    /// @notice Returns the prize for a specific winner and raffle.
     function getPrize(address winner, uint256 _raffleId) external view returns (uint256) {
         return rafflePrizes[_raffleId][winner];
     }
 
-    /// @notice Returns true if an account is currently in cooldown.
     function isInCooldown(address account) external view returns (bool) {
         return cooldownUntil[account] > block.timestamp;
     }
 
-    /// @notice Seconds until the next eligible draw.
     function getTimeUntilNextDraw() external view returns (uint256) {
         if (lastDrawTime == 0) return 0;
         uint256 next = lastDrawTime + drawInterval;
@@ -490,8 +641,27 @@ contract LibertyRaffle is Ownable, Pausable {
         return next - block.timestamp;
     }
 
-    /// @notice Returns current draw readiness: (canDraw, statusCode).
-    ///         status: 0=ok, 1=too soon, 2=floor, 3=paused, 4=no accounts
+    function getJackpotInfo() external view returns (
+        uint256 poolCents_,
+        uint256 jackpotId_,
+        bool triggered_,
+        address winner_,
+        uint256 prize_,
+        uint256 nextCheckSeconds_
+    ) {
+        poolCents_ = jackpotPoolCents;
+        jackpotId_ = jackpotId;
+        triggered_ = jackpotTriggered;
+        winner_ = jackpotWinner;
+        prize_ = jackpotTriggered ? jackpotPrizes[jackpotId][jackpotWinner] : 0;
+        if (lastJackpotCheckTime == 0) {
+            nextCheckSeconds_ = 0;
+        } else {
+            uint256 next = lastJackpotCheckTime + drawInterval;
+            nextCheckSeconds_ = block.timestamp >= next ? 0 : next - block.timestamp;
+        }
+    }
+
     function canDraw() external view returns (bool drawable_, uint8 status) {
         if (paused()) return (false, 3);
         if (block.timestamp < lastDrawTime + drawInterval) return (false, 1);
@@ -501,23 +671,37 @@ contract LibertyRaffle is Ownable, Pausable {
         return (true, 0);
     }
 
+    function canCheckJackpot() external view returns (bool checkable_, uint8 status) {
+        if (paused()) return (false, 3);
+        if (block.timestamp < lastJackpotCheckTime + drawInterval) return (false, 1);
+        if (jackpotPoolCents < MIN_JACKPOT_CENTS) return (false, 2);
+        uint256 count = _eligibleAccountCount();
+        if (count == 0) return (false, 4);
+        if (jackpotTriggered) return (false, 5); // winner pending claim
+        return (true, 0);
+    }
+
     // ─────────────────────────────────────────────────────────
     //  INTERNAL — DRAW EXECUTION
     // ─────────────────────────────────────────────────────────
 
-    /// @dev Executes the weighted random draw. Selects up to 10 unique winners.
-    ///      Winners are weighted: 1 base entry + dust entries from vault.
-    ///      Each winner + all their linked wallets enter 24h cooldown.
+    /// @dev Executes the weighted random draw.
+    ///      Sends 4% of pool to the Liberty Bell jackpot before distributing.
     function _executeDraw() internal {
-        // Increment raffleId FIRST so winners are stored at the new ID and
-        // claimPrize(_raffleId, ...) can use the same ID to retrieve them.
         raffleId++;
         uint256 currentRaffleId = raffleId;
         uint256 count = _eligibleAccountCount();
         if (count == 0) revert NoEligibleAccounts();
 
-        // Build list of eligible accounts with their entry weights
-        // Use a dynamic array sized to registeredAccounts.length
+        uint256 poolCents = prizePoolCents;
+
+        // ── 4% to Liberty Bell ───────────────────────────────
+        uint256 jackpotContribution = (poolCents * JACKPOT_CONTRIBUTION_BPS) / BPS;
+        uint256 distributable = poolCents - jackpotContribution;
+        jackpotPoolCents += jackpotContribution;
+        emit JackpotFunded({ amountCents: jackpotContribution, newTotal: jackpotPoolCents, timestamp: block.timestamp });
+
+        // Build eligible list
         uint256 len = registeredAccounts.length;
         uint256 eligibleCount;
         address[] memory eligibleAddrs = new address[](len);
@@ -527,10 +711,8 @@ contract LibertyRaffle is Ownable, Pausable {
             address acc = registeredAccounts[i];
             if (!isRegistered[acc]) continue;
             if (cooldownUntil[acc] > block.timestamp) continue;
-
             uint256 ent = 1 + VAULT.getDustEntries(acc);
             if (ent == 0) continue;
-
             eligibleAddrs[eligibleCount] = acc;
             entries[eligibleCount] = ent;
             eligibleCount++;
@@ -538,27 +720,19 @@ contract LibertyRaffle is Ownable, Pausable {
 
         if (eligibleCount == 0) revert NoEligibleAccounts();
 
-        // Compute total entries for weighted selection
+        // Compute total entries
         uint256 totalEntries;
-        for (uint256 i = 0; i < eligibleCount; i++) {
-            totalEntries += entries[i];
-        }
+        for (uint256 i = 0; i < eligibleCount; i++) totalEntries += entries[i];
 
-        uint256 poolCents = prizePoolCents;
         uint8 winnerCount = 0;
         uint256 runningTotal = totalEntries;
 
-        // Select up to MAX_WINNERS winners (or fewer if not enough eligible)
-        uint8 maxWinners = uint8(
-            eligibleCount < MAX_WINNERS ? eligibleCount : MAX_WINNERS
-        );
-
-        // Build a "remaining entries" copy so we can remove winners
         uint256[] memory remaining = new uint256[](eligibleCount);
         for (uint256 i = 0; i < eligibleCount; i++) remaining[i] = entries[i];
 
+        uint8 maxWinners = uint8(eligibleCount < MAX_WINNERS ? eligibleCount : MAX_WINNERS);
+
         for (uint256 slot = 0; slot < maxWinners; slot++) {
-            // Deterministic randomness using block attributes + pool seed
             uint256 random = uint256(
                 keccak256(abi.encodePacked(
                     block.prevrandao,
@@ -579,50 +753,86 @@ contract LibertyRaffle is Ownable, Pausable {
                 if (cumulative > target) {
                     winner = eligibleAddrs[i];
                     winnerIdx = i;
-                    remaining[i] = 0; // remove from pool for next pick
+                    remaining[i] = 0;
                     break;
                 }
             }
 
-            if (winner == address(0)) break; // safety
+            if (winner == address(0)) break;
 
             raffleWinners[currentRaffleId][slot] = winner;
 
-            // Compute prize: poolCents * payoutDraftBps[slot] / 10000
-            uint256 prize = (poolCents * PAYOUT_DRAFT_BPS(slot)) / 10000;
+            uint256 prize = (distributable * PAYOUT_DRAFT_BPS(slot)) / BPS;
             rafflePrizes[currentRaffleId][winner] = prize;
 
-            // Set cooldown for winner
             cooldownUntil[winner] = block.timestamp + COOLDOWN_PERIOD;
-
-            // Set cooldown for all linked wallets of winner
             address[] memory linked = LINK_REGISTRY.getLinkedWallets(winner);
             for (uint256 k = 0; k < linked.length; k++) {
                 cooldownUntil[linked[k]] = block.timestamp + COOLDOWN_PERIOD;
             }
 
             winnerCount++;
-            // Subtract winner's actual index weight from runningTotal
             runningTotal -= entries[winnerIdx];
         }
 
-        // Reset pool
+        // Reset regular pool (jackpot already separated)
         prizePoolCents = 0;
         lastDrawTime = block.timestamp;
 
         emit DrawExecuted({
             raffleId: currentRaffleId,
             prizePoolCents: poolCents,
+            jackpotContribution: jackpotContribution,
             winnerCount: winnerCount,
             timestamp: block.timestamp
         });
     }
 
     // ─────────────────────────────────────────────────────────
+    //  INTERNAL — JACKPOT WINNER SELECTION
+    // ─────────────────────────────────────────────────────────
+
+    /// @dev Selects one eligible account for the Liberty Bell jackpot.
+    ///      Weighted by 1 + vault dust entries (same weighting as regular raffle).
+    function _selectJackpotWinner(uint256 randomSeed) internal view returns (address) {
+        uint256 len = registeredAccounts.length;
+        uint256 eligibleCount;
+        address[] memory eligibleAddrs = new address[](len);
+        uint256[] memory entries = new uint256[](len);
+        uint256 totalEntries;
+
+        for (uint256 i = 0; i < len; i++) {
+            address acc = registeredAccounts[i];
+            if (!isRegistered[acc]) continue;
+            if (cooldownUntil[acc] > block.timestamp) continue;
+            uint256 ent = 1 + VAULT.getDustEntries(acc);
+            if (ent == 0) continue;
+            eligibleAddrs[eligibleCount] = acc;
+            entries[eligibleCount] = ent;
+            totalEntries += ent;
+            eligibleCount++;
+        }
+
+        require(eligibleCount > 0, "no eligible accounts");
+
+        // Weighted selection using the passed-in random seed
+        uint256 target = randomSeed % totalEntries;
+        uint256 cumulative;
+
+        for (uint256 i = 0; i < eligibleCount; i++) {
+            cumulative += entries[i];
+            if (cumulative > target) {
+                return eligibleAddrs[i];
+            }
+        }
+
+        return eligibleAddrs[0]; // safety
+    }
+
+    // ─────────────────────────────────────────────────────────
     //  INTERNAL — HELPERS
     // ─────────────────────────────────────────────────────────
 
-    /// @dev Returns count of currently eligible (registered + not in cooldown) accounts.
     function _eligibleAccountCount() internal view returns (uint256) {
         uint256 count;
         uint256 len = registeredAccounts.length;
@@ -635,25 +845,19 @@ contract LibertyRaffle is Ownable, Pausable {
         return count;
     }
 
-    /// @dev Converts ETH amount to USD cents using Chainlink or $1 fallback.
     function _centsToEthWei(uint256 cents) internal view returns (uint256) {
         if (ETH_USD_FEED == address(0)) {
-            // Fallback: 1 cent = 1e10 wei ($1/ETH). cents * 1e10 = wei
             return cents * 1e10;
         }
-        // Chainlink feed: cents * 1e18 / price = wei
         int256 price = IChainlinkFeed(ETH_USD_FEED).latestAnswer();
         return (cents * 1e18) / uint256(price);
     }
 
     function _ethToUsdCents(uint256 ethWei) internal view returns (uint256) {
         if (ETH_USD_FEED == address(0)) {
-            // Fallback: 1 ETH = $1,000,000.00 → 100,000,000 cents
-            // ethWei / 1e10 = ETH units at 1e18 → 1e8 = 100,000,000 cents per ETH
             return ethWei / 1e10;
         }
-        // Chainlink ETH/USD feed: price in 8 decimals (e.g., $2,000 = 2000000000)
         int256 price = IChainlinkFeed(ETH_USD_FEED).latestAnswer();
-        return (ethWei * uint256(price)) / 1e18; // cents (8 dec price / 1e18 wei)
+        return (ethWei * uint256(price)) / 1e18;
     }
 }

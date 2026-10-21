@@ -1,14 +1,17 @@
 {
-  "name": "code",
+  "name": "libertytorch",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "LibertyTorch smart contracts + watcher",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network",
+    "watcher:build": "tsc -p watcher.tsconfig.json",
+    "watcher:dev": "ts-node watcher/watcher.ts",
+    "watcher:start": "node dist/watcher/watcher.js",
+    "build": "npm run compile && npm run watcher:build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@types/node": "^26.6.5",

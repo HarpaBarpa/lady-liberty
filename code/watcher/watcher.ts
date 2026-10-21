@@ -3,92 +3,89 @@
  * ==========================================
  * Runs alongside the LibertyVault + LibertyRaffle contracts on Robinhood Chain.
  *
- * TWO jobs:
+ * THREE jobs:
  *   1. Holder watcher — polls Transfer events on $LIBERTY, registers accounts
- *      when balance ≥ $10 (MIN_HOLD_CENTS = 1000), deregisters when it drops.
+ *      when balance ≥ threshold, deregisters when it drops.
  *   2. Draw keeper — calls raffle.checkAndDraw() every hour.
+ *   3. Jackpot keeper — calls raffle.checkJackpot() every hour (Liberty Bell).
  *
- * SECURITY DESIGN (no trusted third party):
- *   - Dust deposits are computed ON-CHAIN by LibertyVault.depositDust().
- *     The watcher does NOT credit tickets/entries. The vault does.
- *   - Wallet linking is verified ON-CHAIN by LinkRegistry (EIP-712 signed).
- *   - The watcher's only write: registerAccount() / deregisterAccount() —
- *     a guard function that checks the watcher actually verified the balance.
- *     The raffle enforces isRegistered[] and cooldownUntil[] on-chain.
- *   - A compromised watcher can at worst register ineligible wallets,
- *     giving them 1 base entry. It cannot create unlimited entries,
- *     because dust entries come from actual vault deposits.
+ * SECURITY: Dust entries computed ON-CHAIN by LibertyVault. Watcher only writes
+ * registerAccount/deregisterAccount/checkAndDraw/checkJackpot.
+ * A compromised watcher can at worst register ineligible wallets for 1 base entry.
  *
- * PERSISTENT STATE (survives restarts):
- *   - watcher-state.json: lastProcessedBlock, knownHolders map
- *   - Dedup via txHash-logIndex prevents double-processing across restarts
+ * PERSISTENT STATE:
+ *   - watcher-state.json: lastProcessedBlock, knownHolders, timers
+ *   - watcher-dedup.json: txHash-logIndex keys (no double-processing)
  *
- * RPC: Robinhood Chain public RPC (https://rpc.mainnet.chain.robinhood.com)
- * No third-party indexer — direct ethers.js event subscription.
+ * RPC: Robinhood Chain public RPC (no third-party indexer needed).
  */
 
-import { ethers } from "ethers";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { ethers, Log, TransactionReceipt } from "ethers";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface WatcherState {
   lastProcessedBlock: number;
-  knownHolders: Record<string, boolean>; // address → isRegistered
+  knownHolders: Record<string, boolean>;
   lastDrawTime: number;
   lastJackpotCheck: number;
+  lastJackpotTriggerTime: number;
 }
 
-// ─── Configuration (environment variables) ────────────────────────────────────
-const RPC_URL =
-  process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhood.com";
+// ─── Config ──────────────────────────────────────────────────────────────────
+const RPC_URL = process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhood.com";
 const CHAIN_ID = parseInt(process.env.CHAIN_ID || "4663");
-const WATCHER_KEY = process.env.WATCHER_KEY || ""; // deployer key (needed for registerAccount)
+const WATCHER_KEY = process.env.WATCHER_KEY || "";
 const LIBERTY_TOKEN_ADDR = process.env.LIBERTY_TOKEN || "";
 const RAFFLE_ADDR = process.env.RAFFLE_ADDR || "";
-const VAULT_ADDR = process.env.VAULT_ADDR || "";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const MIN_HOLD_CENTS = 1000; // $10.00 = 1000 cents (must match LibertyRaffle.MIN_HOLD_CENTS)
 const STATE_FILE = join(__dirname, "..", "..", "watcher-state.json");
 const DEDUP_FILE = join(__dirname, "..", "..", "watcher-dedup.json");
-const DRAW_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-const JACKPOT_INTERVAL_MS = 60 * 60 * 1000; // check hourly
-const BLOCK_BATCH = 2000; // blocks per catch-up batch (avoid RPC rate limits)
-const POLL_INTERVAL_MS = 30_000; // poll new blocks every 30s in live mode
-const PRICE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // re-check prices every 5 min
+const DRAW_INTERVAL_MS = 60 * 60 * 1000;
+const BLOCK_BATCH = 2000;
 
-// ─── Global state ─────────────────────────────────────────────────────────────
+// ─── Global ─────────────────────────────────────────────────────────────────
 let provider: ethers.JsonRpcProvider;
 let signer: ethers.Wallet;
-let raffle: ethers.Contract;
-let libertyToken: ethers.Contract;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let raffle: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let libertyToken: any;
 let state: WatcherState;
-let dedupSet: Set<string>; // "txHash-logIndex"
-let priceCache: Record<string, number> = {};
+let dedupSet: Set<string>;
 
-// ─── ABI fragments ────────────────────────────────────────────────────────────
+// ─── ABI ─────────────────────────────────────────────────────────────────────
 const RAFFLE_ABI = [
   "function registerAccount(address account) external",
   "function registerAccounts(address[] calldata accounts) external",
   "function deregisterAccount(address account) external",
   "function checkAndDraw() external",
+  "function checkJackpot() external",
   "function isRegistered(address) view returns (bool)",
   "function getEligibleAccounts() view returns (address[])",
   "function lastDrawTime() view returns (uint256)",
+  "function lastJackpotCheckTime() view returns (uint256)",
   "function raffleId() view returns (uint256)",
   "function prizePoolCents() view returns (uint256)",
+  "function jackpotPoolCents() view returns (uint256)",
+  "function jackpotTriggered() view returns (bool)",
+  "function jackpotWinner() view returns (address)",
   "function owner() view returns (address)",
+  "function canDraw() view returns (bool, uint8)",
+  "function canCheckJackpot() view returns (bool, uint8)",
+  "event DrawExecuted(uint256 indexed raffleId, uint256 prizePoolCents, uint256 jackpotContribution, uint256 winnerCount, uint256 timestamp)",
+  "event DrawSkipped(uint256 indexed raffleId, uint256 poolCents, uint256 nextCheckTime, uint256 timestamp)",
+  "event JackpotFunded(uint256 amountCents, uint256 newTotal, uint256 timestamp)",
+  "event JackpotTriggered(uint256 indexed jackpotId, address indexed winner, uint256 prizeCents, uint256 randomValue, uint256 timestamp)",
+  "event JackpotSkipped(uint256 poolCents, uint256 nextCheckTime, uint256 timestamp)",
   "event AccountRegistered(address indexed account, uint256 timestamp)",
   "event AccountDeregistered(address indexed account, uint256 timestamp)",
-  "event DrawExecuted(uint256 indexed raffleId, uint256 prizePoolCents, uint256 winnerCount, uint256 timestamp)",
-  "event DrawSkipped(uint256 indexed raffleId, uint256 poolCents, uint256 nextCheckTime, uint256 timestamp)",
 ];
 
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
   "function decimals() view returns (uint8)",
-  "function totalSupply() view returns (uint256)",
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 ];
 
@@ -98,17 +95,21 @@ function loadState(): WatcherState {
     if (existsSync(STATE_FILE)) {
       return JSON.parse(readFileSync(STATE_FILE, "utf8"));
     }
-  } catch (err) {
-    console.warn("⚠ Could not load state file, starting fresh:", err);
-  }
-  return { lastProcessedBlock: 0, knownHolders: {}, lastDrawTime: 0, lastJackpotCheck: 0 };
+  } catch {}
+  return {
+    lastProcessedBlock: 0,
+    knownHolders: {},
+    lastDrawTime: 0,
+    lastJackpotCheck: 0,
+    lastJackpotTriggerTime: 0,
+  };
 }
 
 function saveState(): void {
   try {
     writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
   } catch (err) {
-    console.error("❌ Failed to save state:", err);
+    console.error("Failed to save state:", err);
   }
 }
 
@@ -117,11 +118,12 @@ function loadDedup(): void {
     if (existsSync(DEDUP_FILE)) {
       const arr: string[] = JSON.parse(readFileSync(DEDUP_FILE, "utf8"));
       dedupSet = new Set(arr);
-      // Prune old entries (keep last 50k)
       if (dedupSet.size > 50_000) {
         const entries = [...dedupSet];
         dedupSet = new Set(entries.slice(entries.length - 40_000));
       }
+    } else {
+      dedupSet = new Set();
     }
   } catch {
     dedupSet = new Set();
@@ -132,11 +134,11 @@ function saveDedup(): void {
   try {
     writeFileSync(DEDUP_FILE, JSON.stringify([...dedupSet]));
   } catch (err) {
-    console.error("❌ Failed to save dedup:", err);
+    console.error("Failed to save dedup:", err);
   }
 }
 
-// ─── Initialization ───────────────────────────────────────────────────────────
+// ─── Setup ───────────────────────────────────────────────────────────────────
 async function setup(): Promise<void> {
   if (!LIBERTY_TOKEN_ADDR) throw new Error("LIBERTY_TOKEN not set");
   if (!RAFFLE_ADDR) throw new Error("RAFFLE_ADDR not set");
@@ -145,57 +147,45 @@ async function setup(): Promise<void> {
   provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
   signer = new ethers.Wallet(WATCHER_KEY, provider);
 
-  raffle = new ethers.Contract(RAFFLE_ADDR, RAFFLE_ABI, provider);
-  libertyToken = new ethers.Contract(LIBERTY_TOKEN_ADDR, ERC20_ABI, provider);
+  raffle = new ethers.Contract(RAFFLE_ADDR, RAFFLE_ABI, provider).connect(signer) as any;
+  libertyToken = new ethers.Contract(LIBERTY_TOKEN_ADDR, ERC20_ABI, provider) as any;
 
-  // Verify signer is the raffle owner
-  const owner = await raffle.owner();
-  if (signer.address.toLowerCase() !== owner.toLowerCase()) {
-    console.warn(
-      `⚠  WATCHER_KEY (${signer.address}) is NOT raffle owner (${owner}). ` +
-      `registerAccount() calls will fail — it's onlyOwner.`
-    );
-  }
+  const owner: string = await raffle.owner();
+  const isOwner = signer.address.toLowerCase() === owner.toLowerCase();
 
   state = loadState();
   loadDedup();
 
-  console.log(`\n🗽 LibertyTorch Watcher — starting up`);
-  console.log(`   RPC:        ${RPC_URL}`);
-  console.log(`   Chain ID:   ${CHAIN_ID}`);
-  console.log(`   $LIBERTY:   ${LIBERTY_TOKEN_ADDR}`);
-  console.log(`   Raffle:     ${RAFFLE_ADDR}`);
-  console.log(`   Vault:      ${VAULT_ADDR || "(not set — entry computation is on-chain)"}`);
-  console.log(`   Watcher:    ${signer.address}`);
-  console.log(`   Last block: ${state.lastProcessedBlock}`);
-  console.log(`   Known holders: ${Object.keys(state.knownHolders).length}\n`);
+  console.log("\nLibertyTorch Watcher");
+  console.log("  RPC:        " + RPC_URL);
+  console.log("  Chain ID:   " + CHAIN_ID);
+  console.log("  $LIBERTY:   " + LIBERTY_TOKEN_ADDR);
+  console.log("  Raffle:     " + RAFFLE_ADDR);
+  console.log("  Watcher:   " + signer.address);
+  console.log("  Owner OK:   " + (isOwner ? "YES" : "NO — registerAccount/deregisterAccount will FAIL"));
+  console.log("  Last block: " + state.lastProcessedBlock + "\n");
 }
 
-// ─── Balance check ────────────────────────────────────────────────────────────
+// ─── Balance check ──────────────────────────────────────────────────────────
 async function checkBalance(account: string): Promise<boolean> {
   try {
-    const raw = await libertyToken.balanceOf(account);
-    const dec = await libertyToken.decimals();
+    const [raw, dec] = await Promise.all([
+      libertyToken.balanceOf(account) as Promise<bigint>,
+      libertyToken.decimals() as Promise<number>,
+    ]);
     const balance = Number(ethers.formatUnits(raw, dec));
-
-    // For base entry eligibility we need $LIBERTY ≥ $10.
-    // Without a $LIBERTY/USD feed on-chain, we use a fixed nominal threshold:
-    // 1,000 $LIBERTY tokens minimum (configurable; this is a placeholder
-    // until a real feed is available).
-    //
-    // IN PRODUCTION: replace this with a Chainlink $LIBERTY/USD feed or
-    // use a DEX price oracle to convert balance → USD.
-    const MIN_TOKENS = 1000; // placeholder threshold
+    // TODO: replace with $LIBERTY/USD price feed or DEX oracle for proper USD threshold
+    const MIN_TOKENS = 1000;
     return balance >= MIN_TOKENS;
   } catch (err) {
-    console.error(`  ❌ balanceOf failed for ${account}:`, err);
+    console.error("  balanceOf failed for " + account + ":", err);
     return false;
   }
 }
 
-// ─── Process a single Transfer event ──────────────────────────────────────────
-async function processTransfer(log: ethers.Log): Promise<void> {
-  const dedupKey = `${log.transactionHash}-${log.logIndex}`;
+// ─── Process Transfer ───────────────────────────────────────────────────────
+async function processTransfer(log: Log): Promise<void> {
+  const dedupKey = log.transactionHash + "-" + log.index;
   if (dedupSet.has(dedupKey)) return;
   dedupSet.add(dedupKey);
 
@@ -206,56 +196,49 @@ async function processTransfer(log: ethers.Log): Promise<void> {
     });
     if (!parsed || parsed.name !== "Transfer") return;
 
-    const from = parsed.args[0] as string;
-    const to = parsed.args[1] as string;
-    const zero = "0x0000000000000000000000000000000000000000";
+    const from = parsed.args?.[0] as string | undefined;
+    const to = parsed.args?.[1] as string | undefined;
+    const ZERO = "0x0000000000000000000000000000000000000000";
 
-    const addressesToCheck = new Set<string>();
-    if (from !== zero) addressesToCheck.add(from);
-    if (to !== zero) addressesToCheck.add(to);
+    const addrs = new Set<string>();
+    if (from && from !== ZERO) addrs.add(from);
+    if (to && to !== ZERO) addrs.add(to);
 
-    for (const addr of addressesToCheck) {
+    for (const addr of addrs) {
       const eligible = await checkBalance(addr);
-      const currentlyRegistered = state.knownHolders[addr] === true;
+      const registered = state.knownHolders[addr] === true;
 
-      if (eligible && !currentlyRegistered) {
+      if (eligible && !registered) {
         try {
-          const tx = await raffle
-            .connect(signer)
-            .registerAccount(addr) as ethers.TransactionResponse;
-          console.log(`  ✅ Registered ${addr} (≥ threshold)`);
+          const tx = await raffle.registerAccount(addr);
+          console.log("  + Registered " + addr);
           await tx.wait();
           state.knownHolders[addr] = true;
         } catch (err: any) {
-          console.error(`  ❌ registerAccount failed for ${addr}:`, err?.reason || err);
+          console.error("  registerAccount(" + addr + ") failed:", err.reason || err.message);
         }
-      } else if (!eligible && currentlyRegistered) {
+      } else if (!eligible && registered) {
         try {
-          const tx = await raffle
-            .connect(signer)
-            .deregisterAccount(addr) as ethers.TransactionResponse;
-          console.log(`  🔻 Deregistered ${addr} (below threshold)`);
+          const tx = await raffle.deregisterAccount(addr);
+          console.log("  - Deregistered " + addr);
           await tx.wait();
           state.knownHolders[addr] = false;
         } catch (err: any) {
-          console.error(`  ❌ deregisterAccount failed for ${addr}:`, err?.reason || err);
+          console.error("  deregisterAccount(" + addr + ") failed:", err.reason || err.message);
         }
       }
     }
   } catch (err) {
-    console.error(`  ❌ Transfer processing error:`, err);
-    // Don't remove from dedup — don't retry broken events indefinitely
+    console.error("  Transfer processing error:", err);
   }
 }
 
-// ─── Catch-up: historical Transfer scanning ────────────────────────────────────
+// ─── Catch-up ──────────────────────────────────────────────────────────────
 async function catchUp(fromBlock: number, toBlock: number): Promise<void> {
   if (fromBlock >= toBlock) return;
-
-  console.log(`\n📜 Scanning blocks ${fromBlock} → ${toBlock}...`);
-
-  // Batch in chunks to avoid RPC rate limits
+  console.log("\nCatching up blocks " + fromBlock + " -> " + toBlock + "...");
   let scanned = 0;
+
   for (let start = fromBlock; start < toBlock; start += BLOCK_BATCH) {
     const end = Math.min(start + BLOCK_BATCH - 1, toBlock);
     try {
@@ -267,96 +250,99 @@ async function catchUp(fromBlock: number, toBlock: number): Promise<void> {
       });
 
       for (const log of logs) {
-        await processTransfer(log);
+        await processTransfer(log as Log);
         scanned++;
       }
 
       state.lastProcessedBlock = end;
-      saveState();
-      if (scanned % 100 === 0) saveDedup();
+      if (scanned % 100 === 0) {
+        saveState();
+        saveDedup();
+      }
     } catch (err) {
-      console.error(`  ⚠  Batch ${start}-${end} failed:`, err);
-      // Don't update lastProcessedBlock on failure — retry next run
+      console.error("  Batch " + start + "-" + end + " failed:", err);
       break;
     }
-
-    // Brief pause between batches to respect rate limits
     await sleep(200);
   }
 
-  console.log(`   ✅ Scanned ${scanned} transfer events`);
+  console.log("  Done — " + scanned + " transfer events");
 }
 
-// ─── Full rescan of all known holders ─────────────────────────────────────────
+// ─── Full rescan ──────────────────────────────────────────────────────────
 async function fullRescan(): Promise<void> {
-  console.log(`\n🔍 Full rescan of ${Object.keys(state.knownHolders).length} known holders...`);
+  const holders = Object.keys(state.knownHolders);
+  console.log("\nRescanning " + holders.length + " known holders...");
   let changes = 0;
-  for (const addr of Object.keys(state.knownHolders)) {
-    const eligible = await checkBalance(addr);
-    const currentlyRegistered = state.knownHolders[addr] === true;
 
-    if (eligible && !currentlyRegistered) {
+  for (const addr of holders) {
+    const eligible = await checkBalance(addr);
+    const registered = state.knownHolders[addr] === true;
+
+    if (eligible && !registered) {
       try {
-        const tx = await raffle.connect(signer).registerAccount(addr);
-        await tx.wait();
+        await raffle.registerAccount(addr);
         state.knownHolders[addr] = true;
         changes++;
-      } catch (err: any) {
-        console.error(`  ❌ Rescan register ${addr}:`, err?.reason || err);
-      }
-    } else if (!eligible && currentlyRegistered) {
+        console.log("  + Registered " + addr);
+      } catch {}
+    } else if (!eligible && registered) {
       try {
-        const tx = await raffle.connect(signer).deregisterAccount(addr);
-        await tx.wait();
+        await raffle.deregisterAccount(addr);
         state.knownHolders[addr] = false;
         changes++;
-      } catch (err: any) {
-        console.error(`  ❌ Rescan deregister ${addr}:`, err?.reason || err);
-      }
+        console.log("  - Deregistered " + addr);
+      } catch {}
     }
 
-    if (changes % 10 === 0 && changes > 0) {
+    if (changes > 0 && changes % 10 === 0) {
       saveState();
-      await sleep(500); // throttle
+      await sleep(500);
     }
   }
+
   if (changes > 0) {
-    console.log(`   ✅ Rescan: ${changes} account status changes applied`);
+    console.log("  " + changes + " status changes applied");
     saveState();
   } else {
-    console.log(`   ✅ All known holders up to date`);
+    console.log("  All up to date");
   }
 }
 
-// ─── Draw keeper ──────────────────────────────────────────────────────────────
+// ─── Draw keeper ───────────────────────────────────────────────────────────
 async function triggerDraw(): Promise<void> {
   const now = Date.now();
   if (now - state.lastDrawTime < DRAW_INTERVAL_MS) return;
 
   try {
-    // Check if draw is actually due on-chain
-    const lastDraw = Number(await raffle.lastDrawTime());
-    const interval = 3600; // 1 hour in seconds
-    if (Math.floor(Date.now() / 1000) < lastDraw + interval) {
-      return; // not due yet
+    const [canDraw] = await raffle.canDraw() as [boolean, number];
+    if (!canDraw) {
+      state.lastDrawTime = now;
+      saveState();
+      return;
     }
 
-    console.log(`\n🎰 Triggering hourly draw...`);
-    const tx = await raffle.connect(signer).checkAndDraw() as ethers.TransactionResponse;
-    console.log(`   TX: ${tx.hash}`);
-    const receipt = await tx.wait();
+    console.log("\nTriggering hourly draw...");
+    const tx = await raffle.checkAndDraw();
+    console.log("  TX: " + tx.hash);
+    const receipt: TransactionReceipt | null = await tx.wait();
+    if (!receipt) { console.error("  TX reverted"); return; }
 
-    // Parse events to see if draw executed or skipped
     for (const log of receipt.logs) {
       try {
-        const parsed = raffle.interface.parseLog({
-          topics: log.topics as string[],
-          data: log.data,
-        });
+        const parsed = raffle.interface.parseLog({ topics: log.topics as string[], data: log.data });
         if (parsed?.name === "DrawExecuted") {
-          console.log(`   🎉 Draw #${parsed.args.raffleId} executed! Pool: ${parsed.args.prizePoolCents}¢, Winners: ${parsed.args.winnerCount}`);
+          const pc = Number(parsed.args!.prizePoolCents) / 100;
+          const jc = Number(parsed.args!.jackpotContribution) / 100;
+          console.log(
+            "  Draw #" + parsed.args!.raffleId + " — Pool: $" + pc.toFixed(2) +
+            " | Bell: $" + jc.toFixed(2) + " | Winners: " + parsed.args!.winnerCount
+          );
         } else if (parsed?.name === "DrawSkipped") {
-          console.log(`   ⏭  Draw skipped — pool below floor (${parsed.args.poolCents}¢)`);
+          console.log("  Skipped — pool: $" + (Number(parsed.args!.poolCents) / 100).toFixed(2));
+        } else if (parsed?.name === "JackpotFunded") {
+          console.log("  Bell funded: $" + (Number(parsed.args!.amountCents) / 100).toFixed(2) +
+            " -> pot: $" + (Number(parsed.args!.newTotal) / 100).toFixed(2));
         }
       } catch {}
     }
@@ -364,38 +350,68 @@ async function triggerDraw(): Promise<void> {
     state.lastDrawTime = now;
     saveState();
   } catch (err: any) {
-    if (err?.reason?.includes("DrawTooSoon") || err?.data?.includes("DrawTooSoon")) {
-      // Not due yet — update timestamp to avoid retry spam
+    const msg = err.reason || (err.data ? err.data.toString() : err.message);
+    if (msg.includes("DrawTooSoon")) {
       state.lastDrawTime = now;
       saveState();
     } else {
-      console.error(`  ❌ Draw trigger failed:`, err?.reason || err);
+      console.error("  Draw failed:", msg);
     }
   }
 }
 
-// ─── Liberty Bell jackpot check (future: contract integration) ────────────────
-async function checkJackpot(): Promise<void> {
+// ─── Jackpot keeper ───────────────────────────────────────────────────────
+async function triggerJackpotCheck(): Promise<void> {
   const now = Date.now();
-  if (now - state.lastJackpotCheck < JACKPOT_INTERVAL_MS) return;
+  if (now - state.lastJackpotCheck < DRAW_INTERVAL_MS) return;
 
-  // Jackpot: 1-in-72 probability on-chain check.
-  // Currently the contract does not have a separate jackpot function —
-  // this is a placeholder for when the Liberty Bell contract logic is added.
-  //
-  // When implemented, this would:
-  //   1. Call raffle.checkJackpot() (future function)
-  //   2. Use Chainlink VRF or block randomness for verifiable 1-in-72 odds
-  //   3. Select winner from eligible accounts, subject to shared cooldown
-  //
-  // For now, this is a no-op stub.
-  state.lastJackpotCheck = now;
-  saveState();
+  try {
+    const [canCheck] = await raffle.canCheckJackpot() as [boolean, number];
+    if (!canCheck) {
+      state.lastJackpotCheck = now;
+      saveState();
+      return;
+    }
+
+    console.log("\nChecking Liberty Bell...");
+    const tx = await raffle.checkJackpot();
+    console.log("  TX: " + tx.hash);
+    const receipt: TransactionReceipt | null = await tx.wait();
+    if (!receipt) { console.error("  TX reverted"); return; }
+
+    for (const log of receipt.logs) {
+      try {
+        const parsed = raffle.interface.parseLog({ topics: log.topics as string[], data: log.data });
+        if (parsed?.name === "JackpotTriggered") {
+          console.log(
+            "  BELL RUNG! #" + parsed.args!.jackpotId +
+            " | Winner: " + parsed.args!.winner +
+            " | Prize: $" + (Number(parsed.args!.prizeCents) / 100).toFixed(2) +
+            " | Random: " + parsed.args!.randomValue
+          );
+          state.lastJackpotTriggerTime = now;
+        } else if (parsed?.name === "JackpotSkipped") {
+          console.log("  Silent — pot: $" + (Number(parsed.args!.poolCents) / 100).toFixed(2));
+        }
+      } catch {}
+    }
+
+    state.lastJackpotCheck = now;
+    saveState();
+  } catch (err: any) {
+    const msg = err.reason || (err.data ? err.data.toString() : err.message);
+    if (msg.includes("JackpotTooSoon")) {
+      state.lastJackpotCheck = now;
+      saveState();
+    } else {
+      console.error("  Jackpot check failed:", msg);
+    }
+  }
 }
 
-// ─── Live block subscription ──────────────────────────────────────────────────
+// ─── Live listener ────────────────────────────────────────────────────────
 async function startLiveListener(): Promise<void> {
-  console.log(`\n📡 Listening for live $LIBERTY transfers...`);
+  console.log("Listening for live $LIBERTY transfers...");
 
   provider.on("block", async (blockNum: number) => {
     try {
@@ -407,93 +423,94 @@ async function startLiveListener(): Promise<void> {
       });
 
       for (const log of logs) {
-        await processTransfer(log);
+        await processTransfer(log as Log);
       }
 
       state.lastProcessedBlock = blockNum;
-
-      // Periodic save (every ~10 blocks)
       if (blockNum % 10 === 0) {
         saveState();
         saveDedup();
       }
     } catch (err) {
-      console.error(`⚠  Block ${blockNum} scan error:`, err);
+      console.error("Block " + blockNum + " error:", err);
     }
   });
 }
 
-// ─── Status reporter ──────────────────────────────────────────────────────────
+// ─── Status ───────────────────────────────────────────────────────────────
 async function reportStatus(): Promise<void> {
   try {
     const raffleId = Number(await raffle.raffleId());
     const poolCents = Number(await raffle.prizePoolCents());
+    const jackpotCents = Number(await raffle.jackpotPoolCents());
+    const jackpotTriggered: boolean = await raffle.jackpotTriggered();
+    const jackpotWinner: string = await raffle.jackpotWinner();
     const lastDraw = Number(await raffle.lastDrawTime());
-    const eligibleCount = (await raffle.getEligibleAccounts()).length;
-    const registeredCount = Object.values(state.knownHolders).filter(Boolean).length;
+    const lastJack = Number(await raffle.lastJackpotCheckTime());
+    const eligible = (await raffle.getEligibleAccounts()).length;
+    const registered = Object.values(state.knownHolders).filter(Boolean).length;
 
     const nextDrawSec = lastDraw > 0 ? (lastDraw + 3600) - Math.floor(Date.now() / 1000) : 0;
-    const nextDraw = nextDrawSec > 0
-      ? `${Math.floor(nextDrawSec / 60)}m ${nextDrawSec % 60}s`
-      : "ANY MOMENT";
+    const nextJackSec = lastJack > 0 ? (lastJack + 3600) - Math.floor(Date.now() / 1000) : 0;
+    const drawStr = nextDrawSec > 0 ? Math.floor(nextDrawSec / 60) + "m" : "DUE";
+    const jackStr = nextJackSec > 0 ? Math.floor(nextJackSec / 60) + "m" : "DUE";
 
-    console.log(`\n📊 Status — ${new Date().toISOString()}`);
-    console.log(`   Raffle #${raffleId}  |  Pool: $${(poolCents / 100).toFixed(2)}  |  Eligible: ${eligibleCount}  |  Known holders: ${registeredCount}`);
-    console.log(`   Next draw: ${nextDraw}  |  Block: ${state.lastProcessedBlock}`);
+    console.log(
+      "\n[" + new Date().toISOString() + "] Raffle #" + raffleId +
+      " | Pool: $" + (poolCents / 100).toFixed(2) +
+      " | Eligible: " + eligible +
+      " | Next draw: " + drawStr
+    );
+    console.log(
+      "  Bell: $" + (jackpotCents / 100).toFixed(2) +
+      " pot | " + (jackpotTriggered ? "WINNER: " + jackpotWinner : "Next: " + jackStr) +
+      " | Holders: " + registered + " | Block: " + state.lastProcessedBlock
+    );
   } catch (err) {
-    console.warn(`⚠  Status report failed:`, err);
+    console.warn("Status failed:", err);
   }
 }
 
-// ─── Utility ───────────────────────────────────────────────────────────────────
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// ─── Main ────────────────────────────────────────────────────────────────────
+// ─── Main ────────────────────────────────────────────────────────────────
 async function main() {
   await setup();
 
-  // 1. Catch up on any missed blocks since last run
   const latest = await provider.getBlockNumber();
   const from = state.lastProcessedBlock > 0
     ? state.lastProcessedBlock + 1
-    : Math.max(1, latest - BLOCK_BATCH * 5); // first run: scan last ~10k blocks
+    : Math.max(1, latest - BLOCK_BATCH * 5);
 
   await catchUp(from, latest);
-
-  // 2. Full rescan of known holders (correct any drift from missed events)
   await fullRescan();
-
-  // 3. Trigger draw if due
   await triggerDraw();
-
-  // 4. Start live listener
+  await triggerJackpotCheck();
   await startLiveListener();
-
-  // 5. Report initial status
   await reportStatus();
 
-  // ─── Periodic timers ──────────────────────────────────────────────────────
+  // Draw + jackpot check every minute (will early-exit if not due)
   setInterval(async () => {
     await triggerDraw();
-    await checkJackpot();
-  }, 60_000); // check every minute
+    await triggerJackpotCheck();
+  }, 60_000);
 
-  setInterval(async () => {
-    await fullRescan();
-  }, PRICE_CHECK_INTERVAL_MS); // full rescan every 5 min (balance checks)
+  // Full holder rescan every 5 minutes
+  setInterval(fullRescan, 5 * 60_000);
 
+  // Status + save every 5 minutes
   setInterval(async () => {
     await reportStatus();
     saveState();
     saveDedup();
-  }, 5 * 60_000); // status report + save every 5 min
+  }, 5 * 60_000);
 
-  console.log(`\n✅ Watcher running. Press Ctrl+C to stop.\n`);
+  console.log("\nWatcher running. Press Ctrl+C to stop.\n");
 }
 
 main().catch((err) => {
-  console.error("❌ Watcher crashed:", err);
+  console.error("Watcher crashed:", err);
   process.exit(1);
 });
