@@ -62,7 +62,7 @@ window.LIBERTY_CONFIG = {
   },
 
   openDecisions: [
-    "The final payout split, and where the remaining 4% goes",
+    "What the exact conditions for the 1-in-72 jackpot trigger will be",
     "Who receives the 2% fee and how it is accounted",
     "Entry-weight precision and rounding",
     "Deposits that land while a draw is in progress",
