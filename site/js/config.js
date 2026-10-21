@@ -107,7 +107,7 @@ window.LIBERTY_CONFIG = {
   },
 
   openDecisions: [
-    "Where the remaining 4% of the payout split goes",
+    "What the exact conditions for the 1-in-72 jackpot trigger will be",
     "Duration of dust-earned entries before expiry",
     "Rules for drawings with fewer than 10 eligible participants",
     "Who receives the 2% protocol fee and how it is accounted",
