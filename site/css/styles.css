@@ -60,6 +60,7 @@ button { font: inherit; color: inherit; }
 .fine { font-size: 0.9rem; color: var(--muted); }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--patina); margin-right: 8px; vertical-align: 1px; }
 .dot-copper { background: var(--copper); box-shadow: 0 0 0 3px rgba(184, 115, 58, 0.22); }
+.dot-mint { background: var(--mint); box-shadow: 0 0 0 3px rgba(110, 231, 134, 0.25); }
 
 /* Buttons */
 .btn {
