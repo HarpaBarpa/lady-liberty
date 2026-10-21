@@ -100,13 +100,44 @@ npx hardhat run scripts/deploy.ts --network robinhood
 
 ---
 
+## Watcher & Keeper Architecture
+
+A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the contracts. It does NOT use any third-party indexing service.
+
+### Two jobs
+
+1. **Holder watcher** — monitors `Transfer` events on the $LIBERTY token via direct RPC polling. When a wallet's balance crosses the threshold (≥1000 $LIBERTY), it calls `raffle.registerAccount()`. When it drops, it calls `raffle.deregisterAccount()`. Runs a full rescan of all known holders every 5 minutes to correct any drift.
+2. **Draw keeper** — calls `raffle.checkAndDraw()` at each eligible hourly window. `checkAndDraw()` is permissionless (anyone can call it), but the watcher ensures it fires reliably.
+
+### Persistent state (survives restarts)
+
+- `watcher-state.json`: last processed block, known holder registry
+- `watcher-dedup.json`: set of `txHash-logIndex` keys (no double-processing)
+- On restart, the watcher catches up from `lastProcessedBlock` → current block, then runs a full rescan of all tracked holders
+
+### Security model (why no third party needed)
+
+Dust deposits are **computed on-chain** by `LibertyVault.depositDust()`. The watcher only handles holder registration. Here's how each attack vector is addressed:
+
+| Concern | How it's handled |
+|---|---|
+| Fake deposits → entries | Impossible. The vault only credits entries when actual tokens are transferred in. |
+| Wallet attribution | `depositDust(primary, token, amount)` requires `primary` hint to match an EIP-712-signed link in LinkRegistry. Wrong hint → revert. |
+| Compromised watcher key | Worst case: registers ineligible wallets for 1 base entry each. Cannot create dust entries (those are on-chain). Cannot bypass cooldown. Cannot drain the prize pool. |
+| Double-crediting deposits | On-chain: contributions are per-cycle; entries recomputed fresh each cycle. Off-chain: dedup by txHash-logIndex. |
+| Entry cap bypass | Vault enforces max 5 entries per linked wallet per cycle and max 25% of total entries per draw on-chain. |
+| Missed blocks during downtime | Watcher catches up from `lastProcessedBlock` on restart, rescans all known holders, and will never double-process (dedup keys). |
+
+---
+
 ## Known Limitations
 
-1. **Indexer required for $LIBERTY base entry:** The vault cannot read $LIBERTY balances on-chain from other wallets. An off-chain indexer (e.g., The Graph subgraph, Chainlink automation, or custom backend) must watch for $LIBERTY transfers and call `raffle.registerAccount(wallet)` when balance ≥ $10.
-2. **No secondary→primary reverse map:** The vault relies on the `depositDust` caller's `primary` hint, which is verified against the LinkRegistry. A direct registry scan would be needed if the hint is unavailable.
-3. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for community raffle; not suitable for high-stakes financial applications.
-4. **ETH/USD feed:** If `ETH_USD_FEED = address(0)`, ETH is priced at $1 (not market value). Prize amounts will be wrong if this is not updated with a real feed.
-5. **Manual account registration:** No automatic deregistration when $LIBERTY balance drops below $10. Owner must call `deregisterAccount` off-chain.
+1. **Holder registration requires watcher process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The watcher (`code/watcher/watcher.ts`) handles this, but it must run continuously on a VPS or hosted worker (not Vercel — the frontend being online doesn't mean the watcher is running).
+2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for community raffle; not suitable for high-stakes applications. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
+3. **ETH/USD feed:** If `ETH_USD_FEED = address(0)`, ETH is priced at $1 (not market value). A real Chainlink ETH/USD feed address must be set at deploy time.
+4. **Production hosting:** The watcher needs an always-on host (e.g., $5/mo VPS, Railway, Fly.io). It needs the deployer key (for `registerAccount`), ~0.001 ETH for gas, and process monitoring with auto-restart. Not included: healthcheck alerts, log rotation, metrics.
+5. **$LIBERTY/USD price unavailable on-chain** — the watcher currently uses a token-count threshold. A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
+6. **The Liberty Bell jackpot logic is not yet in the smart contracts.** The 4% allocation is specified but the on-chain trigger (1-in-72 RNG per cycle) and separate jackpot pool tracking need to be added to LibertyRaffle.sol before the jackpot is live.
 
 ---
 
