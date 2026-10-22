@@ -1,6 +1,6 @@
 # LibertyTorch — Project Spec
 **Last updated:** 2026-10-22
-**Version:** 2.3
+**Version:** 2.4
 
 ---
 
@@ -122,13 +122,14 @@ npx hardhat run scripts/deploy.ts --network robinhood
 
 ## Watcher & Keeper Architecture
 
-A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the contracts. It does NOT use any third-party indexing service.
+A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs alongside the contracts on Fly.io. It does NOT use any third-party indexing service.
 
-### Three jobs
+### Four jobs
 
 1. **Holder watcher** — monitors `Transfer` events on the $LIBERTY token via direct RPC polling. When a wallet's balance crosses the threshold (≥1000 $LIBERTY), it calls `raffle.registerAccount()`. When it drops, it calls `raffle.deregisterAccount()`. Runs a full rescan of all known holders every 5 minutes to correct any drift.
-2. **Draw keeper** — calls `raffle.checkAndDraw()` at each eligible hourly window. `checkAndDraw()` is permissionless (anyone can call it), but the watcher ensures it fires reliably.
+2. **Draw keeper** — calls `raffle.checkAndDraw()` at each eligible hourly window. `checkAndDraw()` is permissionless (anyone can call it), but the keeper ensures it fires reliably.
 3. **Jackpot keeper** — calls `raffle.checkJackpot()` at each eligible hourly window. Same independence as the draw keeper — fires regardless of whether the regular draw has fired.
+4. **Dust liquidator** — runs automatically after every successful draw. Pulls all accumulated dust from `LibertyVault` to the deployer Torch wallet, swaps it for ETH (DEX aggregator integration pending — 0x or 1inch API), and splits the proceeds: **50% → `LibertyRaffle.fundPrizePoolETH()` (prize pool)** | **50% → deployer Torch wallet (dev income)**.
 
 ### Persistent state (survives restarts)
 
@@ -151,19 +152,23 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 | Fake deposits → entries | Impossible. The vault only credits entries when actual tokens are transferred in. |
 | Wallet attribution | `depositDust(primary, token, amount)` requires `primary` hint to match an EIP-712-signed link in LinkRegistry. Wrong hint → revert. |
 | `notifyDeposit` double-counting | Checkpoint tracking (`_depositCheckpoint`) advances on every call — only fresh token arrivals count. |
-| Compromised watcher key | Worst case: registers ineligible wallets for 1 base entry each. Cannot create dust entries (those are on-chain). Cannot bypass cooldown. Cannot drain the prize pool. |
+| Compromised watcher key | Can register ineligible wallets (1 base entry each). Cannot create dust entries, bypass cooldown, or drain the prize pool. |
+| Compromised deployer key | The deployer key owns the vault and raffle. If compromised: owner can `withdrawToken` drain the vault, `pause` the raffle, or `sweepToken` the prize pool. Key must be secured. |
 | Double-crediting deposits | On-chain: contributions are per-cycle; entries recomputed fresh each cycle. Off-chain: dedup by txHash-logIndex. |
-| Entry cap bypass | Vault enforces max 5 entries per linked wallet per cycle and max 25% of total entries per draw on-chain. |
-| Missed blocks during downtime | Watcher catches up from `lastProcessedBlock` on restart, rescans all known holders, and will never double-process (dedup keys). |
+| Entry cap bypass | Vault enforces max 5 entries per linked wallet per cycle on-chain. |
+| Missed blocks during downtime | Watcher catches up from `lastProcessedBlock` on restart, rescans all known holders, never double-processes (dedup keys). |
+| Dust liquidation trust | The keeper (`TORCH_DEPLOYER_KEY`) pulls dust from vault to the deployer wallet, then (once DEX integrated) splits proceeds 50/50. Compromised key = dust goes to attacker instead of dev wallet. No prize pool drain possible via this path. |
 
 ---
 
 ## Known Limitations
 
-1. **Holder registration requires watcher process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The watcher handles this, but it must run continuously.
+1. **Holder registration requires keeper process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The keeper handles this, but it must run continuously.
 2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for community raffle; not suitable for high-stakes applications. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
 3. **ETH/USD feed unavailable on Robinhood Chain:** No Chainlink ETH/USD feed address has been confirmed on Robinhood Chain. Deploy with `ETH_USD_FEED = address(0)` for $1/ETH fallback. Prize pool thresholds and payouts will be in non-USD terms until a real feed is available.
-4. **$LIBERTY/USD price unavailable on-chain** — the watcher uses a token-count threshold (≥1000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
+4. **$LIBERTY/USD price unavailable on-chain** — the keeper uses a token-count threshold (≥1000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
+5. **Dust swap requires DEX aggregator API** — the liquidator pulls dust from the vault to the deployer wallet, but the ETH swap step is stubbed pending a 0x or 1inch API key. Until then, dust accumulates in the deployer wallet without being converted. Configure the swap in `liquidateDust()` once a DEX API key is available on Robinhood Chain.
+6. **Deployer key is single point of trust** — the `TORCH_DEPLOYER_KEY` owns the vault, can drain dust, can pause the raffle, and receives the dev split from liquidation. If compromised, the attacker can drain accumulated dust and pause the raffle. Key must be stored securely (Vault + hardware wallet recommended for long-term).
 
 ---
 
