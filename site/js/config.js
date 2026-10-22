@@ -3,6 +3,10 @@
 window.LIBERTY_CONFIG = {
   status: "live",
 
+  // Deploy password for /deploy.html — NEVER commit a real value here
+  // Injected at Vercel build time via NEXT_PUBLIC_DEPLOY_PASSWORD env var
+  
+
   rules: {
     network: "Robinhood Chain",
     valuation: "Finnhub-backed oracle, USD value locked at deposit",

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contract Deployer — LibertyTorch</title>
   <style>
@@ -207,6 +208,26 @@
     .success-banner h2 { color: var(--torch); font-size: 1.2rem; margin-bottom: 8px; }
     .success-banner p { color: var(--muted); font-size: 0.85rem; }
   </style>
+  <script>
+    // ─── Simple access gate ───────────────────────────────────────────────────
+    // Set GATE_PASSWORD in site/js/config.js or change the value below.
+    // To disable the gate temporarily, set DISABLE_GATE = true.
+    const DISABLE_GATE = true;
+
+    function checkGate() {
+      if (DISABLE_GATE || !GATE_PASSWORD) return true;
+      const stored = sessionStorage.getItem('lt_deploy_ok');
+      if (stored === GATE_PASSWORD) return true;
+      const attempt = window.prompt('Enter the deploy access password:');
+      if (attempt === GATE_PASSWORD) {
+        sessionStorage.setItem('lt_deploy_ok', attempt);
+        return true;
+      }
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#DCF5EB;background:#0a1110;font-family:Segoe UI,sans-serif;text-align:center;padding:24px;"><div><h1 style="color:#6EE786">🔒 Access Restricted</h1><p>This tool is restricted to authorized users only.</p></div></div>';
+      return false;
+    }
+    if (!checkGate()) throw new Error('Access denied');
+  </script>
 </head>
 <body>
   <div class="card">
@@ -214,8 +235,10 @@
     <h1>LibertyTorch Contract Deployer</h1>
     <p class="subtitle">Deploy LinkRegistry → LibertyVault → LibertyRaffle</p>
 
-    <div class="warning">
-      ⚠️ Only use this after the $LIBERTY token is launched. Have your RPC URL and $LIBERTY address ready.
+    <div class="warning security-notice">
+      ⚠️ <strong>Authorized use only.</strong> This tool deploys LibertyTorch smart contracts to Robinhood Chain.
+      Never enter a seed phrase or private key here. Always verify the contract addresses match this project.
+      Misuse may violate local laws.
     </div>
 
     <div class="network-status">
@@ -281,7 +304,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
   <script>
     // ─── Artifact data (injected at build time) ─────────────────────────────────
     // These will be replaced by the build script with actual bytecode + ABI
