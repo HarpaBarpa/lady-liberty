@@ -3,30 +3,40 @@
 
 ---
 
-## 1. Fly.io Secrets + Deploy (run after you have RAFFLE_ADDR and LIBERTY_TOKEN)
+## 1. Fly.io Secrets + Deploy (run after you have all three contract addresses)
 
 ```bash
 # ─────────────────────────────────────────────────────────
-# Step 1: Set secrets on the running watcher app
+# Step 1: Set all secrets on the running watcher/keeper
 # ─────────────────────────────────────────────────────────
 fly secrets set \
+  ROBINHOOD_RPC=https://rpc.mainnet.chain.robinhood.com \
+  CHAIN_ID=4663 \
   LIBERTY_TOKEN=<LIBERTY_TOKEN_ADDRESS> \
-  RAFFLE_ADDR=<LIBERTY_RAFFLE_ADDRESS> \
-  WATCHER_KEY=<NEW_DEPLOYER_PRIVATE_KEY> \
+  VAULT_ADDR=<VAULT_ADDRESS> \
+  LIBERTY_RAFFLE=<LIBERTY_RAFFLE_ADDRESS> \
+  TORCH_DEPLOYER_KEY=<DEPLOYER_PRIVATE_KEY> \
+  WATCHER_KEY=<WATCHER_PRIVATE_KEY> \
   -a libertytorch-watcher
 
 # ─────────────────────────────────────────────────────────
-# Step 2: Redeploy the watcher to pick up new secrets
+# Step 2: Redeploy to pick up new secrets
 # ─────────────────────────────────────────────────────────
 fly deploy -a libertytorch-watcher
 
 # ─────────────────────────────────────────────────────────
-# Step 3: Verify the watcher is running correctly
+# Step 3: Verify
 # ─────────────────────────────────────────────────────────
-fly logs libertytorch-watcher | grep -E "Watcher|error|ERROR|ready"
+fly logs libertytorch-watcher | grep -E "Keeper|LibertyTorch|error|ERROR"
 ```
 
-Expected output from Step 3: `"LibertyTorch Watcher vX.X.X — starting"` + `"Watcher running"` (no ERROR lines).
+Expected: `"LibertyTorch Keeper"` header + `"Keeper running"` (no ERROR lines).
+
+The keeper runs FOUR jobs on one machine:
+1. **Holder watcher** — tracks $LIBERTY balances, registers/deregisters eligible accounts
+2. **Draw keeper** — fires `checkAndDraw()` every hour
+3. **Jackpot keeper** — fires `checkJackpot()` every hour (Liberty Bell)
+4. **Dust liquidator** — after every draw, pulls dust from vault to dev wallet (swap + split pending DEX API setup)
 
 ---
 
@@ -35,20 +45,20 @@ Expected output from Step 3: `"LibertyTorch Watcher vX.X.X — starting"` + `"Wa
 ```bash
 cd code
 
-# Replace <TOKEN_ADDRESS> with the address from Torch (ends in 1111)
-# Replace <ETH_USD_FEED> with the Chainlink ETH/USD feed address on Robinhood Chain
-#   If no feed exists, use "0x0000000000000000000000000000000000000000" (zero address)
-#   This falls back to $1/ETH pricing — fine for now, replace when a feed is available.
-# Replace <PROTOCOL_FEE_RECIPIENT> with the address to receive 2% vault fees (deployer address recommended)
+# Replace <TOKEN_ADDRESS> with the address from Torch Launchpad
+# Replace <PROTOCOL_FEE_RECIPIENT> with your deployer address (0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438)
+# Replace <ETH_USD_FEED> with Chainlink ETH/USD feed — use 0x0 for $1/ETH fallback
 
 LIBERTY_TOKEN=<TOKEN_ADDRESS> \
-PROTOCOL_FEE_RECIPIENT=<YOUR_DEPLOYER_ADDRESS> \
+PROTOCOL_FEE_RECIPIENT=<DEPLOYER_ADDRESS> \
 ETH_USD_FEED=0x0000000000000000000000000000000000000000 \
 npx hardhat run scripts/deploy.ts --network robinhood
 
-# This deploys LinkRegistry + LibertyVault + LibertyRaffle
-# Saves output to code/deployments.json
+# Deploys: LinkRegistry → LibertyVault → LibertyRaffle
+# Saves addresses to code/deployments.json
 ```
+
+**Note:** Vault protocol fee is **3%** (300 bps), matching the frontend config.
 
 ---
 
@@ -66,114 +76,89 @@ contracts: {
 },
 ```
 
-Then commit and push:
+Then commit and push (GitHub auto-deploy NOT connected — use deploy.sh):
 ```bash
-cd ..
-git add site/js/config.js
-git commit -m "Update contract addresses post-deploy"
-git push
-# Vercel auto-deploys
+cd site && ./deploy.sh <VERCEL_TOKEN>
 ```
 
 ---
 
 ## 4. Seed Prize Pool (run after contracts deployed)
 
-**⚠️ How much ETH to seed with?**
+**⚠️ Amount matters:** pool needs ≥$50 to fire a draw.
 
-The raffle needs ≥$50 in the pool to fire a draw. ETH/USD pricing is in $.
+| Amount | Approx @ $3,500/ETH | Fires draw? |
+|--------|---------------------|-------------|
+| 0.015 ETH | ~$52 | ✅ Barely |
+| 0.02 ETH | ~$70 | ✅ Healthy |
+| 0.05 ETH | ~$175 | ✅ Solid start |
+| 0.10 ETH | ~$350 | ✅ Credible |
 
-| Amount | Approx value @ $3,500/ETH | Fires draw? |
-|--------|--------------------------|-------------|
-| 0.015 ETH | ~$52 | ✅ Just barely |
-| 0.02 ETH | ~$70 | ✅ Yes |
-| 0.05 ETH | ~$175 | ✅ Yes (healthy start) |
-| 0.10 ETH | ~$350 | ✅ Yes (credible) |
+Current default in fund-pool.ts: **0.01 ETH — below threshold, won't fire.**
 
-Current default in fund-pool.ts: 0.01 ETH (⚠️ below $50 threshold — won't fire)
-
-**To set your amount, either pass it as an env var or edit the default in fund-pool.ts:**
-
-```bash
-# Option A: pass as env var (recommended for one-off)
-ETH_AMOUNT=0.05 npx hardhat run scripts/fund-pool.ts --network robinhood
-
-# Option B: edit the default in code/scripts/fund-pool.ts
-# Change: const amount = process.env.ETH_AMOUNT || "0.01";
-# To:     const amount = process.env.ETH_AMOUNT || "0.05";
-```
-
-Then run:
 ```bash
 cd code
-RAFFLE_ADDR=<RAFFLE_ADDRESS> \
+RAFFLE_ADDR=<LIBERTY_RAFFLE_ADDRESS> \
 ETH_AMOUNT=0.05 \
 npx hardhat run scripts/fund-pool.ts --network robinhood
 ```
 
 ---
 
-## 5. Register Eligible Holders (run after contracts deployed)
+## 5. Register Eligible Holders (optional)
 
-If you have a list of known eligible wallets (≥1000 $LIBERTY each), edit `code/scripts/register-holders.ts`:
-
+Edit `code/scripts/register-holders.ts`:
 ```typescript
 const ACCOUNTS: string[] = [
-  "0x...", // your deployer/holder address
-  // add more addresses here
+  "0x...", // known eligible addresses
 ];
 ```
 
-Then run:
 ```bash
 cd code
-RAFFLE_ADDR=<RAFFLE_ADDRESS> \
+RAFFLE_ADDR=<LIBERTY_RAFFLE_ADDRESS> \
 npx hardhat run scripts/register-holders.ts --network robinhood
 ```
 
-If the ACCOUNTS array is empty, this script skips silently.
-
 ---
 
-## 6. Health Check (run at any time post-deploy)
+## 6. Health Check
 
 ```bash
 cd code
 ROBINHOOD_RPC=https://rpc.mainnet.chain.robinhood.com \
-RAFFLE_ADDR=<RAFFLE_ADDRESS> \
+RAFFLE_ADDR=<LIBERTY_RAFFLE_ADDRESS> \
 VAULT_ADDR=<VAULT_ADDRESS> \
-LINK_REG_ADDR=<LINK_REGISTRY_ADDRESS> \
 npx hardhat run scripts/check.ts --network robinhood
 ```
 
-Expected output shows: deployer balance, raffle status (canDraw), pool size in USD, vault token count, eligible account count.
+---
+
+## Dust Liquidation — How It Works
+
+After every successful draw, the keeper automatically:
+1. Pulls all accumulated dust tokens from `LibertyVault` to your Torch deployer wallet
+2. Swaps the dust for ETH (DEX aggregator integration pending — needs 0x or 1inch API key)
+3. Splits the proceeds: **50% → `LibertyRaffle.fundPrizePoolETH()` (prize pool)** | **50% → your Torch wallet (dev income)**
+
+The dust swap step is stubbed in the keeper until a DEX aggregator API key is configured.
+Once ready, add the swap call inside `liquidateDust()` in `watcher.ts`.
 
 ---
 
 ## Chainlink Feed Note
 
-Robinhood Chain does not yet have a confirmed Chainlink ETH/USD feed address publicly documented. The deploy script uses `address(0)` as the ETH/USD feed, which falls back to $1/ETH pricing.
-
-**Impact:** Until a real feed is set, `fundPrizePoolETH()` and prize payouts will be priced at $1/ETH instead of market value. The pool threshold ($50) and draw logic still work — just in non-USD terms.
-
-**To upgrade when a feed is available:**
-```bash
-# Call setEthUsdFeed on the deployed LibertyRaffle contract
-# (owner-only function)
-npx hardhat run scripts/set-feed.ts --network robinhood
-```
+No confirmed ETH/USD feed on Robinhood Chain yet. Deploy uses `address(0)` = $1/ETH fallback.
+Upgrade when a feed is available via `set-feed.ts`.
 
 ---
 
-## Checklist Before You Launch
+## Pre-Launch Checklist
 
-- [ ] $LIBERTY token launched on Torch Launchpad (token address in hand)
-- [ ] ETH_USD_FEED address confirmed (or use zero address for $1 fallback)
+- [ ] $LIBERTY token launched on Torch Launchpad
 - [ ] Contracts deployed (`deploy.ts`)
-- [ ] Fly.io watcher secrets set + redeployed
-- [ ] `site/js/config.js` updated + pushed (Vercel deploys)
-- [ ] Prize pool seeded (`fund-pool.ts`)
-- [ ] Eligible holders registered (`register-holders.ts`) — if any
-- [ ] Health check passes (`check.ts`)
-- [ ] Domain reactivated on Namecheap (`libertytorch.online` live)
-- [ ] Manual test draw fired (`draw.ts`) — optional, `checkAndDraw()` fires automatically via watcher
+- [ ] Fly.io secrets set + redeployed
+- [ ] `site/js/config.js` updated + deployed (`./deploy.sh`)
+- [ ] Prize pool seeded (≥0.02 ETH)
+- [ ] Health check passes
+- [ ] Domain reactivated on Namecheap

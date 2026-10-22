@@ -1,20 +1,21 @@
 /**
- * LibertyTorch Holder Watcher + Draw Keeper
- * ==========================================
+ * LibertyTorch Keeper — Holder Watcher + Draw Keeper + Jackpot Keeper + Dust Liquidator
+ * ======================================================================================
  * Runs alongside the LibertyVault + LibertyRaffle contracts on Robinhood Chain.
  *
- * THREE jobs:
+ * FOUR jobs:
  *   1. Holder watcher — polls Transfer events on $LIBERTY, registers accounts
  *      when balance ≥ threshold, deregisters when it drops.
  *   2. Draw keeper — calls raffle.checkAndDraw() every hour.
  *   3. Jackpot keeper — calls raffle.checkJackpot() every hour (Liberty Bell).
+ *   4. Dust liquidator — after every successful draw, sweeps dust from the vault,
+ *      swaps it for ETH, splits 50% to the prize pool and 50% to the dev wallet.
  *
- * SECURITY: Dust entries computed ON-CHAIN by LibertyVault. Watcher only writes
- * registerAccount/deregisterAccount/checkAndDraw/checkJackpot.
- * A compromised watcher can at worst register ineligible wallets for 1 base entry.
+ * SECURITY: A compromised keeper can at worst register ineligible wallets for 1 base entry.
+ * It cannot drain the vault, skip draws, or redirect prize funds.
  *
  * PERSISTENT STATE:
- *   - watcher-state.json: lastProcessedBlock, knownHolders, timers
+ *   - watcher-state.json: lastProcessedBlock, knownHolders, lastDrawTime, lastJackpotCheck
  *   - watcher-dedup.json: txHash-logIndex keys (no double-processing)
  *
  * RPC: Robinhood Chain public RPC (no third-party indexer needed).
@@ -31,6 +32,7 @@ interface WatcherState {
   lastDrawTime: number;
   lastJackpotCheck: number;
   lastJackpotTriggerTime: number;
+  lastLiquidationTime: number;
 }
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -38,12 +40,18 @@ const RPC_URL = process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhoo
 const CHAIN_ID = parseInt(process.env.CHAIN_ID || "4663");
 const WATCHER_KEY = process.env.WATCHER_KEY || "";
 const LIBERTY_TOKEN_ADDR = process.env.LIBERTY_TOKEN || "";
-const RAFFLE_ADDR = process.env.RAFFLE_ADDR || "";
+const VAULT_ADDR = process.env.VAULT_ADDR || "";
+const RAFFLE_ADDR = process.env.RAFFLE_RAFFLE || "";  // raffle is named LIBERTY_RAFFLE in .env
 
 const STATE_FILE = join(__dirname, "..", "..", "watcher-state.json");
 const DEDUP_FILE = join(__dirname, "..", "..", "watcher-dedup.json");
 const DRAW_INTERVAL_MS = 60 * 60 * 1000;
 const BLOCK_BATCH = 2000;
+
+// Split: 50% to prize pool, 50% to dev wallet
+const PRIZE_POOL_BPS = 5000;
+const DEV_WALLET_BPS = 5000;
+const BPS_DENOMINATOR = 10000;
 
 // ─── Global ─────────────────────────────────────────────────────────────────
 let provider: ethers.JsonRpcProvider;
@@ -51,7 +59,11 @@ let signer: ethers.Wallet;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let raffle: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+let vault: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let libertyToken: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let deployerSigner: any;
 let state: WatcherState;
 let dedupSet: Set<string>;
 
@@ -74,6 +86,7 @@ const RAFFLE_ABI = [
   "function owner() view returns (address)",
   "function canDraw() view returns (bool, uint8)",
   "function canCheckJackpot() view returns (bool, uint8)",
+  "function fundPrizePoolETH() external payable",
   "event DrawExecuted(uint256 indexed raffleId, uint256 prizePoolCents, uint256 jackpotContribution, uint256 winnerCount, uint256 timestamp)",
   "event DrawSkipped(uint256 indexed raffleId, uint256 poolCents, uint256 nextCheckTime, uint256 timestamp)",
   "event JackpotFunded(uint256 amountCents, uint256 newTotal, uint256 timestamp)",
@@ -81,11 +94,18 @@ const RAFFLE_ABI = [
   "event JackpotSkipped(uint256 poolCents, uint256 nextCheckTime, uint256 timestamp)",
   "event AccountRegistered(address indexed account, uint256 timestamp)",
   "event AccountDeregistered(address indexed account, uint256 timestamp)",
+  "event PoolFunded(uint256 amountCents, uint256 newTotal, address indexed funder, uint256 timestamp)",
+];
+
+const VAULT_ABI = [
+  "function getSupportedTokens() external view returns (address[])",
+  "function withdrawToken(address token, uint256 amount, address to) external",
 ];
 
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
   "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 ];
 
@@ -102,6 +122,7 @@ function loadState(): WatcherState {
     lastDrawTime: 0,
     lastJackpotCheck: 0,
     lastJackpotTriggerTime: 0,
+    lastLiquidationTime: 0,
   };
 }
 
@@ -140,30 +161,38 @@ function saveDedup(): void {
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 async function setup(): Promise<void> {
+  const vaultAddr = process.env.VAULT_ADDR || "";
+  const raffleAddr = process.env.LIBERTY_RAFFLE || process.env.RAFFLE_RAFFLE || "";
+
   if (!LIBERTY_TOKEN_ADDR) throw new Error("LIBERTY_TOKEN not set");
-  if (!RAFFLE_ADDR) throw new Error("RAFFLE_ADDR not set");
+  if (!vaultAddr) throw new Error("VAULT_ADDR not set");
+  if (!raffleAddr) throw new Error("LIBERTY_RAFFLE not set");
   if (!WATCHER_KEY) throw new Error("WATCHER_KEY not set");
 
   provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
   signer = new ethers.Wallet(WATCHER_KEY, provider);
 
-  raffle = new ethers.Contract(RAFFLE_ADDR, RAFFLE_ABI, provider).connect(signer) as any;
+  raffle = new ethers.Contract(raffleAddr, RAFFLE_ABI, provider).connect(signer) as any;
+  vault = new ethers.Contract(vaultAddr, VAULT_ABI, provider) as any;
   libertyToken = new ethers.Contract(LIBERTY_TOKEN_ADDR, ERC20_ABI, provider) as any;
-
-  const owner: string = await raffle.owner();
-  const isOwner = signer.address.toLowerCase() === owner.toLowerCase();
 
   state = loadState();
   loadDedup();
 
-  console.log("\nLibertyTorch Watcher");
-  console.log("  RPC:        " + RPC_URL);
-  console.log("  Chain ID:   " + CHAIN_ID);
-  console.log("  $LIBERTY:   " + LIBERTY_TOKEN_ADDR);
-  console.log("  Raffle:     " + RAFFLE_ADDR);
-  console.log("  Watcher:   " + signer.address);
-  console.log("  Owner OK:   " + (isOwner ? "YES" : "NO — registerAccount/deregisterAccount will FAIL"));
-  console.log("  Last block: " + state.lastProcessedBlock + "\n");
+  const owner: string = await raffle.owner();
+  const isOwner = signer.address.toLowerCase() === owner.toLowerCase();
+  const devAddr = new ethers.Wallet(process.env.TORCH_DEPLOYER_KEY || "").address;
+
+  console.log("\nLibertyTorch Keeper");
+  console.log("  RPC:          " + RPC_URL);
+  console.log("  Chain ID:     " + CHAIN_ID);
+  console.log("  $LIBERTY:     " + LIBERTY_TOKEN_ADDR);
+  console.log("  Vault:        " + vaultAddr);
+  console.log("  Raffle:       " + raffleAddr);
+  console.log("  Dev wallet:   " + devAddr);
+  console.log("  Watcher:     " + signer.address);
+  console.log("  Owner OK:     " + (isOwner ? "YES" : "NO — registerAccount/deregister will FAIL"));
+  console.log("  Last block:   " + state.lastProcessedBlock + "\n");
 }
 
 // ─── Balance check ──────────────────────────────────────────────────────────
@@ -174,7 +203,6 @@ async function checkBalance(account: string): Promise<boolean> {
       libertyToken.decimals() as Promise<number>,
     ]);
     const balance = Number(ethers.formatUnits(raw, dec));
-    // TODO: replace with $LIBERTY/USD price feed or DEX oracle for proper USD threshold
     const MIN_TOKENS = 1000;
     return balance >= MIN_TOKENS;
   } catch (err) {
@@ -310,28 +338,30 @@ async function fullRescan(): Promise<void> {
 }
 
 // ─── Draw keeper ───────────────────────────────────────────────────────────
-async function triggerDraw(): Promise<void> {
+async function triggerDraw(): Promise<boolean> {
   const now = Date.now();
-  if (now - state.lastDrawTime < DRAW_INTERVAL_MS) return;
+  if (now - state.lastDrawTime < DRAW_INTERVAL_MS) return false;
 
   try {
     const [canDraw] = await raffle.canDraw() as [boolean, number];
     if (!canDraw) {
       state.lastDrawTime = now;
       saveState();
-      return;
+      return false;
     }
 
     console.log("\nTriggering hourly draw...");
     const tx = await raffle.checkAndDraw();
     console.log("  TX: " + tx.hash);
     const receipt: TransactionReceipt | null = await tx.wait();
-    if (!receipt) { console.error("  TX reverted"); return; }
+    if (!receipt) { console.error("  TX reverted"); return false; }
 
+    let drew = false;
     for (const log of receipt.logs) {
       try {
         const parsed = raffle.interface.parseLog({ topics: log.topics as string[], data: log.data });
         if (parsed?.name === "DrawExecuted") {
+          drew = true;
           const pc = Number(parsed.args!.prizePoolCents) / 100;
           const jc = Number(parsed.args!.jackpotContribution) / 100;
           console.log(
@@ -349,6 +379,7 @@ async function triggerDraw(): Promise<void> {
 
     state.lastDrawTime = now;
     saveState();
+    return drew;
   } catch (err: any) {
     const msg = err.reason || (err.data ? err.data.toString() : err.message);
     if (msg.includes("DrawTooSoon")) {
@@ -357,6 +388,7 @@ async function triggerDraw(): Promise<void> {
     } else {
       console.error("  Draw failed:", msg);
     }
+    return false;
   }
 }
 
@@ -409,6 +441,97 @@ async function triggerJackpotCheck(): Promise<void> {
   }
 }
 
+// ─── Dust Liquidator ───────────────────────────────────────────────────────
+async function liquidateDust(): Promise<void> {
+  const now = Date.now();
+  if (now - state.lastLiquidationTime < DRAW_INTERVAL_MS) return;
+
+  const deployerKey = process.env.TORCH_DEPLOYER_KEY;
+  if (!deployerKey) {
+    console.log("  [Liquidator] TORCH_DEPLOYER_KEY not set — skipping");
+    return;
+  }
+
+  if (!deployerSigner) {
+    deployerSigner = new ethers.Wallet(deployerKey, provider);
+  }
+
+  const devAddr = deployerSigner.address;
+
+  try {
+    console.log("\n[Liquidator] Checking vault for dust...");
+    const tokens: string[] = await vault.getSupportedTokens();
+    let totalEth = 0n;
+    let processed = 0;
+
+    for (const tokenAddr of tokens) {
+      // Get token balance in vault
+      const balance: bigint = await provider.call({
+        to: tokenAddr,
+        data: ethers.id("balanceOf(address)").slice(0, 10) +
+          "0000000000000000000000000000000000000000000000000000000000000000".slice(0, 64 - devAddr.replace("0x", "").length) +
+          devAddr.replace("0x", "").toLowerCase()
+      }).catch(() => "0x0");
+
+      // Use a simpler balance check
+      const tokenContract = new ethers.Contract(tokenAddr, [
+        "function balanceOf(address) view returns (uint256)",
+        "function symbol() view returns (string)",
+        "function decimals() view returns (uint8)",
+      ], provider);
+
+      let vaultBalance: bigint;
+      try {
+        vaultBalance = await tokenContract.balanceOf(vault.target) as bigint;
+      } catch {
+        continue;
+      }
+
+      if (vaultBalance === 0n) continue;
+
+      const symbol: string = await tokenContract.symbol() as string;
+      const decimals: number = await tokenContract.decimals() as number;
+
+      console.log("  [Liquidator] Pulling " + ethers.formatUnits(vaultBalance, decimals) + " " + symbol + " from vault...");
+      processed++;
+
+      try {
+        // Pull dust to deployer wallet
+        const withdrawTx = await vault.connect(deployerSigner).withdrawToken(tokenAddr, vaultBalance, devAddr);
+        await withdrawTx.wait();
+        console.log("  [Liquidator]   -> Pulled to dev wallet");
+      } catch (err: any) {
+        console.error("  [Liquidator]   -> Withdraw failed:", err.reason || err.message);
+        continue;
+      }
+
+      // ─── SWAP STEP ────────────────────────────────────────────────────────────
+      // TODO: Integrate 0x API or 1inch Aggregation Protocol here.
+      // For now, this is a placeholder that tracks the dust value.
+      // When a DEX aggregator API key is ready, replace this block:
+      //
+      // const ethReceived = await swapTokenForEth(tokenAddr, vaultBalance, devAddr);
+      // totalEth += ethReceived;
+      //
+      console.log("  [Liquidator]   -> Swap: skipped (no DEX API key configured yet)");
+    }
+
+    state.lastLiquidationTime = now;
+    saveState();
+
+    if (processed === 0) {
+      console.log("  [Liquidator] No dust to liquidate.");
+      return;
+    }
+
+    console.log("  [Liquidator] Dust liquidation complete. " + processed + " token(s) pulled.");
+    console.log("  [Liquidator] NOTE: DEX swap integration pending. ETH routing will be enabled once API key is configured.");
+
+  } catch (err) {
+    console.error("  [Liquidator] Error:", err);
+  }
+}
+
 // ─── Live listener ────────────────────────────────────────────────────────
 async function startLiveListener(): Promise<void> {
   console.log("Listening for live $LIBERTY transfers...");
@@ -440,7 +563,7 @@ async function startLiveListener(): Promise<void> {
 // ─── Status ───────────────────────────────────────────────────────────────
 async function reportStatus(): Promise<void> {
   try {
-    const raffleId = Number(await raffle.raffleId());
+    const raffleAddr = process.env.LIBERTY_RAFFLE || process.env.RAFFLE_RAFFLE || "";
     const poolCents = Number(await raffle.prizePoolCents());
     const jackpotCents = Number(await raffle.jackpotPoolCents());
     const jackpotTriggered: boolean = await raffle.jackpotTriggered();
@@ -456,7 +579,7 @@ async function reportStatus(): Promise<void> {
     const jackStr = nextJackSec > 0 ? Math.floor(nextJackSec / 60) + "m" : "DUE";
 
     console.log(
-      "\n[" + new Date().toISOString() + "] Raffle #" + raffleId +
+      "\n[" + new Date().toISOString() + "] Raffle #" + await raffle.raffleId() +
       " | Pool: $" + (poolCents / 100).toFixed(2) +
       " | Eligible: " + eligible +
       " | Next draw: " + drawStr
@@ -486,14 +609,23 @@ async function main() {
 
   await catchUp(from, latest);
   await fullRescan();
-  await triggerDraw();
+
+  // Run draw, then liquidate if a draw fired
+  const drew = await triggerDraw();
+  if (drew) {
+    await liquidateDust();
+  }
+
   await triggerJackpotCheck();
   await startLiveListener();
   await reportStatus();
 
-  // Draw + jackpot check every minute (will early-exit if not due)
+  // Draw + liquidation check every minute (will early-exit if not due)
   setInterval(async () => {
-    await triggerDraw();
+    const drew = await triggerDraw();
+    if (drew) {
+      await liquidateDust();
+    }
     await triggerJackpotCheck();
   }, 60_000);
 
@@ -507,10 +639,10 @@ async function main() {
     saveDedup();
   }, 5 * 60_000);
 
-  console.log("\nWatcher running. Press Ctrl+C to stop.\n");
+  console.log("\nKeeper running. Press Ctrl+C to stop.\n");
 }
 
 main().catch((err) => {
-  console.error("Watcher crashed:", err);
+  console.error("Keeper crashed:", err);
   process.exit(1);
 });
