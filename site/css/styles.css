@@ -164,7 +164,7 @@ button { font: inherit; color: inherit; }
 .level-tag-light { color: var(--mint); }
 
 /* 0 ft: harbor */
-.harbor { min-height: min(calc(100svh - var(--header-h)), 920px); padding-block: 40px 0; display: flex; flex-direction: column; overflow: hidden; }
+.harbor { min-height: min(calc(100svh - var(--header-h)), 920px); padding-block: 40px 0; display: flex; flex-direction: column; }
 .harbor-bg { position: absolute; inset: 0; background: #CDEEE6 url("../assets/harbor-dawn.webp") center bottom / cover no-repeat; }
 .harbor-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(247, 255, 251, 0.82) 0%, rgba(247, 255, 251, 0.62) 38%, rgba(247, 255, 251, 0) 60%); }
 .harbor-grid { position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); align-items: center; gap: 24px; z-index: 1; }
@@ -184,7 +184,7 @@ button { font: inherit; color: inherit; }
 .torch-spot { position: absolute; left: 12%; top: 0.5%; width: 15%; aspect-ratio: 1; border: 0; background: transparent; border-radius: 50%; cursor: pointer; padding: 0; }
 .torch-ping { position: absolute; right: -6px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--mint); border: 2px solid var(--harbor); }
 .torch-spot:hover .torch-ping { transform: scale(1.2); }
-.quip { position: absolute; left: 29%; top: -3%; max-width: 230px; background: var(--porcelain); color: var(--harbor); border: 2px solid var(--harbor); border-radius: 18px 18px 18px 4px; padding: 10px 14px; font-weight: 650; font-size: 0.98rem; line-height: 1.35; box-shadow: 0 10px 20px rgba(10, 31, 33, 0.15); animation: pop 0.25s ease both; }
+.quip { position: absolute; left: 29%; top: -3%; z-index: 5; max-width: 230px; background: var(--porcelain); color: var(--harbor); border: 2px solid var(--harbor); border-radius: 18px 18px 18px 4px; padding: 10px 14px; font-weight: 650; font-size: 0.98rem; line-height: 1.35; box-shadow: 0 10px 20px rgba(10, 31, 33, 0.15); animation: pop 0.25s ease both; }
 @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
 .torch-hint { position: absolute; left: 30%; top: 2%; font-family: var(--font-display); font-style: italic; font-size: 0.95rem; color: var(--harbor); background: rgba(247, 255, 251, 0.8); padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
 .hero-art.has-quip .torch-hint { display: none; }

@@ -400,7 +400,7 @@
     ["Draw interval", "Checked every " + rules.drawIntervalMinutes + " minutes; drawing if pool ≥ $" + (rules.minPoolUsdCents / 100).toFixed(0)],
     ["Winners", rules.winnersPerRound + " per round, one prize per wallet"],
     ["Cooldown", rules.cooldownHours + " hours after winning"],
-    ["Buy tax", "3% total → 0.90% Torch / 0.50% buyback / 1.35% raffle / 0.25% dev"],
+    ["Buy tax", "3% total → 1.00% Torch / 1.00% buyback & burn / 0.85% raffle / 0.15% dev"],
     ["Volume to trigger", "~$" + (rules.volumePerDrawUsdCents / 100).toFixed(2) + " in buys builds ~$" + (rules.minPoolUsdCents / 100).toFixed(0)],
     ["Payouts", "In kind, draft split totals " + draftTotal + "% (" + draftRest + "% TBD)"],
     ["Prize rollover", "Unspent funds roll to next hour"],
