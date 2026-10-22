@@ -44,8 +44,8 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     /// @notice Basis points denominator (100% = 10000 bps)
     uint256 public constant BPS = 10000;
 
-    /// @notice Protocol fee: 200 bps = 2.00%
-    uint256 public constant PROTOCOL_FEE_BPS = 200;
+    /// @notice Protocol fee: 300 bps = 3.00%
+    uint256 public constant PROTOCOL_FEE_BPS = 300;
 
     // ─────────────────────────────────────────────────────────
     //  IMMUTABLES
