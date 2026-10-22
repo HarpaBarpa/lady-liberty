@@ -100,12 +100,6 @@
     spot.closest(".hero-art").classList.add("has-quip");
     clearTimeout(quipTimer);
     quipTimer = setTimeout(function () { quip.hidden = true; }, 5200);
-
-    // Scroll to practice round
-    setTimeout(function () {
-      var target = $("#torch");
-      target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
-    }, 500);
   });
 
   /* Example assets */
