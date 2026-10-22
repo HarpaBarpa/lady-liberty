@@ -237,6 +237,7 @@ TOKENOMICS.md           — tokenomics reference
 
 ## v2.3 Changes (Oct 22, 2026)
 
+- **Torch tap target repositioned** (`site/css/styles.css`, commit `46b1073`): Changed from `left: 12%; top: 0.5%; width: 15%` to `right: 10%; top: 2%; width: 28%`. Original coordinates placed the tap zone in the upper-left of the hero image, well away from the Lady Liberty flame which sits in the upper-right of the illustration. New positioning uses `right`-anchored coordinates to provide a wide, generous hit zone covering the flame area across all viewport sizes.
 - **`deployPassword` removed** from `site/js/config.js` and `site/deploy.html`. Access gate in `deploy.html` set to `DISABLE_GATE = true`. No credential fields remain in client-side JavaScript.
 - **Legal pages added:**
   - `site/legal/tos.html` — Terms of Service, NY State/USA governing law, AAA arbitration in New York County, smart contract risk disclosures, full disclaimer of warranties and limitation of liability
