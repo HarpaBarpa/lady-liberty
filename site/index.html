@@ -62,7 +62,7 @@
       <div class="hero-copy">
         <p class="status-chip"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
         <h1 id="hero-title">Give me your tired, your poor, your huddled <em>dust.</em></h1>
-        <p class="lede">Hold $LIBERTY to enter the hourly raffle. Link your wallets, deposit crypto dust from <strong>any supported token</strong>, and earn bonus entries. Ten winners take a slice of the ETH prize vault every hour.</p>
+        <p class="lede">Hold $LIBERTY to enter the hourly raffle. Link your wallets, deposit crypto dust from <strong>any supported token</strong>, and earn bonus entries. Dust is converted to ETH and split into the prize pool. Ten winners take ETH every hour.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#vault">Explore the vault</a>
           <a class="btn btn-ghost" href="#inside">How it works</a>
@@ -88,11 +88,11 @@
       <p class="level-tag">Level 1 · The pedestal · 154 ft</p>
       <div class="vault-grid">
         <figure class="vault-art">
-          <img src="assets/pedestal-vault.webp" width="900" height="900" alt="A granite pedestal with a round copper vault door standing open. The vault is empty except for one unimpressed pigeon." loading="lazy">
+          <img src="assets/pedestal-vault.webp" width="900" height="900" alt="A granite pedestal with a round copper vault door. A pigeon stands by the vault entrance." loading="lazy">
         </figure>
         <div class="vault-copy">
           <h2 id="vault-title">The vault lives in the pedestal. Right now it's empty.</h2>
-          <p>The prize vault holds ETH contributions from the hourly raffle. When the pool hits $50+, ten winners split it in kind. Scroll down to connect your wallet.</p>
+          <p>The prize vault holds ETH from contributions and dust conversions. Deposited dust is regularly swapped to ETH — 50% flows into the prize pool and 50% back to the protocol. When the pool hits $50+, ten winners split the ETH. Scroll down to connect your wallet.</p>
 
           <div class="plaque" role="group" aria-label="Prize vault live stats">
             <div class="plaque-main">
@@ -157,12 +157,12 @@
         <li class="stair">
           <span class="stair-n" aria-hidden="true">02</span>
           <h3>Earn entries</h3>
-          <p>Every <strong>$<span data-rule="dust-step">0.50</span></strong> in dust from <strong>any supported token</strong> earns 1 entry. Each token gets its own live price feed. Maximum <strong><span data-rule="dust-max">5</span> entries</strong> per linked wallet per cycle. A <span data-rule="fee">2%</span> protocol fee comes off each deposit.</p>
+          <p>Every <strong>$<span data-rule="dust-step">0.50</span></strong> in dust from <strong>any supported token</strong> earns 1 entry. Each token gets its own live price feed. Maximum <strong><span data-rule="dust-max">5</span> entries</strong> per linked wallet per cycle. A <span data-rule="fee">3%</span> protocol fee comes off each deposit.</p>
         </li>
         <li class="stair">
           <span class="stair-n" aria-hidden="true">03</span>
           <h3>Draw and share out</h3>
-          <p>Every <span data-rule="interval">hour</span>, if the prize pool has at least <strong>$<span data-rule="min-pool">50</span></strong>, <span data-rule="winners">10</span> unique wallets win. If the pool is below the threshold the drawing is skipped and funds roll over. Winners are excluded for <strong><span data-rule="cooldown">24</span> hours</strong>.</p>
+          <p>Every <span data-rule="interval">hour</span>, if the prize pool has at least <strong>$<span data-rule="min-pool">50</span></strong> in ETH, <span data-rule="winners">10</span> unique wallets win. Dust is automatically swapped to ETH and split into the pool. If the pool is below the threshold the drawing is skipped and funds roll over. Winners are excluded for <strong><span data-rule="cooldown">24</span> hours</strong>.</p>
         </li>
       </ol>
       <p class="inside-sign">Copper hands. Warm heart.</p>
@@ -189,7 +189,7 @@
         <p class="calc-help" id="calc-help">Between $1.00 and $1,000,000.00.</p>
         <p class="calc-error" id="calc-error" data-calc-error aria-live="polite"></p>
         <dl class="calc-out" data-calc-out aria-live="polite" aria-atomic="true">
-          <div><dt>Protocol fee (<span data-rule="fee">2%</span>)</dt><dd data-calc-fee>$2.00</dd></div>
+          <div><dt>Protocol fee (<span data-rule="fee">3%</span>)</dt><dd data-calc-fee>$3.00</dd></div>
           <div class="calc-net"><dt>Net entry value</dt><dd data-calc-net>$98.00</dd></div>
         </dl>
         <p class="calc-roman" data-calc-roman aria-hidden="true">XCVIII</p>
@@ -220,8 +220,8 @@
       <div class="crown-panel">
         <p class="level-tag">Level 4 · The crown · 260 ft</p>
         <div class="crown-head">
-          <h2 id="crown-title">Win a slice of every asset.</h2>
-          <p>Ten winners per round, one prize per wallet. Prizes are paid in kind: the vault never swaps your assets.</p>
+          <h2 id="crown-title">Win a slice of the pool.</h2>
+          <p>Ten winners per round, one prize per wallet. Dust deposits are automatically swapped to ETH and split 50% to the prize pool and 50% back to the protocol.</p>
         </div>
         <div class="split-card">
           <div class="split-title">
@@ -369,19 +369,19 @@
         </details>
         <details>
           <summary>Which assets can go in?</summary>
-          <p>The vault accepts any ERC-20 token with a USD price feed. Each token has its own Chainlink oracle — AAPL, USDC, BTC, whatever has a live feed. Ask in the community channel for the current supported list.</p>
+          <p>The vault accepts any ERC-20 token with a USD price feed — AAPL, USDC, whatever has a live oracle. Accumulated dust is periodically converted to ETH: 50% goes to the prize pool and 50% goes back to the protocol. Ask in the community channel for the current supported list.</p>
         </details>
         <details>
           <summary>Why is the vault empty?</summary>
-          <p>The vault is live on-chain. Deposits open once supported dust tokens are configured. Check the ledger section to connect your wallet.</p>
+          <p>The vault is live on-chain. Deposits open once supported dust tokens are configured and the $LIBERTY token launches. Check the ledger section to connect your wallet.</p>
         </details>
         <details>
           <summary>How is my entry value worked out?</summary>
-          <p>The oracle values your deposit in USD and locks that value when it lands. The 2% protocol fee comes off, and the net USD value is your entry weight. It isn't a ticket count, and your share of the total weight isn't the same as your chance of winning when ten prizes go to ten different wallets.</p>
+          <p>The oracle values your deposit in USD when it lands. The 3% protocol fee comes off, and the net USD value is your entry weight. Each linked wallet earns up to 5 dust entries per hour (1 entry per $0.50). Dust tokens are converted to ETH — your entries are weighted, not ticket counts.</p>
         </details>
         <details>
           <summary>What do winners get?</summary>
-          <p>A percentage of every asset in the vault, in kind. If the vault holds four kinds of token, a winner gets their percentage of each of the four. Nothing is swapped.</p>
+          <p>ETH from the prize pool. Dust deposits are regularly swapped to ETH and split 50% to the prize pool and 50% back to the protocol treasury. Winners receive their payout share in ETH.</p>
         </details>
         <details>
           <summary>What is the Liberty Bell jackpot?</summary>
@@ -403,7 +403,7 @@
         <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
         <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
       </a>
-      <p>Born copper in 1886, burned green by time. Lady Liberty grew from the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Any token with real value can become dust — the vault prices it live.</p>
+      <p>Born copper in 1886, burned green by time. Lady Liberty grew from the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Any token with real value can become dust — it's priced live, then converted to ETH for the prize pool.</p>
       <p class="fine">$LIBERTY is the community token. Hold it to enter. Everything that burns becomes greater.</p>
     </div>
     <div class="aging">

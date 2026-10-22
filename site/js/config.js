@@ -114,7 +114,7 @@ window.LIBERTY_CONFIG = {
     "What the exact conditions for the 1-in-72 jackpot trigger will be",
     "Duration of dust-earned entries before expiry",
     "Rules for drawings with fewer than 10 eligible participants",
-    "Who receives the 2% protocol fee and how it is accounted",
+    "Who receives the 3% protocol fee and how it is accounted",
     "Entry-weight precision and rounding",
     "Deposits that land while a draw is in progress",
     "Oracle timestamps and what happens with stale prices",
