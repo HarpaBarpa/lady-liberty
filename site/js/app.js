@@ -101,13 +101,11 @@
     clearTimeout(quipTimer);
     quipTimer = setTimeout(function () { quip.hidden = true; }, 5200);
 
-    // Scroll to practice round on second click
-    if (quipIndex === 1) {
-      setTimeout(function () {
-        var target = $("#torch");
-        target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
-      }, 800);
-    }
+    // Scroll to practice round
+    setTimeout(function () {
+      var target = $("#torch");
+      target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    }, 500);
   });
 
   /* Example assets */
