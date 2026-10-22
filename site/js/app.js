@@ -86,6 +86,11 @@
   var quipIndex = -1;
   var quipTimer = null;
   spot.addEventListener("click", function () {
+    // Flash the torch ping
+    spot.classList.add("flash");
+    setTimeout(function () { spot.classList.remove("flash"); }, 600);
+
+    // Cycle quips
     quipIndex = (quipIndex + 1) % C.torchQuips.length;
     quip.hidden = false;
     quip.textContent = C.torchQuips[quipIndex];
@@ -95,6 +100,14 @@
     spot.closest(".hero-art").classList.add("has-quip");
     clearTimeout(quipTimer);
     quipTimer = setTimeout(function () { quip.hidden = true; }, 5200);
+
+    // Scroll to practice round on second click
+    if (quipIndex === 1) {
+      setTimeout(function () {
+        var target = $("#torch");
+        target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+      }, 800);
+    }
   });
 
   /* Example assets */
