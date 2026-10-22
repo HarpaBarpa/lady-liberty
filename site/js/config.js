@@ -28,7 +28,7 @@ window.LIBERTY_CONFIG = {
     cooldownHours: 24,            // winner excluded for 24h after win
 
     // Protocol fee
-    feeBps: 200,                  // 2% protocol fee, in basis points
+    feeBps: 300,                  // 3% protocol fee, in basis points
 
     // Buy tax funding
     buyTaxBps: 300,               // 3% total buy tax
