@@ -28,10 +28,10 @@ window.LIBERTY_CONFIG = {
 
     // Buy tax funding
     buyTaxBps: 300,               // 3% total buy tax
-    raffleTaxBps: 135,            // 1.35% to raffle vault
-    torchTaxBps: 90,              // 0.90% to Torch Protocol
-    buybackTaxBps: 50,            // 0.50% buyback & burn
-    devTaxBps: 25,                // 0.25% development / marketing
+    raffleTaxBps: 85,             // 0.85% to raffle vault
+    torchTaxBps: 100,             // 1.00% to Torch Protocol
+    buybackTaxBps: 100,           // 1.00% buyback & burn
+    devTaxBps: 15,                // 0.15% development / marketing
     volumePerDrawUsdCents: 370370, // ~$3,703.70 volume → ~$50 raffle
 
     payoutDraft: [35, 20, 12, 8, 6, 5, 4, 3, 2, 1], // reference split, totals 96: keep as draft

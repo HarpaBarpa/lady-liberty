@@ -45,42 +45,21 @@ These are baked into Torch — we don't get to change them.
 
 ### 2.2 Buy Tax Rate
 
-We choose 1–10%. The tax hits on every buy.
+**Decision: 3% Total Buy Tax**
+- 1.00% to Torch protocol
+- 1.00% to $LIBERTY buyback & burn
+- 0.85% to RWA raffle funding
+- 0.15% to Development / marketing
 
-**Every 1% of buy tax at 2.5 ETH MC, on 10 ETH daily volume:**
-
-| Tax % | Daily revenue | Our 70% | Torch 30% |
-|---|---|---|---|
-| 2% | 0.20 ETH | 0.14 ETH | 0.06 ETH |
-| 3% | 0.30 ETH | 0.21 ETH | 0.09 ETH |
-| 4% | 0.40 ETH | 0.28 ETH | 0.12 ETH |
-| 5% | 0.50 ETH | 0.35 ETH | 0.15 ETH |
-| 10% | 1.00 ETH | 0.70 ETH | 0.30 ETH |
-
-Too high = kills volume. Too low = no revenue. The sweet spot for Torch tokens with utility is typically 3–5%.
-
-**Recommendation: 4%.**
-- High enough to generate meaningful revenue for the RWAFFLE prize pool
-- Low enough that people still trade
-- Above the default 2% but not predatory
-- 0.28 ETH/day our share to fund the prize pool on decent volume
+*(Note: Torch Launchpad only allows a 50/50 split between burn and creator at the contract level, so the 0.85% and 0.15% will be routed through the creator allocation and split manually.)*
 
 ---
 
-### 2.3 Tax Destination (Our 70%)
+### 2.3 Tax Destination
 
-| Option | What happens | Fits Liberty? |
-|---|---|---|
-| **Creator** | Paid to us as ETH/$TORCH. We can do anything with it | ✅ We funnel it into RWAFFLE prize pool |
-| **Burn** | Tokens bought and sent to dead address. Deflationary | ⚠️ Simple narrative but loses the prize pool angle |
-| **Holders** | Paid to every wallet holding $LIBERTY | ⚠️ Passive yield — doesn't directly feed RWAFFLE |
-| **Liquidity** (Custom launch) | Added to the pool | ❌ Doesn't serve the raffle narrative |
-
-**Recommendation: Creator.**
-- This gives us full control of the revenue
-- We publicly commit to funneling the ETH into the RWAFFLE prize pool
-- Creates the flywheel: more trades → more prize pool → more RWAFFLE visibility → more $LIBERTY buys → more trades
-- Burn is simpler but less strategic — "buyback and burn" is tired. "Buyback and raffle" is new
+**Decision: 50% Burn / 50% Creator**
+- Torch Launchpad strictly enforces this split structure.
+- The 50% to Creator will be used to fund the RWA raffle (0.85% of volume) and Dev/Marketing (0.15% of volume).
 
 ---
 
@@ -144,8 +123,8 @@ The creator tax + RWAFFLE buyback = **two sources of buy pressure**, both feedin
 | Parameter | Decision | Why |
 |---|---|---|
 | **Preset** | Launch (2.5 ETH) | Balanced risk/reward |
-| **Buy tax** | 4% | Good revenue, doesn't kill volume |
-| **Tax destination** | Creator | Full control to fund RWAFFLE |
+| **Buy tax** | 3% | 1% Torch, 1% burn, 0.85% raffle, 0.15% dev |
+| **Tax destination** | Creator (split post-launch) | Split manually to fund raffle/dev |
 | **Pair asset** | $TORCH | "Fuel the torch" narrative |
 | **Dev buy** | 2% of supply | ~0.05 ETH, skin in the game |
 | **Anti-snipe** | ON | Default — protects launch |
