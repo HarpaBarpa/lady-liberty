@@ -1,8 +1,10 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("https://rpc.mainnet.chain.robinhood.com");
-  const wallet = new ethers.Wallet("REDACTED_COMPROMISED_KEY", provider);
+  const provider = new ethers.JsonRpcProvider(
+    process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhood.com"
+  );
+  const wallet = new ethers.Wallet(process.env.TORCH_DEPLOYER_KEY!, provider);
 
   const bal = await provider.getBalance(wallet.address);
   console.log("Deployer:", wallet.address);

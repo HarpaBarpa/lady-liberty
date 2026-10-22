@@ -83,6 +83,15 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     /// @notice Cycle ID at which entries were last computed for a primary
     mapping(address => uint256) public lastEntryCycle;
 
+    /// @notice Checkpoint of vault's token balance at the last notifyDeposit
+    ///         call.  Advances on every notifyDeposit so we only count fresh
+    ///         arrivals.  Not touched by depositDust.
+    mapping(address => uint256) private _depositCheckpoint;
+
+    /// @notice Lightweight anti-spam fee for notifyDeposit — 1% (100 bps).
+    ///         Half the normal 2% because the user has already paid gas.
+    uint256 public constant ANTI_SPAM_FEE_BPS = 100;
+
     // ─────────────────────────────────────────────────────────
     //  EVENTS
     // ─────────────────────────────────────────────────────────
@@ -105,6 +114,12 @@ contract LibertyVault is Ownable, ReentrancyGuard {
 
     event SupportedTokenAdded(address indexed token, address feed);
     event SupportedTokenRemoved(address indexed token);
+    event NoNewDeposit(
+        address indexed sender,
+        address indexed token,
+        uint256 currentHeld,
+        uint256 checkpointed
+    );
 
     // ─────────────────────────────────────────────────────────
     //  CONSTRUCTOR
@@ -155,6 +170,9 @@ contract LibertyVault is Ownable, ReentrancyGuard {
             IERC20(dustToken).safeTransfer(PROTOCOL_FEE_RECIPIENT, fee);
         }
 
+        // Advance the checkpoint so notifyDeposit doesn't double-count this
+        _depositCheckpoint[dustToken] = IERC20(dustToken).balanceOf(address(this));
+
         uint256 cycleId = _currentCycleId();
         contributions[msg.sender][cycleId][dustToken] += net;
 
@@ -164,6 +182,78 @@ contract LibertyVault is Ownable, ReentrancyGuard {
         }
 
         emit DustDeposited(msg.sender, resolvedPrimary, dustToken, amount, fee, net, cycleId);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  EXTERNAL — PAST-TRANSFER NOTIFY
+    // ─────────────────────────────────────────────────────────
+
+    /// @notice Credits dust entries for tokens that were already transferred
+    ///         to the vault via plain ERC-20 transfer(). Designed for use with
+    ///         the freedom machine frontend, which lets users sweep dust with
+    ///         a single wallet prompt (no approve or EIP-712 required).
+    ///
+    ///         The caller specifies which primary wallet they're sending dust
+    ///         for and what token they just transferred in. The vault reads
+    ///         the difference between its current balance and its tracked
+    ///         checkpointed balance to determine how much the caller actually
+    ///         sent. Only the delta beyond what was checkpointed counts.
+    ///
+    ///         Security:
+    ///         - A 1% anti-spam fee (half the normal 2%) is deducted on the
+    ///           delta so you can't fake dust deposits for free entries.
+    ///         - Only the caller can claim a delta — you can't notify for
+    ///           someone else's transfer.
+    ///         - Only tokens already in `supportedTokensList` are recognized.
+    ///
+    /// @param primary   Primary wallet that owns the caller (msg.sender).
+    ///                  Must be linked via LinkRegistry.
+    /// @param dustToken ERC-20 token that was already transferred to the vault.
+    function notifyDeposit(address primary, address dustToken)
+        external nonReentrant
+    {
+        if (primary == address(0)) revert ZeroAddress();
+        if (!isSupportedToken[dustToken]) revert UnsupportedToken();
+
+        // Resolve linkage first — reverts if caller isn't linked to primary
+        address resolvedPrimary = _resolvePrimary(msg.sender, primary);
+
+        uint256 currentHeld = IERC20(dustToken).balanceOf(address(this));
+        uint256 checkpointed = _depositCheckpoint[dustToken];
+
+        // Nothing new arrived since the last checkpoint
+        if (currentHeld <= checkpointed) {
+            emit NoNewDeposit(msg.sender, dustToken, currentHeld, checkpointed);
+            return;
+        }
+
+        uint256 delta = currentHeld - checkpointed;
+        uint256 fee = (delta * ANTI_SPAM_FEE_BPS) / BPS;
+        uint256 net = delta - fee;
+
+        // Forward the anti-spam fee to the protocol fee recipient
+        if (fee > 0) {
+            IERC20(dustToken).safeTransfer(PROTOCOL_FEE_RECIPIENT, fee);
+        }
+
+        // Advance the checkpoint to the new current balance (minus what we
+        // just forwarded) so the next notifyDeposit only sees fresh arrivals.
+        _depositCheckpoint[dustToken] = IERC20(dustToken).balanceOf(address(this));
+
+        uint256 cycleId = _currentCycleId();
+        contributions[msg.sender][cycleId][dustToken] += net;
+
+        _computeAndCreditDustEntries(resolvedPrimary);
+
+        emit DustDeposited(
+            msg.sender,
+            resolvedPrimary,
+            dustToken,
+            delta,
+            fee,
+            net,
+            cycleId
+        );
     }
 
     // ─────────────────────────────────────────────────────────
@@ -255,6 +345,12 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     /// @notice Get the price feed address for a token.
     function getTokenFeed(address token) external view returns (address) {
         return tokenFeed[token];
+    }
+
+    /// @notice Read the deposit checkpoint for a token (unauthenticated —
+    ///         anyone can read it on-chain).
+    function getDepositCheckpoint(address token) external view returns (uint256) {
+        return _depositCheckpoint[token];
     }
 
     /// @notice Account info snapshot.

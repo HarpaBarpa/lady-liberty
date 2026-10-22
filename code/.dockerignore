@@ -1,0 +1,8 @@
+node_modules
+artifacts
+cache
+.next
+frontend
+site
+.git
+*.log

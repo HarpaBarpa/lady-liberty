@@ -1,6 +1,6 @@
 # LibertyTorch — Project Spec
-**Last updated:** 2026-10-21
-**Version:** 2.1
+**Last updated:** 2026-10-22
+**Version:** 2.2
 
 ---
 
@@ -108,11 +108,11 @@ ETH_USD_FEED=0x... \
 npx hardhat run scripts/deploy.ts --network robinhood
 ```
 
-**Deployer address:** `0x1c3d93A1B471B4245E0a81878F052267446aaCfD` (Torch wallet)
-**Deployer balance:** ~0.00092 ETH (Oct 21, 2026)
+**Deployer address:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (Torch wallet, key in Vault as "New Deployer Wallet Key")
+**Deployer balance:** ~0.054 ETH (Oct 22, 2026)
 
 **Already deployed:**
-- LinkRegistry: `0x6AeE4702002a768B3e9c626030D8d1370904CCCB` ✅
+- LinkRegistry: `0x6AeE4702002a768B3e9c626030D8d1370904CCCB` (by old deployer — will redeploy fresh)
 
 ---
 
@@ -161,9 +161,11 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 |---|---|
 | `ROBINHOOD_RPC` | RPC URL: `https://rpc.mainnet.chain.robinhood.com` |
 | `CHAIN_ID` | 4663 |
-| `LIBERTY_TOKEN` | $LIBERTY token address (required for vault + raffle deploy) |
-| `TORCH_DEPLOYER_KEY` | Deployer private key (Torch wallet) |
+| `LIBERTY_TOKEN` | $LIBERTY token address (from Torch Launchpad — not yet deployed) |
+| `TORCH_DEPLOYER_KEY` | Deployer private key in `.env` (`.gitignore`d — never committed) |
 | `ETH_USD_FEED` | Chainlink ETH/USD feed (optional, default: address(0) = $1 fallback) |
+
+**Security:** `hardhat.config.ts` now uses `dotenv/config` to auto-load `.env`. The key is never in source code, never committed, and never pushed to GitHub. All scripts read from `process.env` or `ethers.getSigners()`.
 
 ---
 
@@ -211,13 +213,21 @@ LAUNCH_RUNBOOK.md       — step-by-step launch checklist
 
 ---
 
+## v2.2 Changes (Oct 22, 2026)
+
+- **New deployer wallet:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (key in Vault as "New Deployer Wallet Key", funded ~0.054 ETH)
+- **Key security hardened:** `.env` is `.gitignore`d, `dotenv` loads it automatically, key never touches source code
+- **`notifyDeposit()` added to LibertyVault:** alternative deposit path for the freedom machine frontend — users send plain `transfer()` then call `notifyDeposit()` to claim entries. 1% anti-spam fee, checkpoint-tracking prevents double-counting, LinkRegistry validates ownership
+- **`check.ts` fixed:** no longer hardcodes any private key
+- **Fly.io watcher deployed:** 2 machines at `libertytorch-watcher.fly.dev`, secrets ready (needs LIBERTY_TOKEN/RAFFLE_ADDR/WATCHER_KEY after deploy)
+- **Freedom machine prototype reviewed** (`claude/eloquent-newton-b68b18`): scan, preflight, send guard architecture accepted; `notifyDeposit()` bridges it with the vault
+
 ## Next Steps
 
-1. **Get Fly.io account** → fly.io → Sign up → save token in vault as "Fly.io Token"
-2. **Deploy watcher** → `fly launch` + set secrets → `fly deploy`
-3. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Quick Launch → pay 0.00015 ETH → save token address
-4. **Deploy vault + raffle** → paste token address → run deploy script
-5. **Add dust token feeds** → `vault.addSupportedToken(tokenAddr, feedAddr)` for each supported token
-6. **Seed prize pool + test draw** → fund with ETH, run `scripts/check.ts`, trigger `scripts/draw.ts`
-7. **Verify on site** → connect wallet at `libertytorch.online`
-8. **Launch coin** (LAST STEP) → deploy on Torch Launchpad → announce
+1. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 4% buy tax to Creator → buy 2% dev supply → pay 0.00015 ETH fee → save token address
+2. **Deploy vault + raffle** → paste token address → `LIBERTY_TOKEN=0x... npx hardhat run scripts/deploy.ts --network robinhood`
+3. **Inject watcher secrets** → `fly secrets set LIBERTY_TOKEN=... RAFFLE_ADDR=... WATCHER_KEY=... -a libertytorch-watcher` → `fly deploy -a libertytorch-watcher`
+4. **Update site config** → edit `site/js/config.js` with deployed addresses → push → Vercel auto-deploys
+5. **Seed prize pool** → `npx hardhat run scripts/fund-pool.ts --network robinhood`
+6. **Register eligible wallets** → `npx hardhat run scripts/register-holders.ts --network robinhood`
+7. **Test draw** → `npx hardhat run scripts/check.ts --network robinhood` → if ready, `scripts/draw.ts`
