@@ -1,12 +1,12 @@
 # LibertyTorch — Project Spec
 **Last updated:** 2026-10-22
-**Version:** 2.2
+**Version:** 2.3
 
 ---
 
 ## What It Is
 
-LibertyTorch is a **decentralized multi-asset raffle protocol** deployed on Robinhood Chain (chainId: 4663). The protocol accepts any ERC-20 token as dust deposits, prices each one independently via Chainlink, and runs an hourly weighted raffle. Holding $LIBERTY earns a base entry. Linking secondary wallets and depositing dust earns bonus entries.
+LibertyTorch is a **decentralized multi-asset raffle protocol** deployed on Robinhood Chain (chainId: 4663). The protocol accepts any ERC-20 token as dust deposits, prices each one independently via Chainlink, and runs an hourly weighted raffle. Holding ≥$10 in $LIBERTY earns a base entry. Linking secondary wallets and depositing dust earns bonus entries.
 
 **The Liberty Bell:** A separate jackpot that grows at 4% of every successful draw, triggering independently at 1-in-72 odds per eligible hourly check. Any registered holder has a shot at the bell — same cooldown, same eligible pool, separate prize.
 
@@ -24,15 +24,18 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
                            └── LibertyRaffle (hourly draw + Liberty Bell jackpot)
 ```
 
-**3 smart contracts:**
+**Smart contracts:**
 
 | Contract | File | Purpose |
 |---|---|---|
 | LinkRegistry | `LinkRegistry.sol` | EIP-712 wallet linking (primary ↔ secondary, max 5) |
 | LibertyVault | `LibertyVault.sol` | Dust deposits, per-token Chainlink feeds, entry calculation |
 | LibertyRaffle | `LibertyRaffle.sol` | Hourly draw + Liberty Bell jackpot + prize distribution |
+| RWAFFLE | `RWAFFLE.sol` | Legacy contract — not in active use; superseded by LibertyVault + LibertyRaffle |
 
 **Frontend:** Single-page site at `libertytorch.online` — live on-chain data via `contracts.js` reads directly from deployed contracts. Browser wallet (Rabby/Metamask) required to connect.
+
+**Legal:** `site/legal/tos.html` (Terms of Service) and `site/legal/privacy.html` (Privacy Policy) — both compliant with New York State and U.S. federal law (CCPA, NY SHIELD Act, AAA arbitration in New York County).
 
 ---
 
@@ -47,12 +50,13 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
 
 ### LibertyVault
 - **Constructor:** `(linkRegistry, libertyToken, protocolFeeRecipient)`
-- **Dust deposit:** Secondary calls `depositDust(primary, dustToken, amount)` — tokens pulled into vault, 2% fee deducted, entries credited to primary. **Secondary must be linked to primary in LinkRegistry (strict enforcement).**
+- **Dust deposit path 1 — `depositDust`:** Secondary calls `depositDust(primary, dustToken, amount)` — tokens pulled into vault, 2% fee deducted, entries credited to primary. **Secondary must be linked to primary in LinkRegistry (strict enforcement).**
+- **Dust deposit path 2 — `notifyDeposit`:** For integrations that can't use `depositDust` directly (e.g., the freedom machine). User sends a plain ERC-20 `transfer()` to the vault, then calls `notifyDeposit(primary, dustToken)` to claim entries. 1% anti-spam fee (half the normal rate — user already paid gas). Checkpoint tracking prevents double-counting. Caller is bound to `primary` via LinkRegistry.
 - **Entry math:**
   - `entries_W = min(floor(usdCents(W) / 50), 5)` per linked wallet per cycle
   - `totalEntries(primary) = 1 (base) + Σ entries_W`
   - Max 26 entries per primary per cycle (1 base + 5 wallets × 5 entries)
-- **Per-token price feeds:** Each supported token has its own Chainlink/USD feed. `address(0)` = $1.00 fallback (for testing or 1:1 pegged tokens).
+- **Per-token price feeds:** Each supported token has its own Chainlink/USD feed. `address(0)` = $1.00 fallback.
   - `addSupportedToken(token, feed)` — add token + feed
   - `setTokenFeed(token, feed)` — update feed
   - `getTokenFeed(token)` — read feed
@@ -100,19 +104,19 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
 3. LibertyRaffle (4 args)
 4. Post-deploy: `vault.addSupportedToken(token, feed)` for each dust token
 
-**Deploy script:** `scripts/deploy.ts`
+**Deploy script:** `code/scripts/deploy.ts`
 ```bash
+cd code
 LIBERTY_TOKEN=0x... \
 PROTOCOL_FEE_RECIPIENT=0x... \
 ETH_USD_FEED=0x... \
 npx hardhat run scripts/deploy.ts --network robinhood
 ```
 
-**Deployer address:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (Torch wallet, key in Vault as "New Deployer Wallet Key")
+**Deployer address:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (key in Vault as "New Deployer Wallet Key")
 **Deployer balance:** ~0.054 ETH (Oct 22, 2026)
 
-**Already deployed:**
-- LinkRegistry: `0x6AeE4702002a768B3e9c626030D8d1370904CCCB` (by old deployer — will redeploy fresh)
+**Pre-deploy checklist:** See `SCRIPTS.md` — full staged runbook for post-token-deploy steps including Fly.io secrets, site config update, pool seeding, and health check.
 
 ---
 
@@ -132,12 +136,21 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 - `watcher-dedup.json`: set of `txHash-logIndex` keys (no double-processing)
 - On restart, the watcher catches up from `lastProcessedBlock` → current block, then runs a full rescan of all tracked holders
 
+### Fly.io deployment
+
+- **App name:** `libertytorch-watcher`
+- **Region:** ewr (Newark, NJ)
+- **Machines:** 2 (shared-cpu-1x, 256MB RAM, ~$2.19/mo)
+- **Status:** Deployed, running. Awaiting `LIBERTY_TOKEN`, `RAFFLE_ADDR`, `WATCHER_KEY` secrets (injected after contract deployment).
+- **Pre-set secrets:** `ROBINHOOD_RPC`, `CHAIN_ID`
+
 ### Security model
 
 | Concern | How it's handled |
 |---|---|
 | Fake deposits → entries | Impossible. The vault only credits entries when actual tokens are transferred in. |
 | Wallet attribution | `depositDust(primary, token, amount)` requires `primary` hint to match an EIP-712-signed link in LinkRegistry. Wrong hint → revert. |
+| `notifyDeposit` double-counting | Checkpoint tracking (`_depositCheckpoint`) advances on every call — only fresh token arrivals count. |
 | Compromised watcher key | Worst case: registers ineligible wallets for 1 base entry each. Cannot create dust entries (those are on-chain). Cannot bypass cooldown. Cannot drain the prize pool. |
 | Double-crediting deposits | On-chain: contributions are per-cycle; entries recomputed fresh each cycle. Off-chain: dedup by txHash-logIndex. |
 | Entry cap bypass | Vault enforces max 5 entries per linked wallet per cycle and max 25% of total entries per draw on-chain. |
@@ -147,11 +160,10 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 
 ## Known Limitations
 
-1. **Holder registration requires watcher process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The watcher handles this, but it must run continuously on a VPS or hosted worker.
+1. **Holder registration requires watcher process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The watcher handles this, but it must run continuously.
 2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for community raffle; not suitable for high-stakes applications. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
-3. **ETH/USD feed:** If `ETH_USD_FEED = address(0)`, ETH is priced at $1 (not market value). A real Chainlink ETH/USD feed address should be set at deploy time.
-4. **Production hosting:** The watcher needs an always-on host (Fly.io, Railway, or a VPS). It needs the deployer key (for `registerAccount`), ~0.001 ETH for gas, and process monitoring with auto-restart.
-5. **$LIBERTY/USD price unavailable on-chain** — the watcher uses a token-count threshold (≥1000 $LIBERTY = eligible). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
+3. **ETH/USD feed unavailable on Robinhood Chain:** No Chainlink ETH/USD feed address has been confirmed on Robinhood Chain. Deploy with `ETH_USD_FEED = address(0)` for $1/ETH fallback. Prize pool thresholds and payouts will be in non-USD terms until a real feed is available.
+4. **$LIBERTY/USD price unavailable on-chain** — the watcher uses a token-count threshold (≥1000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
 
 ---
 
@@ -162,10 +174,10 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 | `ROBINHOOD_RPC` | RPC URL: `https://rpc.mainnet.chain.robinhood.com` |
 | `CHAIN_ID` | 4663 |
 | `LIBERTY_TOKEN` | $LIBERTY token address (from Torch Launchpad — not yet deployed) |
-| `TORCH_DEPLOYER_KEY` | Deployer private key in `.env` (`.gitignore`d — never committed) |
-| `ETH_USD_FEED` | Chainlink ETH/USD feed (optional, default: address(0) = $1 fallback) |
+| `TORCH_DEPLOYER_KEY` | Deployer private key — **`.env` only**, `.gitignore`d, never committed |
+| `ETH_USD_FEED` | Chainlink ETH/USD feed (optional, default: `address(0)` = $1 fallback) |
 
-**Security:** `hardhat.config.ts` now uses `dotenv/config` to auto-load `.env`. The key is never in source code, never committed, and never pushed to GitHub. All scripts read from `process.env` or `ethers.getSigners()`.
+**Security model:** `hardhat.config.ts` imports `dotenv/config` and auto-loads `.env`. The deployer key is never in source code, never in Git history (scrubbed Oct 22, 2026), and never pushed to GitHub. All scripts read from `process.env` or `ethers.getSigners()`.
 
 ---
 
@@ -174,29 +186,32 @@ A self-hosted Node.js watcher (`code/watcher/watcher.ts`) runs alongside the con
 ```
 code/
   contracts/
-    LinkRegistry.sol     — wallet linking
-    LibertyVault.sol     — dust deposits + per-token feeds
+    LinkRegistry.sol     — wallet linking (EIP-712)
+    LibertyVault.sol     — dust deposits + per-token feeds + notifyDeposit
     LibertyRaffle.sol    — hourly draw + Liberty Bell jackpot + prize distribution
     MockERC20.sol       — test mock
+    RWAFFLE.sol         — legacy, not in active use
   scripts/
-    deploy.ts           — Hardhat deploy script
-    check.ts             — check raffle status + canDraw
-    fund-pool.ts         — seed prize pool with ETH
+    deploy.ts           — deploy all 3 contracts
+    check.ts            — health check (read-only, env vars + on-chain)
+    fund-pool.ts        — seed prize pool with ETH
     draw.ts             — manually trigger a draw
     register-holders.ts  — pre-register known eligible wallets
   test/
-    LibertyRaffle.test.ts — all 35 passing tests
+    LibertyRaffle.test.ts — 35 passing tests
   watcher/
     watcher.ts          — production watcher/keeper (3 jobs)
     Dockerfile          — container image for hosting
-  hardhat.config.ts
-  watcher.tsconfig.json
-  .env
+  hardhat.config.ts     — dotenv auto-loads .env
+  .env                  — TORCH_DEPLOYER_KEY, ROBINHOOD_RPC, CHAIN_ID (.gitignore)
+  .gitignore            — .env*, node_modules/, artifacts/, cache/
 
 site/
   index.html            — main landing page
-  deploy.html           — browser-based contract deployer
-  whitepaper/index.html — whitepaper
+  deploy.html           — browser-based contract deployer (gate disabled)
+  legal/
+    tos.html            — Terms of Service (NY/US law, AAA arbitration)
+    privacy.html        — Privacy Policy (CCPA, NY SHIELD Act compliant)
   js/
     config.js           — product parameters + contract addresses
     contracts.js        — live chain data layer (ethers.js v6)
@@ -205,15 +220,34 @@ site/
     rules.js            — arithmetic utilities
   css/styles.css
 
-docs/
-  ARCHITECTURE.md       — contract architecture details
+frontend/
+  app/
+    whitepaper/
+      page.tsx          — Next.js whitepaper (v1.2, synced to spec)
+  public/
+    whitepaper/
+      index.html        — static whitepaper
 
-LAUNCH_RUNBOOK.md       — step-by-step launch checklist
+SCRIPTS.md              — staged post-deploy runbook (Fly.io, pool seeding, etc.)
+LAUNCH_RUNBOOK.md       — original launch checklist
+TOKENOMICS.md           — tokenomics reference
 ```
 
 ---
 
-## v2.2 Changes (Oct 22, 2026)
+## v2.3 Changes (Oct 22, 2026)
+
+- **`deployPassword` removed** from `site/js/config.js` and `site/deploy.html`. Access gate in `deploy.html` set to `DISABLE_GATE = true`. No credential fields remain in client-side JavaScript.
+- **Legal pages added:**
+  - `site/legal/tos.html` — Terms of Service, NY State/USA governing law, AAA arbitration in New York County, smart contract risk disclosures, full disclaimer of warranties and limitation of liability
+  - `site/legal/privacy.html` — Privacy Policy, zero-data-collection architecture, no cookies/analytics, CCPA rights, NY SHIELD Act compliance
+  - Both linked in `site/index.html` footer
+- **Whitepaper v1.2 synced to spec:** 3 winners → 10 winners, 50/30/20 split → 35/20/12/8/6/5/4/3/2/1, Liberty Bell section added, ≥$10 eligibility, 24h cooldown, min pool $50, oracle pricing, risk section expanded. Footer legal links added.
+- **Git history scrubbed (Oct 22, 2026):** Compromised private key `0x55805...` replaced with `REDACTED_COMPROMISED_KEY` across all 72 rewritten commits. GitHub PAT also confirmed absent from rewritten history. Force-pushed to `github.com/HarpaBarpa/lady-liberty`.
+- **`SCRIPTS.md` added:** Staged runbook for all post-deploy steps — Fly.io secrets, contract deployment, site config update, prize pool seeding with threshold guidance, holder registration, health check, Chainlink feed note.
+- **`frontend/app/whitepaper/page.tsx`:** Now reflects Liberty Bell, correct raffle mechanics, updated tokenomics, and legal links.
+
+## v2.2 Changes (Oct 22, 2026 — earlier this session)
 
 - **New deployer wallet:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (key in Vault as "New Deployer Wallet Key", funded ~0.054 ETH)
 - **Key security hardened:** `.env` is `.gitignore`d, `dotenv` loads it automatically, key never touches source code
@@ -224,12 +258,24 @@ LAUNCH_RUNBOOK.md       — step-by-step launch checklist
 - **Buy tax revised to 3% (50/50 Burn/Creator):** Torch 1.00% / Buyback & Burn 1.00% / Raffle 0.85% / Dev+Marketing 0.15%. Torch Launchpad only allows a burn/creator split at contract level, so the 0.85% + 0.15% route through the Creator allocation and are split manually post-launch.
 - **Torch tap bug fixed:** `.torch-spot` hotspot and `.quip` bubble had no `z-index`, so they rendered behind the hero artwork on some viewports — the tap "did nothing". Added `z-index` and removed the masking `overflow: hidden` that clipped the quip bubble.
 
+## Security Incident — Oct 21, 2026 (On Record)
+
+On October 21, 2026, the previous deployer private key (`0x5580599790c417a85a378e5391b2ae60f0ee7e06cbbcda9cbd59de6b7f5a7967`) was inadvertently exposed in a GitHub commit (`79434db`) and used to drain the associated wallet of ~3,147,750 ODDS + 0.00009204 ETH within 67 seconds. The incident was reported to Ampere support.
+
+**Remediation taken:**
+- Key rotated immediately — new wallet funded and key stored in Vault
+- `check.ts` rewritten to read from `process.env` only
+- `.env` / `.gitignore` / `dotenv` security model implemented
+- Git history scrubbed (Oct 22, 2026) — scrubbed commits: `79434db`, `fb4d034`, `59fbfec`, `9f718a5`
+- Old LinkRegistry (`0x6AeE4702002a768B3e9c626030D8d1370904CCCB`) is stale — all 3 contracts will be deployed fresh with the new key
+
 ## Next Steps
 
-1. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 3% buy tax (50% Burn / 50% Creator) → buy 2% dev supply → pay 0.00015 ETH fee → save token address
-2. **Deploy vault + raffle** → paste token address → `LIBERTY_TOKEN=0x... npx hardhat run scripts/deploy.ts --network robinhood`
-3. **Inject watcher secrets** → `fly secrets set LIBERTY_TOKEN=... RAFFLE_ADDR=... WATCHER_KEY=... -a libertytorch-watcher` → `fly deploy -a libertytorch-watcher`
-4. **Update site config** → edit `site/js/config.js` with deployed addresses → push → Vercel auto-deploys
-5. **Seed prize pool** → `npx hardhat run scripts/fund-pool.ts --network robinhood`
-6. **Register eligible wallets** → `npx hardhat run scripts/register-holders.ts --network robinhood`
-7. **Test draw** → `npx hardhat run scripts/check.ts --network robinhood` → if ready, `scripts/draw.ts`
+1. **Reactivate domain** → check Namecheap account → re-enable `libertytorch.online` if suspended
+2. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 3% buy tax (50% Burn / 50% Creator) → buy 2% dev supply → pay 0.00015 ETH fee → save token address
+3. **Deploy vault + raffle** → paste token address → see `SCRIPTS.md` for full command
+4. **Inject watcher secrets** → `fly secrets set LIBERTY_TOKEN=... RAFFLE_ADDR=... WATCHER_KEY=... -a libertytorch-watcher` → `fly deploy -a libertytorch-watcher`
+5. **Update site config** → edit `site/js/config.js` with deployed addresses → push → Vercel auto-deploys
+6. **Seed prize pool** → default is 0.01 ETH (below $50 threshold at $1/ETH fallback) — set `ETH_AMOUNT=0.05` for a healthy starting pool
+7. **Register eligible wallets** → edit `code/scripts/register-holders.ts` → `npx hardhat run scripts/register-holders.ts --network robinhood`
+8. **Health check** → `npx hardhat run scripts/check.ts --network robinhood` → if canDraw = true, `scripts/draw.ts`
