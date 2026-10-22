@@ -181,7 +181,7 @@ button { font: inherit; color: inherit; }
 .hero-art { margin: 0; position: relative; align-self: end; justify-self: center; width: min(100%, 560px); }
 .hero-art img { width: 100%; max-height: calc(100svh - var(--header-h) - 20px); object-fit: contain; object-position: bottom; filter: drop-shadow(0 24px 30px rgba(15, 55, 57, 0.18)); animation: rise 0.9s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-.torch-spot { position: absolute; left: 12%; top: 0.5%; width: 15%; aspect-ratio: 1; border: 0; background: transparent; border-radius: 50%; cursor: pointer; padding: 0; z-index: 2; }
+.torch-spot { position: absolute; right: 10%; top: 2%; width: 28%; aspect-ratio: 1; border: 0; background: transparent; border-radius: 50%; cursor: pointer; padding: 0; z-index: 2; }
 .torch-ping { position: absolute; right: -6px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--mint); border: 2px solid var(--harbor); }
 .torch-spot:hover .torch-ping { transform: scale(1.2); }
 .quip { position: absolute; left: 29%; top: -3%; z-index: 5; max-width: 230px; background: var(--porcelain); color: var(--harbor); border: 2px solid var(--harbor); border-radius: 18px 18px 18px 4px; padding: 10px 14px; font-weight: 650; font-size: 0.98rem; line-height: 1.35; box-shadow: 0 10px 20px rgba(10, 31, 33, 0.15); animation: pop 0.25s ease both; }
