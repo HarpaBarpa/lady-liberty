@@ -14,7 +14,7 @@ const RPC_URL = process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhoo
 const PRIVATE_KEY = process.env.TORCH_DEPLOYER_KEY; // Same key that owns the vault
 const VAULT_ADDRESS = process.env.LIBERTY_VAULT;
 const RAFFLE_ADDRESS = process.env.LIBERTY_RAFFLE;
-const DEV_WALLET = process.env.DEV_WALLET; // Where the dev split goes
+const DEV_WALLET = process.env.DEV_WALLET || process.env.DEPLOYER_ADDRESS; // Defaults to deployer address
 
 // The split (e.g. 50/50)
 const PRIZE_POOL_BPS = 5000; // 50%
@@ -36,10 +36,13 @@ const RAFFLE_ABI = [
 ];
 
 async function main() {
-  if (!PRIVATE_KEY || !VAULT_ADDRESS || !RAFFLE_ADDRESS || !DEV_WALLET) {
-    console.error("Missing required environment variables (TORCH_DEPLOYER_KEY, LIBERTY_VAULT, LIBERTY_RAFFLE, DEV_WALLET)");
+  if (!PRIVATE_KEY || !VAULT_ADDRESS || !RAFFLE_ADDRESS) {
+    console.error("Missing required environment variables: TORCH_DEPLOYER_KEY, LIBERTY_VAULT, LIBERTY_RAFFLE");
     process.exit(1);
   }
+
+  // DEV_WALLET defaults to the deployer address (your Torch wallet)
+  const devWallet = DEV_WALLET || new ethers.Wallet(PRIVATE_KEY).address;
 
   const provider = new ethers.JsonRpcProvider(RPC_URL);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
@@ -104,7 +107,7 @@ async function main() {
     }
 
     if (devShare > 0n) {
-      console.log(`Sending ${ethers.formatEther(devShare)} ETH to Dev Wallet (${DEV_WALLET})...`);
+      console.log(`Sending ${ethers.formatEther(devShare)} ETH to Dev Wallet (${devWallet})...`);
       const devTx = await wallet.sendTransaction({
         to: DEV_WALLET,
         value: devShare
