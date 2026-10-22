@@ -14,8 +14,8 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     robinhood: {
-      url: process.env.ROBINHOOD_RPC || "https://rpc.robinhoodchain.io",
-      chainId: process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337,
+      url: process.env.ROBINHOOD_RPC || "https://rpc.mainnet.chain.robinhood.com",
+      chainId: process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 4663,
       accounts: process.env.TORCH_DEPLOYER_KEY ? [process.env.TORCH_DEPLOYER_KEY] : [],
     },
   },
