@@ -221,10 +221,12 @@ LAUNCH_RUNBOOK.md       — step-by-step launch checklist
 - **`check.ts` fixed:** no longer hardcodes any private key
 - **Fly.io watcher deployed:** 2 machines at `libertytorch-watcher.fly.dev`, secrets ready (needs LIBERTY_TOKEN/RAFFLE_ADDR/WATCHER_KEY after deploy)
 - **Freedom machine prototype reviewed** (`claude/eloquent-newton-b68b18`): scan, preflight, send guard architecture accepted; `notifyDeposit()` bridges it with the vault
+- **Buy tax revised to 3% (50/50 Burn/Creator):** Torch 1.00% / Buyback & Burn 1.00% / Raffle 0.85% / Dev+Marketing 0.15%. Torch Launchpad only allows a burn/creator split at contract level, so the 0.85% + 0.15% route through the Creator allocation and are split manually post-launch.
+- **Torch tap bug fixed:** `.torch-spot` hotspot and `.quip` bubble had no `z-index`, so they rendered behind the hero artwork on some viewports — the tap "did nothing". Added `z-index` and removed the masking `overflow: hidden` that clipped the quip bubble.
 
 ## Next Steps
 
-1. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 4% buy tax to Creator → buy 2% dev supply → pay 0.00015 ETH fee → save token address
+1. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 3% buy tax (50% Burn / 50% Creator) → buy 2% dev supply → pay 0.00015 ETH fee → save token address
 2. **Deploy vault + raffle** → paste token address → `LIBERTY_TOKEN=0x... npx hardhat run scripts/deploy.ts --network robinhood`
 3. **Inject watcher secrets** → `fly secrets set LIBERTY_TOKEN=... RAFFLE_ADDR=... WATCHER_KEY=... -a libertytorch-watcher` → `fly deploy -a libertytorch-watcher`
 4. **Update site config** → edit `site/js/config.js` with deployed addresses → push → Vercel auto-deploys

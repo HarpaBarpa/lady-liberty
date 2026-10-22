@@ -88,7 +88,7 @@ export default function WhitepaperPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px", gap: "8px", fontSize: "0.8rem", color: "#3F6466", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "8px" }}>
               <span>Allocation</span><span style={{ textAlign: "right" }}>Tax</span><span style={{ textAlign: "right" }}>Per $100K</span>
             </div>
-            {[["Torch Protocol","0.90%","$900"],["$LIBERTY Buyback & Burn","0.50%","$500"],["RWA Raffle Funding","1.35%","$1,350"],["Development / Marketing","0.25%","$250"]].map(([label,tax,rev]) => (
+            {[["Torch Protocol","1.00%","$1,000"],["$LIBERTY Buyback & Burn","1.00%","$1,000"],["RWA Raffle Funding","0.85%","$850"],["Development / Marketing","0.15%","$150"]].map(([label,tax,rev]) => (
               <div key={String(label)} style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px", gap: "8px", fontSize: "0.9rem", padding: "8px 0", borderBottom: "1px solid rgba(63,100,102,0.5)" }}>
                 <span style={{ color: "#DCF5EB" }}>{label}</span>
                 <span style={{ color: "#6EE786", fontFamily: "monospace", textAlign: "right" }}>{tax}</span>
@@ -101,7 +101,7 @@ export default function WhitepaperPage() {
               <span style={{ color: "#F7FFFB", fontFamily: "monospace", textAlign: "right" }}>$3,000</span>
             </div>
             <div style={{ marginTop: "20px" }}>
-              {[["Torch Protocol 0.90%","Keeps the Torch ecosystem running."],["$LIBERTY Buyback & Burn 0.50%","Automated buyback and burn. Deflationary with every trade."],["RWA Raffle Funding 1.35%","Funds the hourly community raffle — LibertyTorch's core utility."],["Development / Marketing 0.25%","Site maintenance, social presence, community growth."]].map(([k,v]) => (
+              {[["Torch Protocol 1.00%","Keeps the Torch ecosystem running."],["$LIBERTY Buyback & Burn 1.00%","Automated buyback and burn. Deflationary with every trade."],["RWA Raffle Funding 0.85%","Funds the hourly community raffle — LibertyTorch's core utility."],["Development / Marketing 0.15%","Site maintenance, social presence, community growth."]].map(([k,v]) => (
                 <p key={String(k)} style={{ fontSize: "0.85rem", marginBottom: "8px" }}><span style={{ color: "#6EE786", fontWeight: 700 }}>· {k} </span><span style={{ color: "#DCF5EB", opacity: 0.75 }}>{v}</span></p>
               ))}
             </div>
@@ -114,7 +114,7 @@ export default function WhitepaperPage() {
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "20px" }}>Hold $LIBERTY to be eligible. Send dust coins to boost your entries. Every hour, three winners split the vault.</p>
           <div style={{ background: "#174C4F", borderRadius: "16px", padding: "24px", margin: "16px 0" }}>
             <p style={{ fontSize: "0.7rem", color: "#6EE786", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "16px" }}>Raffle Parameters</p>
-            {[["Eligibility","Hold any amount of $LIBERTY"],["Entry boost","Send any ERC-20 token to the vault — USD value (via oracle) increases entry weight"],["Draw frequency","Hourly"],["Winners per draw","3"],["Prize split","1st: 50% · 2nd: 30% · 3rd: 20%"],["Prize currency","ETH — sent directly to winners' wallets"],["Vault funding","1.35% buy tax + dust coin deposits"]].map(([k,v]) => (
+            {[["Eligibility","Hold any amount of $LIBERTY"],["Entry boost","Send any ERC-20 token to the vault — USD value (via oracle) increases entry weight"],["Draw frequency","Hourly"],["Winners per draw","3"],["Prize split","1st: 50% · 2nd: 30% · 3rd: 20%"],["Prize currency","ETH — sent directly to winners' wallets"],["Vault funding","0.85% buy tax + dust coin deposits"]].map(([k,v]) => (
               <div key={String(k)} style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "16px", marginBottom: "12px", fontSize: "0.9rem" }}>
                 <span style={{ color: "#6EE786", fontWeight: 700 }}>{k}</span>
                 <span style={{ color: "#DCF5EB", opacity: 0.85 }}>{v}</span>
@@ -124,13 +124,13 @@ export default function WhitepaperPage() {
           <h3 style={{ fontSize: "1.05rem", color: "#6EE786", fontWeight: 700, marginBottom: "10px" }}>How to boost your entries</h3>
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>Send any amount of any ERC-20 token to the LibertyTorch vault address. The USD value of your deposit is calculated via live oracle pricing — that USD value becomes your entry weight. The more dust you send, the higher your weight. Gas is paid by the project where possible — you should not need to spend ETH to enter.</p>
           <h3 style={{ fontSize: "1.05rem", color: "#6EE786", fontWeight: 700, marginBottom: "10px" }}>Vault funding — two streams</h3>
-          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9 }}><strong style={{ color: "#6EE786" }}>Tax stream:</strong> 1.35% of every $LIBERTY buy automatically flows into the vault — on-chain, every trade. <strong style={{ color: "#6EE786" }}>Dust stream:</strong> deposited tokens are held in the vault, contributing to the pool. More dust = bigger vault = bigger prizes.</p>
+          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9 }}><strong style={{ color: "#6EE786" }}>Tax stream:</strong> 0.85% of every $LIBERTY buy automatically flows into the vault — on-chain, every trade. <strong style={{ color: "#6EE786" }}>Dust stream:</strong> deposited tokens are held in the vault, contributing to the pool. More dust = bigger vault = bigger prizes.</p>
         </section>
 
         <section id="flywheel" style={{ paddingTop: "56px" }}>
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 900, color: "#F7FFFB", marginBottom: "16px" }}>7. The Flywheel</h2>
           <div style={{ background: "#174C4F", borderRadius: "16px", padding: "24px", margin: "16px 0" }}>
-            {[["1","Buyers pay 3% tax","0.90% to Torch, 0.50% buyback, 1.35% vault, 0.25% dev/marketing"],["2","Vault grows","1.35% tax + dust deposits accumulate in the ETH prize vault"],["3","Prizes attract holders","The raffle makes holding $LIBERTY valuable. People buy and hold to be eligible"],["4","Dust depositors boost entries","Users send any token — USD valued via oracle — boosting their entry weight"],["5","Volume compounds","More holders = more community = more trading = more tax = LOOP"]].map(([n,t,d],i) => (
+            {[["1","Buyers pay 3% tax","1.00% to Torch, 1.00% buyback, 0.85% vault, 0.15% dev/marketing"],["2","Vault grows","0.85% tax + dust deposits accumulate in the ETH prize vault"],["3","Prizes attract holders","The raffle makes holding $LIBERTY valuable. People buy and hold to be eligible"],["4","Dust depositors boost entries","Users send any token — USD valued via oracle — boosting their entry weight"],["5","Volume compounds","More holders = more community = more trading = more tax = LOOP"]].map(([n,t,d],i) => (
               <div key={n} style={{ display: "grid", gridTemplateColumns: "36px 1fr", gap: "14px", marginBottom: i < 4 ? "20px" : "0" }}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(110,231,134,0.15)", border: "1px solid #6EE786", display: "flex", alignItems: "center", justifyContent: "center", color: "#6EE786", fontWeight: 900, fontSize: "0.9rem", flexShrink: 0 }}>{n}</div>
                 <div><p style={{ color: "#F7FFFB", fontWeight: 700, fontSize: "0.95rem", marginBottom: "2px" }}>{t}</p><p style={{ color: "#DCF5EB", opacity: 0.7, fontSize: "0.85rem" }}>{d}</p></div>
