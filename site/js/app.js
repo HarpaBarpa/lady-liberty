@@ -468,6 +468,7 @@
     var muteBtn  = document.getElementById("lt-mute");
     var muteIcon = document.getElementById("lt-mute-icon");
     var soundIcon= document.getElementById("lt-sound-icon");
+    var vol     = document.getElementById("lt-vol");
     if (!audio || !overlay || !muteBtn) return;
 
     var started = false;
@@ -486,6 +487,14 @@
     overlay.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startAudio(); }
     });
+
+    if (vol) {
+      vol.addEventListener("input", function () {
+        audio.volume = vol.value / 100;
+        vol.style.setProperty("--pct", vol.value + "%");
+      });
+      vol.style.setProperty("--pct", vol.value + "%");
+    }
 
     muteBtn.addEventListener("click", function () {
       audio.muted = !audio.muted;
