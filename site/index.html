@@ -26,7 +26,7 @@
         <li><a href="#vault">The vault</a></li>
         <li><a href="#inside">How it works</a></li>
         <li><a href="#crown">Prizes</a></li>
-        <li><a href="#torch">Practice round</a></li>
+        <li><a href="#torch">Live draw</a></li>
         <li><a href="#faq">FAQ</a></li>
         <li><a href="#bell">Liberty Bell</a></li>
       </ul>
@@ -71,11 +71,10 @@
       </div>
       <figure class="hero-art">
         <img src="assets/liberty-hero.webp" width="1024" height="1536" alt="Lady Liberty as a friendly woman with a short sea-green bob, copper freckles and a seven-ray crown, raising a mint-green torch and holding out an open hand.">
-        <a class="torch-spot" href="#torch" aria-describedby="quip" aria-label="Ask the torch">
+        <a class="torch-spot" href="#torch" aria-label="Jump to live draw">
           <span class="torch-ping" aria-hidden="true"></span>
         </a>
-        <p class="quip" id="quip" role="status" aria-live="polite" hidden></p>
-        <p class="torch-hint" aria-hidden="true">psst, tap the torch</p>
+        <p class="torch-hint" aria-hidden="true">tap the torch</p>
       </figure>
     </div>
     <div class="climb-cue"><a href="#vault">Start climbing <span aria-hidden="true">↓</span></a></div>
@@ -194,7 +193,7 @@
         </dl>
         <p class="calc-roman" data-calc-roman aria-hidden="true">XCVIII</p>
         <p class="calc-roman-note" data-calc-roman-note>Carved in Roman numerals, for the tablet. Romans didn't do cents.</p>
-        <button class="btn btn-copper" type="button" data-calc-carry>Take <span data-calc-carry-amt>$98.00</span> to the practice round</button>
+        <button class="btn btn-copper" type="button" data-calc-carry>Jump to live draw</button>
       </form>
     </div>
   </section>
@@ -294,43 +293,45 @@
     </div>
   </section>
 
-  <!-- 305 ft: the torch -->
+  <!-- 305 ft: the torch and the live draw -->
   <section class="lvl torch" id="torch" data-ft="305" aria-labelledby="torch-title">
     <div class="torch-bg" aria-hidden="true"></div>
     <div class="wrap">
       <p class="level-tag level-tag-light">Level 5 · The torch · 305 ft</p>
       <div class="torch-head">
-        <h2 id="torch-title">Practice round. Pigeons only.</h2>
-        <p>Nineteen harbor pigeons with pretend entries, plus you with the example from the tablet. Light the torch to draw ten winners: weighted picks, one prize per wallet.</p>
+        <h2 id="torch-title">The draw. Hourly. Automatic.</h2>
+        <p>The live raffle fires every hour when the pool is funded. Ten winners, weighted by entries, one prize per wallet. Connect your wallet — the numbers update in real time.</p>
       </div>
 
-      <div class="practice" data-practice>
-        <div class="practice-vault">
-          <p class="pv-label">Pretend vault</p>
-          <ul class="pv-list" data-pv-list></ul>
-          <p class="pv-note">Made-up amounts. Nothing real is held.</p>
-        </div>
-
-        <ul class="flock" data-flock aria-label="Practice entrants"></ul>
-
-        <div class="practice-controls">
-          <button class="btn btn-mint" type="button" data-draw>Light the practice torch</button>
-          <button class="btn btn-outline-light" type="button" data-simulate>Run 1,000 practice rounds</button>
-          <button class="btn btn-text-light" type="button" data-reset disabled>Reset</button>
-        </div>
-        <p class="practice-status" data-practice-status role="status" aria-live="polite"></p>
-
-        <div class="results" data-results hidden>
-          <h3 class="results-title">Winners and what they'd get</h3>
-          <div class="results-scroll">
-            <table class="results-table">
-              <caption class="sr-only">Practice round winners with their share of each pretend asset</caption>
-              <thead data-results-head></thead>
-              <tbody data-results-body></tbody>
-            </table>
+      <div class="draw-panel">
+        <div class="draw-stats">
+          <div class="draw-stat draw-stat-main">
+            <p class="draw-label">Prize pool</p>
+            <p class="draw-value" data-draw-pool>—</p>
+          </div>
+          <div class="draw-stat">
+            <p class="draw-label">Status</p>
+            <p class="draw-value draw-value-sm" data-draw-state>Connecting to chain…</p>
+          </div>
+          <div class="draw-stat">
+            <p class="draw-label">Next draw</p>
+            <p class="draw-value draw-value-sm" data-draw-time>—</p>
+          </div>
+          <div class="draw-stat">
+            <p class="draw-label">Raffle</p>
+            <p class="draw-value draw-value-sm" data-draw-round>—</p>
+          </div>
+          <div class="draw-stat">
+            <p class="draw-label">Supported tokens</p>
+            <p class="draw-value draw-value-sm" data-draw-parts>—</p>
           </div>
         </div>
-        <p class="sim-out" data-sim-out aria-live="polite"></p>
+
+        <div class="draw-split">
+          <h3>Payout split</h3>
+          <div class="split-chart" data-draw-split aria-label="Payout split — 10 winners, weighted by entries, one prize per wallet"></div>
+          <p class="split-note">Totals 96%. 4% to the Liberty Bell jackpot above.</p>
+        </div>
       </div>
 
       <div class="launch" aria-labelledby="launch-title">
@@ -341,12 +342,12 @@
         <div class="launch-grid">
           <div class="launch-card">
             <p class="launch-state"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
-            <p class="launch-addr">Vault address: <span data-vault-addr class="addr-placeholder">—</span></p>
+            <p class="launch-addr">Raffle address: <span data-vault-addr class="addr-placeholder">—</span></p>
             <h3>Raffle rules</h3>
             <dl class="params" data-params></dl>
           </div>
           <div class="launch-card">
-            <h3>Still open</h3>
+            <h3>Community governance</h3>
             <ul class="todo" data-todo></ul>
           </div>
         </div>

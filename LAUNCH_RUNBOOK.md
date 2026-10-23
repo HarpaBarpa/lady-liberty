@@ -251,6 +251,39 @@ cd /opt/libertytorch && git pull && cd code && npm ci && npm run watcher:build &
 
 ---
 
+## Post-Launch Improvements (do these after first draw fires)
+
+These are cosmetic/UX improvements — not blockers, but worth doing once the raffle is live and there are real draws to show.
+
+### 1. Show participant count in live draw panel
+Currently the torch live-draw panel shows "Supported tokens" (vault count). Wire in the actual eligible participant count from the raffle contract.
+
+**contracts.js change:** Add `getEligibleAccounts()` to the raffle ABI and fetch it in `readContracts()`.
+
+```solidity
+"function getEligibleAccounts() view returns (address[])"
+```
+
+**app.js change:** Read `data.raffle.eligibleAccounts.length` and display it in the `data-draw-parts` element (rename label if needed).
+
+### 2. Show winners after each draw
+After a draw fires, display the winning addresses from `getWinners(raffleId)` in the live draw panel.
+
+**contracts.js change:** Add `getWinners(uint256 _raffleId)` to the raffle ABI, fetch in `readContracts()` keyed by raffleId.
+
+**app.js change:** In the poll loop, after updating pool/round, fetch winners for the current raffleId and display them. Consider:
+- Showing just short addresses (e.g. `0x4A2B…8f3C`) in a "Last winners" row
+- Highlighting if the connected wallet is among them ("You won 1st place!")
+- A simple table: Rank | Wallet | Share %
+
+### 3. Historical winners table (optional)
+Store last 5 raffleIds and show a scrollable history of winners. Useful social proof once there are real participants.
+
+### 4. Make winners display personal
+Once winners are shown, add logic to check if `signerAddr` matches any winner address and display a personal message: "🎉 You won [rank] place! Claim your ETH."
+
+---
+
 ## Gas Budget
 
 | Operation | Approx Cost (Robinhood) |

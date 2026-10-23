@@ -80,27 +80,7 @@
   });
   window.matchMedia("(min-width: 1021px)").addEventListener("change", function (m) { if (m.matches) closeMenu(false); });
 
-  /* Torch quips */
-  var spot = $(".torch-spot");
-  var quip = $("#quip");
-  var quipIndex = -1;
-  var quipTimer = null;
-  spot.addEventListener("click", function () {
-    // Flash the torch ping
-    spot.classList.add("flash");
-    setTimeout(function () { spot.classList.remove("flash"); }, 600);
 
-    // Cycle quips
-    quipIndex = (quipIndex + 1) % C.torchQuips.length;
-    quip.hidden = false;
-    quip.textContent = C.torchQuips[quipIndex];
-    quip.style.animation = "none";
-    void quip.offsetWidth;
-    quip.style.animation = "";
-    spot.closest(".hero-art").classList.add("has-quip");
-    clearTimeout(quipTimer);
-    quipTimer = setTimeout(function () { quip.hidden = true; }, 5200);
-  });
 
   /* Example assets */
   var chipWrap = $("[data-asset-chips]");
@@ -131,8 +111,6 @@
   var calcNet = $("[data-calc-net]");
   var calcRoman = $("[data-calc-roman]");
   var calcRomanNote = $("[data-calc-roman-note]");
-  var carryBtn = $("[data-calc-carry]");
-  var carryAmt = $("[data-calc-carry-amt]");
   var lastNet = R.split(C.calculator.defaultCents, rules.feeBps).net;
 
   function renderCalc() {
@@ -145,7 +123,7 @@
       calcNet.textContent = "--";
       calcRoman.textContent = "";
       calcRomanNote.textContent = "Nothing to carve yet.";
-      carryBtn.disabled = true;
+
       return;
     }
     var s = R.split(parsed.cents, rules.feeBps);
@@ -167,13 +145,20 @@
       calcRoman.textContent = "MMMCMXCIX+";
       calcRomanNote.textContent = "Too big for the tablet. Roman numerals stop at 3,999.";
     }
-    carryBtn.disabled = false;
-    carryAmt.textContent = R.formatUsd(s.net);
+
   }
   calcInput.addEventListener("input", renderCalc);
   calcForm.addEventListener("submit", function (e) { e.preventDefault(); renderCalc(); });
   calcInput.value = (C.calculator.defaultCents / 100).toString();
   renderCalc();
+
+  var carryBtn = $("[data-calc-carry]");
+  if (carryBtn) {
+    carryBtn.addEventListener("click", function () {
+      var target = $("#torch");
+      if (target) target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    });
+  }
 
   /* Payout staircase */
   var stepsWrap = $("[data-split-steps]");
@@ -181,7 +166,7 @@
   $("[data-split-total]").textContent = draftTotal;
   $("[data-split-rest]").textContent = draftRest;
   var maxPct = Math.max.apply(null, draft);
-  var vaultAmts = C.practice.vault;
+  var vaultAmts = C.exampleVault;
 
   function sliceListFor(p) {
     var ul = el("ul", { class: "slice-list" });
@@ -198,13 +183,13 @@
       var share = draft[i];
       p.innerHTML = "";
       p.appendChild(el("strong", null, ordinal(i + 1) + " place takes " + pct(share) + " of every asset."));
-      p.appendChild(document.createTextNode(" With the pretend vault from the practice round, that would be:"));
+      p.appendChild(document.createTextNode(" With the example vault that would be:"));
       splitDetail.appendChild(p);
       splitDetail.appendChild(sliceListFor(share));
       splitDetail.appendChild(el("p", { class: "fine" }, "Paid in kind, one prize per wallet. This explains the split; it doesn't settle anything."));
     } else {
       p.appendChild(el("strong", null, "The last " + pct(draftRest) + " is still to be confirmed."));
-      p.appendChild(document.createTextNode(" The reference split adds up to " + draftTotal + "%. Where the remaining " + draftRest + "% goes isn't decided, so it stays visible here instead of being quietly rounded away. In the pretend vault it would be:"));
+      p.appendChild(document.createTextNode(" The reference split adds up to " + draftTotal + "%. Where the remaining " + draftRest + "% goes isn't decided, so it stays visible here instead of being quietly rounded away. An example allocation:"));
       splitDetail.appendChild(p);
       splitDetail.appendChild(sliceListFor(draftRest));
     }
@@ -231,168 +216,50 @@
   }
   showStep(0);
 
-  /* Practice round */
-  var pvList = $("[data-pv-list]");
-  vaultAmts.forEach(function (v) { pvList.appendChild(el("li", null, R.formatTokens(v.micros) + " " + v.symbol)); });
-
-  var flock = $("[data-flock]");
-  var drawBtn = $("[data-draw]");
-  var simBtn = $("[data-simulate]");
-  var resetBtn = $("[data-reset]");
-  var pStatus = $("[data-practice-status]");
-  var results = $("[data-results]");
-  var resHead = $("[data-results-head]");
-  var resBody = $("[data-results-body]");
-  var simOut = $("[data-sim-out]");
-  var drawing = false;
-  var birdEls = [];
-  var youEntryEl = null;
-  var youIndex = 0;
-
-  function entrants() {
-    var list = [{ name: "You", cents: lastNet, you: true }];
-    C.practice.pigeons.forEach(function (p) { list.push({ name: p.name, cents: p.cents, you: false }); });
-    return list;
-  }
-
-  function buildFlock() {
-    flock.innerHTML = "";
-    birdEls = [];
-    entrants().forEach(function (e, i) {
-      var li = el("li", { class: "bird" + (e.you ? " bird-you" : "") + (i % 3 === 1 ? " flip" : "") });
-      var img = el("img", { src: e.you ? "assets/pigeon-flap.webp" : "assets/pigeon.webp", alt: "", width: "58", height: "58", loading: "lazy" });
-      if (!e.you) img.style.filter = "brightness(" + (0.82 + ((i * 37) % 30) / 100) + ") saturate(" + (0.8 + ((i * 53) % 40) / 100) + ")";
-      li.appendChild(img);
-      li.appendChild(el("span", { class: "bird-name" }, e.you ? "You" : e.name));
-      var entry = el("span", { class: "bird-entry" }, R.formatUsd(e.cents));
-      if (e.you) youEntryEl = entry;
-      li.appendChild(entry);
-      flock.appendChild(li);
-      birdEls.push(li);
+  /* Torch hero tap: scroll to live draw */
+  var spot = $(".torch-spot");
+  if (spot) {
+    spot.addEventListener("click", function () {
+      var target = $("#torch");
+      if (target) target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     });
   }
-  buildFlock();
 
-  function clearRound() {
-    birdEls.forEach(function (b) {
-      b.classList.remove("is-winner", "is-picking", "is-out");
-      var badge = $(".bird-badge", b);
-      if (badge) badge.remove();
-      if (!b.classList.contains("bird-you")) $("img", b).src = "assets/pigeon.webp";
-    });
-    results.hidden = true;
-    resHead.innerHTML = "";
-    resBody.innerHTML = "";
-  }
+  /* Live draw display — hooking into LibertyData */
+  var drawPoolEl  = $("[data-draw-pool]");
+  var drawStateEl = $("[data-draw-state]");
+  var drawTimeEl  = $("[data-draw-time]");
+  var drawRoundEl = $("[data-draw-round]");
+  var drawPartsEl = $("[data-draw-parts]");
+  var drawSplitEl = $("[data-draw-split]");
 
-  function showResults(order, list) {
-    resHead.innerHTML = "";
-    resBody.innerHTML = "";
-    var hr = el("tr");
-    ["Rank", "Wallet", "Share"].concat(vaultAmts.map(function (v) { return v.symbol; })).forEach(function (h) { hr.appendChild(el("th", { scope: "col" }, h)); });
-    resHead.appendChild(hr);
-    order.forEach(function (idx, rank) {
-      var tr = el("tr", list[idx].you ? { class: "row-you" } : null);
-      tr.appendChild(el("td", { class: "num" }, ordinal(rank + 1)));
-      tr.appendChild(el("td", null, list[idx].you ? "You" : list[idx].name));
-      tr.appendChild(el("td", { class: "num" }, pct(draft[rank])));
-      vaultAmts.forEach(function (v) { tr.appendChild(el("td", { class: "num" }, R.formatTokens(R.sliceMicros(v.micros, draft[rank])))); });
-      resBody.appendChild(tr);
+  // Build payout split reference from the draft (bars normalized to max share)
+  var maxPctDraft = Math.max.apply(null, draft);
+  if (drawSplitEl) {
+    draft.forEach(function (share, i) {
+      var row = el("div", { class: "split-row" });
+      var rank = el("span", { class: "split-rank" }, ordinal(i + 1));
+      var bar = el("span", { class: "split-bar" });
+      bar.style.setProperty("--w", Math.max(4, Math.round((share / maxPctDraft) * 100)) + "%");
+      bar.setAttribute("aria-label", ordinal(i + 1) + " place: " + share + "%");
+      var pctEl = el("span", { class: "split-pct" }, pct(share));
+      row.appendChild(rank);
+      row.appendChild(bar);
+      row.appendChild(pctEl);
+      drawSplitEl.appendChild(row);
     });
     if (draftRest > 0) {
-      var tr = el("tr", { class: "row-rest" });
-      tr.appendChild(el("td", { class: "num" }, "-"));
-      tr.appendChild(el("td", null, "Unassigned, to be confirmed"));
-      tr.appendChild(el("td", { class: "num" }, pct(draftRest)));
-      vaultAmts.forEach(function (v) { tr.appendChild(el("td", { class: "num" }, R.formatTokens(R.sliceMicros(v.micros, draftRest)))); });
-      resBody.appendChild(tr);
+      var restRow = el("div", { class: "split-row split-row-ghost" });
+      restRow.appendChild(el("span", { class: "split-rank" }, "TBC"));
+      var restBar = el("span", { class: "split-bar" });
+      restBar.style.setProperty("--w", Math.max(4, Math.round((draftRest / maxPctDraft) * 100)) + "%");
+      restRow.appendChild(restBar);
+      restRow.appendChild(el("span", { class: "split-pct" }, pct(draftRest)));
+      drawSplitEl.appendChild(restRow);
     }
-    results.hidden = false;
   }
 
-  function finishRound(order, list) {
-    birdEls.forEach(function (b, i) { if (order.indexOf(i) === -1) b.classList.add("is-out"); });
-    var youRank = order.indexOf(youIndex);
-    var msg = youRank === -1
-      ? "Ten pigeons won. You didn't this time. The vault is pretend, so nobody lost anything."
-      : "You placed " + ordinal(youRank + 1) + " and would take " + pct(draft[youRank]) + " of every pretend asset.";
-    pStatus.textContent = msg;
-    showResults(order, list);
-    drawing = false;
-    drawBtn.disabled = false;
-    simBtn.disabled = false;
-    resetBtn.disabled = false;
-    drawBtn.textContent = "Light it again";
-  }
-
-  drawBtn.addEventListener("click", function () {
-    if (drawing) return;
-    drawing = true;
-    clearRound();
-    simOut.textContent = "";
-    drawBtn.disabled = true;
-    simBtn.disabled = true;
-    var list = entrants();
-    var order = R.drawWinners(list.map(function (e) { return e.cents; }), rules.winnersPerRound);
-    function mark(rank) {
-      var b = birdEls[order[rank]];
-      b.classList.remove("is-picking");
-      b.classList.add("is-winner");
-      b.appendChild(el("span", { class: "bird-badge" }, ordinal(rank + 1) + " · " + pct(draft[rank])));
-      if (!list[order[rank]].you) $("img", b).src = "assets/pigeon-flap.webp";
-    }
-    if (reduceMotion) {
-      order.forEach(function (_, r) { mark(r); });
-      finishRound(order, list);
-      return;
-    }
-    pStatus.textContent = "The torch is picking...";
-    var r = 0;
-    (function next() {
-      if (r >= order.length) { finishRound(order, list); return; }
-      var b = birdEls[order[r]];
-      b.classList.add("is-picking");
-      setTimeout(function () { mark(r); r++; setTimeout(next, 120); }, 260);
-    })();
-  });
-
-  resetBtn.addEventListener("click", function () {
-    clearRound();
-    pStatus.textContent = "Reset. Same pigeons, fresh round.";
-    simOut.textContent = "";
-    resetBtn.disabled = true;
-    drawBtn.textContent = "Light the practice torch";
-  });
-
-  simBtn.addEventListener("click", function () {
-    var list = entrants();
-    var weights = list.map(function (e) { return e.cents; });
-    var runs = C.practice.simulations;
-    var s = R.simulate(weights, rules.winnersPerRound, youIndex, runs);
-    var share = (lastNet / R.sum(weights)) * 100;
-    simOut.innerHTML = "";
-    simOut.appendChild(document.createTextNode("In " + runs.toLocaleString("en-US") + " practice rounds with " + R.formatUsd(lastNet) + ", you won a prize in "));
-    simOut.appendChild(el("strong", null, Math.round((s.any / runs) * 100) + "%"));
-    simOut.appendChild(document.createTextNode(" of them and took 1st in "));
-    simOut.appendChild(el("strong", null, Math.round((s.first / runs) * 100) + "%"));
-    simOut.appendChild(document.createTextNode(". Your share of the total entry weight is " + share.toFixed(1) + "%. Those numbers aren't the same, which is the point: with ten prizes and one per wallet, weight share isn't your chance. And this is one possible method, not the final one."));
-    resetBtn.disabled = false;
-  });
-
-  carryBtn.addEventListener("click", function () {
-    if (youEntryEl) youEntryEl.textContent = R.formatUsd(lastNet);
-    clearRound();
-    pStatus.textContent = "Your " + R.formatUsd(lastNet) + " example joined the practice round.";
-    simOut.textContent = "";
-    drawBtn.textContent = "Light the practice torch";
-    var target = $("#torch");
-    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
-    setTimeout(function () { drawBtn.focus({ preventScroll: true }); }, reduceMotion ? 0 : 700);
-  });
-  calcInput.addEventListener("input", function () {
-    // keep the "You" card in step with the tablet when no round is showing
-    if (!drawing && results.hidden && youEntryEl) youEntryEl.textContent = R.formatUsd(lastNet);
-  });
+  // draw-panel probes hooked into the poll loop below
 
   /* Launch panel */
   var params = $("[data-params]");
@@ -416,8 +283,21 @@
     d.appendChild(el("dd", null, row[1]));
     params.appendChild(d);
   });
+  /* Mechanical parity notes — things still open for the community to weigh in on */
   var todo = $("[data-todo]");
-  C.openDecisions.forEach(function (t) { todo.appendChild(el("li", null, t)); });
+  if (todo) {
+    [
+      "What the exact conditions for the 1-in-72 jackpot trigger will be",
+      "Duration of dust-earned entries before expiry",
+      "Rules for drawings with fewer than 10 eligible participants",
+      "Entry-weight precision and rounding",
+      "Deposits that land while a draw is in progress",
+      "The supported token list and contract addresses",
+      "Where the draw randomness comes from",
+      "How settlement is carried out",
+      "Legal review and eligible jurisdictions"
+    ].forEach(function (t) { todo.appendChild(el("li", null, t)); });
+  }
 
   /* Aging slider: copper in 1886, patina by now */
   var aging = $("#aging");
@@ -513,6 +393,7 @@
       if (LIVE.NOT_DEPLOYED) {
         if (stateEl) setLive(stateEl, "Contracts deploying — check back soon");
         if (vaultAddrEl) setLive(vaultAddrEl, "—");
+        if (drawStateEl) setLive(drawStateEl, "Contracts deploying — check back soon");
         return;
       }
 
@@ -539,13 +420,27 @@
             setLive(stateEl, "Waiting for deposits");
             if (stateDot) stateDot.className = "dot dot-copper";
           }
+
+          /* Torch live-draw panel */
+          if (drawPoolEl) {
+            setLive(drawPoolEl, LIVE.fmtUsd(pool));
+            drawPoolEl.classList.toggle("draw-pool-funded", pool >= 5000);
+          }
+          if (drawTimeEl) { setLive(drawTimeEl, until > 0 ? LIVE.fmtTimeUntil(until) : "Draw now!"); drawTimeEl.classList.toggle("draw-time-now", until <= 0); }
+          if (drawRoundEl) setLive(drawRoundEl, "#" + data.raffle.raffleId);
+          if (drawStateEl) {
+            var ds2 = pool >= 5000 ? "Pool funded — draw imminent" : pool > 0 ? "Accumulating — next check in " + LIVE.fmtTimeUntil(until || 0) : "Waiting for first deposits";
+            setLive(drawStateEl, ds2);
+          }
         } else if (data.raffleError) {
           showError("Raffle: " + (data.raffleError || "unknown error"));
+          if (drawStateEl) setLive(drawStateEl, "Raffle: " + (data.raffleError || "unknown error"));
         }
 
         /* ── Supported tokens ─── */
         if (data.vault && data.vault.supportedCount != null) {
           setLive(partEl, String(data.vault.supportedCount));
+          if (drawPartsEl) setLive(drawPartsEl, String(data.vault.supportedCount));
         }
 
         /* ── Token burn ─── */

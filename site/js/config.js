@@ -76,60 +76,11 @@ window.LIBERTY_CONFIG = {
 
   calculator: { defaultCents: 10000, minCents: 100, maxCents: 100000000 },
 
-  // Pretend data for the practice round. Nothing here is real.
-  practice: {
-    // amounts in millionths of a token, so slices stay exact
-    vault: [
-      { symbol: "AAPLx", micros: 1200000 },
-      { symbol: "NVDAx", micros: 3000000 },
-      { symbol: "TSLAx", micros: 750000 },
-      { symbol: "SPYx", micros: 400000 }
-    ],
-    // net entry values in cents (weight = base entry + bonus entries from dust)
-    pigeons: [
-      { name: "Gus", cents: 4116 },
-      { name: "Admiral Crumb", cents: 24500 },
-      { name: "Pidge", cents: 980 },
-      { name: "Coo Coo", cents: 12250 },
-      { name: "Sir Featherstone", cents: 392 },
-      { name: "Beaky", cents: 6860 },
-      { name: "Nugget", cents: 1470 },
-      { name: "Dot", cents: 588 },
-      { name: "Lou", cents: 1960 },
-      { name: "Maple", cents: 3332 },
-      { name: "Biscuit", cents: 784 },
-      { name: "Penny", cents: 294 },
-      { name: "Rocco", cents: 8820 },
-      { name: "Pebble", cents: 1176 },
-      { name: "Waffles", cents: 490 },
-      { name: "Mortimer", cents: 5782 },
-      { name: "Juniper", cents: 2450 },
-      { name: "Clementine", cents: 196 },
-      { name: "Bartholomew", cents: 15680 }
-    ],
-    simulations: 1000
-  },
-
-  openDecisions: [
-    "What the exact conditions for the 1-in-72 jackpot trigger will be",
-    "Duration of dust-earned entries before expiry",
-    "Rules for drawings with fewer than 10 eligible participants",
-    "Who receives the 3% protocol fee and how it is accounted",
-    "Entry-weight precision and rounding",
-    "Deposits that land while a draw is in progress",
-    "Oracle timestamps and what happens with stale prices",
-    "The supported token list and contract addresses",
-    "Where the draw randomness comes from",
-    "How settlement is carried out",
-    "Legal review and eligible jurisdictions"
-  ],
-
-  torchQuips: [
-    "Held up since 1886. Copper hands.",
-    "Closed to visitors since 1916. Open at launch.",
-    "Mint green, never out. Not even for an empty vault.",
-    "Everything that burns becomes greater.",
-    "Every hour, on the hour. If the pool's ready.",
-    "Not financial advice. I'm a torch."
+  // Example vault composition for the payout-staircase illustration.
+  exampleVault: [
+    { symbol: "AAPLx", micros: 1200000 },
+    { symbol: "NVDAx", micros: 3000000 },
+    { symbol: "TSLAx", micros: 750000 },
+    { symbol: "SPYx", micros: 400000 }
   ]
 };
