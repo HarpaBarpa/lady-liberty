@@ -41,19 +41,11 @@
   $$("[data-rule='min-pool']").forEach(function (n) { n.textContent = (rules.minPoolUsdCents / 100).toFixed(0); });
   $$("[data-rule='cooldown']").forEach(function (n) { n.textContent = rules.cooldownHours; });
 
-  /* Real vault: always the configured (zero) state */
-  $("[data-vault-value]").textContent = R.formatUsd(C.vault.valueCents);
-  $("[data-vault-participants]").textContent = C.vault.participants;
-  $("[data-vault-deposits]").textContent = C.vault.deposits;
-  $("[data-vault-next]").textContent = C.vault.nextDraw;
-
   /* Vault address from config */
   var vaultAddr = C.contracts && C.contracts.LIBERTY_VAULT;
   var vaultAddrEl = $("[data-vault-addr]");
   if (vaultAddrEl && vaultAddr && !vaultAddr.startsWith("PENDING")) {
     vaultAddrEl.textContent = vaultAddr;
-  } else if (vaultAddrEl) {
-    vaultAddrEl.textContent = "Deploying...";
   }
 
   /* Mobile navigation */
@@ -82,25 +74,39 @@
 
 
 
-  /* Example assets */
+  /* Supported dust tokens — live on-chain when deployed, illustrative examples pre-launch */
   var chipWrap = $("[data-asset-chips]");
   var assetDetail = $("[data-asset-detail]");
+  var assetList = [];
+  function shortAddr(a) { return a ? a.slice(0, 6) + "…" + a.slice(-4) : "—"; }
+
   function showAsset(i) {
-    var a = C.exampleAssets[i];
+    var a = assetList[i];
+    if (!a) return;
     $$(".chip", chipWrap).forEach(function (c, j) { c.setAttribute("aria-pressed", String(i === j)); });
     assetDetail.innerHTML = "";
     var s = el("strong", null, a.symbol);
     assetDetail.appendChild(s);
-    assetDetail.appendChild(document.createTextNode(" is an example of " + a.about + ". It's here to explain the idea, not because it's on a confirmed list, and the vault holds none of it."));
+    assetDetail.appendChild(document.createTextNode(a.about));
   }
-  C.exampleAssets.forEach(function (a, i) {
-    var b = el("button", { type: "button", class: "chip", "aria-pressed": "false" });
-    b.appendChild(el("span", { class: "chip-sym" }, a.symbol));
-    b.appendChild(el("span", { class: "chip-name" }, a.name));
-    b.addEventListener("click", function () { showAsset(i); });
-    chipWrap.appendChild(b);
-  });
-  assetDetail.textContent = "Pick an asset to see what it represents.";
+
+  function renderAssetChips(list) {
+    assetList = list || [];
+    if (!chipWrap) return;
+    chipWrap.innerHTML = "";
+    assetList.forEach(function (a, i) {
+      var b = el("button", { type: "button", class: "chip", "aria-pressed": "false" });
+      b.appendChild(el("span", { class: "chip-sym" }, a.symbol));
+      b.appendChild(el("span", { class: "chip-name" }, a.name || a.symbol));
+      b.addEventListener("click", function () { showAsset(i); });
+      chipWrap.appendChild(b);
+    });
+    if (assetDetail) assetDetail.textContent = assetList.length ? "Pick an asset to see what it represents." : "No supported tokens yet.";
+  }
+
+  renderAssetChips(C.exampleAssets.map(function (a) {
+    return { symbol: a.symbol, name: a.name, about: " is an example of " + a.about + ". It's here to explain the idea, not because it's on a confirmed list." };
+  }));
 
   /* The tablet: entry calculator */
   var calcForm = $("[data-calc]");
@@ -156,32 +162,19 @@
   $("[data-split-total]").textContent = draftTotal;
   $("[data-split-rest]").textContent = draftRest;
   var maxPct = Math.max.apply(null, draft);
-  var vaultAmts = C.exampleVault;
-
-  function sliceListFor(p) {
-    var ul = el("ul", { class: "slice-list" });
-    vaultAmts.forEach(function (v) {
-      ul.appendChild(el("li", null, R.formatTokens(R.sliceMicros(v.micros, p)) + " " + v.symbol));
-    });
-    return ul;
-  }
   function showStep(i) {
     $$(".step", stepsWrap).forEach(function (b, j) { b.setAttribute("aria-pressed", String(i === j)); });
     splitDetail.innerHTML = "";
     var p = document.createElement("p");
     if (i < draft.length) {
       var share = draft[i];
-      p.innerHTML = "";
-      p.appendChild(el("strong", null, ordinal(i + 1) + " place takes " + pct(share) + " of every asset."));
-      p.appendChild(document.createTextNode(" With the example vault that would be:"));
+      p.appendChild(el("strong", null, ordinal(i + 1) + " place takes " + pct(share) + " of the ETH prize pool."));
       splitDetail.appendChild(p);
-      splitDetail.appendChild(sliceListFor(share));
-      splitDetail.appendChild(el("p", { class: "fine" }, "Paid in kind, one prize per wallet. This explains the split; it doesn't settle anything."));
+      splitDetail.appendChild(el("p", { class: "fine" }, "Paid in ETH, one prize per wallet. Dust is liquidated to ETH and split into the pool."));
     } else {
-      p.appendChild(el("strong", null, "The last " + pct(draftRest) + " is still to be confirmed."));
-      p.appendChild(document.createTextNode(" The reference split adds up to " + draftTotal + "%. Where the remaining " + draftRest + "% goes isn't decided, so it stays visible here instead of being quietly rounded away. An example allocation:"));
+      p.appendChild(el("strong", null, "The remaining " + pct(draftRest) + " goes to the Liberty Bell jackpot."));
       splitDetail.appendChild(p);
-      splitDetail.appendChild(sliceListFor(draftRest));
+      splitDetail.appendChild(el("p", { class: "fine" }, "4% of every funded draw rolls into the Liberty Bell — a separate jackpot with 1-in-72 hourly odds."));
     }
   }
   draft.forEach(function (share, i) {
@@ -195,25 +188,18 @@
     stepsWrap.appendChild(b);
   });
   if (draftRest > 0) {
-    var g = el("button", { type: "button", class: "step step-ghost", "aria-pressed": "false", "aria-label": "Remaining " + draftRest + " percent, to be confirmed" });
+    var g = el("button", { type: "button", class: "step step-ghost", "aria-pressed": "false", "aria-label": "Liberty Bell jackpot, " + draftRest + " percent" });
     g.style.setProperty("--h", Math.round((draftRest / maxPct) * 220) + "px");
     g.style.setProperty("--w", Math.max(4, Math.round((draftRest / maxPct) * 100)) + "%");
     g.appendChild(el("span", { class: "step-pct", "aria-hidden": "true" }, pct(draftRest)));
     g.appendChild(el("span", { class: "step-bar", "aria-hidden": "true" }));
-    g.appendChild(el("span", { class: "step-rank", "aria-hidden": "true" }, "TBC"));
+    g.appendChild(el("span", { class: "step-rank", "aria-hidden": "true" }, "Bell"));
     g.addEventListener("click", function () { showStep(draft.length); });
     stepsWrap.appendChild(g);
   }
   showStep(0);
 
-  /* Torch hero tap: scroll to live draw */
-  var spot = $(".torch-spot");
-  if (spot) {
-    spot.addEventListener("click", function () {
-      var target = $("#torch");
-      if (target) target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-    });
-  }
+  /* Torch hero tap: native #torch scroll (href="#torch" on the element handles it) */
 
   /* Live draw display — hooking into LibertyData */
   var drawPoolEl  = $("[data-draw-pool]");
@@ -240,7 +226,7 @@
     });
     if (draftRest > 0) {
       var restRow = el("div", { class: "split-row split-row-ghost" });
-      restRow.appendChild(el("span", { class: "split-rank" }, "TBC"));
+      restRow.appendChild(el("span", { class: "split-rank" }, "Bell"));
       var restBar = el("span", { class: "split-bar" });
       restBar.style.setProperty("--w", Math.max(4, Math.round((draftRest / maxPctDraft) * 100)) + "%");
       restRow.appendChild(restBar);
@@ -264,7 +250,7 @@
     ["Cooldown", rules.cooldownHours + " hours after winning"],
     ["Buy tax", "3% total → 1.00% Torch / 1.00% buyback & burn / 0.85% raffle / 0.15% dev"],
     ["Volume to trigger", "~$" + (rules.volumePerDrawUsdCents / 100).toFixed(2) + " in buys builds ~$" + (rules.minPoolUsdCents / 100).toFixed(0)],
-    ["Payouts", "In kind, draft split totals " + draftTotal + "% (" + draftRest + "% TBD)"],
+    ["Payouts", "Paid in ETH — draft split totals " + draftTotal + "% (" + draftRest + "% to the Liberty Bell)"],
     ["Prize rollover", "Unspent funds roll to next hour"],
     ["Wallet", rules.walletConnection]
   ].forEach(function (row) {
@@ -277,14 +263,11 @@
   var todo = $("[data-todo]");
   if (todo) {
     [
-      "What the exact conditions for the 1-in-72 jackpot trigger will be",
       "Duration of dust-earned entries before expiry",
       "Rules for drawings with fewer than 10 eligible participants",
       "Entry-weight precision and rounding",
       "Deposits that land while a draw is in progress",
-      "The supported token list and contract addresses",
-      "Where the draw randomness comes from",
-      "How settlement is carried out",
+      "The final supported token list and contract addresses",
       "Legal review and eligible jurisdictions"
     ].forEach(function (t) { todo.appendChild(el("li", null, t)); });
   }
@@ -368,8 +351,13 @@
     var burnPctEl   = $("[data-live='burn-pct']");
     var burnTotalEl = $("[data-live='total-supply']");
     var burnSecEl   = $("[data-live='burn-section']");
-    var vaultAddrEl = $("[data-vault-addr]");
-    var stateDot    = $("[data-live-state] .dot");
+    var vaultAddrEl  = $("[data-vault-addr]");
+    var drawPoolEl   = $("[data-draw-pool]");
+    var drawStateEl  = $("[data-draw-state]");
+    var drawTimeEl   = $("[data-draw-time]");
+    var drawRoundEl  = $("[data-draw-round]");
+    var drawPartsEl  = $("[data-draw-parts]");
+    var stateDot     = $("[data-live-state] .dot");
 
     function setLive(el, text) { if (el) el.textContent = text; }
 
@@ -380,13 +368,6 @@
     }
 
     async function poll() {
-      if (LIVE.NOT_DEPLOYED) {
-        if (stateEl) setLive(stateEl, "Contracts deploying — check back soon");
-        if (vaultAddrEl) setLive(vaultAddrEl, "—");
-        if (drawStateEl) setLive(drawStateEl, "Contracts deploying — check back soon");
-        return;
-      }
-
       try {
         var data = await LIVE.read();
 
@@ -427,10 +408,25 @@
           if (drawStateEl) setLive(drawStateEl, "Raffle: " + (data.raffleError || "unknown error"));
         }
 
+        /* ── Participants (eligible accounts) ─── */
+        if (data.raffle && data.raffle.eligibleAccounts && data.raffle.eligibleAccounts.length) {
+          setLive(partEl, String(data.raffle.eligibleAccounts.length));
+        } else if (data.vault && data.vault.supportedCount != null) {
+          setLive(partEl, "—");
+        }
+
         /* ── Supported tokens ─── */
         if (data.vault && data.vault.supportedCount != null) {
-          setLive(partEl, String(data.vault.supportedCount));
           if (drawPartsEl) setLive(drawPartsEl, String(data.vault.supportedCount));
+          if (data.vault.tokenDetails && data.vault.tokenDetails.length) {
+            renderAssetChips(data.vault.tokenDetails.map(function (t) {
+              return {
+                symbol: t.symbol || shortAddr(t.token),
+                name: t.symbol || shortAddr(t.token),
+                about: " is a supported dust token on the vault (contract " + t.token + ")."
+              };
+            }));
+          }
         }
 
         /* ── Token burn ─── */
@@ -463,5 +459,39 @@
     var pollInterval = setInterval(poll, POLL_MS);
     window.LibertyRefresh = poll;
 
+  })();
+
+  /* ── LibertyTorch Audio ─────────────────────────────────── */
+  (function () {
+    var audio    = document.getElementById("lt-audio");
+    var overlay  = document.getElementById("lt-audio-overlay");
+    var muteBtn  = document.getElementById("lt-mute");
+    var muteIcon = document.getElementById("lt-mute-icon");
+    var soundIcon= document.getElementById("lt-sound-icon");
+    if (!audio || !overlay || !muteBtn) return;
+
+    var started = false;
+
+    function startAudio() {
+      if (started) return;
+      started = true;
+      audio.muted = false;
+      audio.volume = 0.65;
+      audio.play().catch(function () {});
+      overlay.classList.add("is-played");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    overlay.addEventListener("click", startAudio);
+    overlay.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startAudio(); }
+    });
+
+    muteBtn.addEventListener("click", function () {
+      audio.muted = !audio.muted;
+      muteBtn.setAttribute("aria-pressed", String(audio.muted));
+      muteIcon.style.display = audio.muted ? "none" : "";
+      soundIcon.style.display = audio.muted ? "" : "none";
+    });
   })();
 })();

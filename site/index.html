@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lady Liberty · RWA raffle</title>
+<title>Lady Liberty · multi-asset raffle</title>
 <meta name="description" content="LibertyTorch — a multi-asset crypto raffle on Robinhood Chain. Hold $LIBERTY to enter. Deposit dust from any supported token to earn bonus entries. Hourly draws, 10 winners.">
 <meta name="theme-color" content="#174C4F">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -12,14 +12,27 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body id="top">
+
+<!-- Audio: LibertyTorch anthem -->
+<audio id="lt-audio" src="assets/Only_With_Liberty.cleaned.mp3" loop preload="auto"></audio>
+<div id="lt-audio-overlay" aria-hidden="false" role="button" tabindex="0" aria-label="Tap to enter the torch">
+  <div class="lt-ao-inner">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C9.5 6 7 8 7 12a5 5 0 0 0 10 0c0-4-2.5-6-5-10Z" fill="var(--mint)"/><circle cx="12" cy="17" r="2" fill="var(--copper-pale)"/></svg>
+    <span>Tap to enter the torch</span>
+  </div>
+</div>
+<button id="lt-mute" type="button" aria-label="Toggle sound" aria-pressed="false">
+  <svg id="lt-mute-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2"/><line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2"/></svg>
+  <svg id="lt-sound-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none"><path d="M11 5 6 9H2v6h4l5 4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+</button>
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="site-header" id="top">
+<header class="site-header">
   <div class="bar">
     <a class="brand" href="#harbor" aria-label="Lady Liberty, back to the harbor">
       <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
-      <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
+      <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">Multi-asset raffle</span></span>
     </a>
     <nav class="nav" id="site-nav" aria-label="Main">
       <ul>
@@ -151,7 +164,7 @@
         <li class="stair">
           <span class="stair-n" aria-hidden="true">01</span>
           <h3>Bring your dust</h3>
-          <p>Hold at least <strong>$<span data-rule="min-liberty">10</span> in $LIBERTY</strong> for your base entry. Then link up to <strong><span data-rule="max-wallets">5</span> secondary wallets</strong> holding RWA dust. Sign a message to prove control — no gas, no transaction.</p>
+          <p>Hold at least <strong>$<span data-rule="min-liberty">10</span> in $LIBERTY</strong> for your base entry. Then link up to <strong><span data-rule="max-wallets">5</span> secondary wallets</strong> holding crypto dust. Sign a message to prove control — no gas, no transaction.</p>
         </li>
         <li class="stair">
           <span class="stair-n" aria-hidden="true">02</span>
@@ -227,7 +240,7 @@
       <p class="level-tag">Level 3.5 · The ledger</p>
       <div class="ledger-head">
         <h2 id="ledger-title">One account. Every wallet counts.</h2>
-        <p>Your main wallet holds $LIBERTY and is your raffle identity. Link secondary wallets holding RWA dust — sign a message to prove control, no gas, no transaction. Every contribution credits your primary account.</p>
+        <p>Your main wallet holds $LIBERTY and is your raffle identity. Link secondary wallets holding crypto dust — sign a message to prove control, no gas, no transaction. Every contribution credits your primary account.</p>
       </div>
       <p class="ledger-error" aria-live="polite"></p>
       <div data-ledger></div>
@@ -263,7 +276,7 @@
       <p class="level-tag">Level 5 · The Liberty Bell · 305 ft</p>
       <div class="bell-head">
         <h2 id="bell-title">When the Bell Tolls, Somebody Gets Paid.</h2>
-        <p>The Liberty Bell receives <strong>4% of every funded raffle</strong> into a growing RWA jackpot. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the Bell rings and one lucky holder takes the pot.</p>
+        <p>The Liberty Bell receives <strong>4% of every funded raffle</strong> into a growing jackpot. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the Bell rings and one lucky holder takes the pot.</p>
       </div>
 
       <div class="bell-grid">
@@ -359,18 +372,17 @@
 
       <div class="launch" aria-labelledby="launch-title">
         <div class="launch-copy">
-          <h2 id="launch-title">The torch has been closed to visitors since 1916. Ours opens at launch.</h2>
+          <h2 id="launch-title">The torch has been closed to visitors since 1916. Ours is open.</h2>
           <p>Connect your wallet to see your entries and linked wallets.</p>
         </div>
         <div class="launch-grid">
           <div class="launch-card">
             <p class="launch-state"><span class="dot dot-mint" aria-hidden="true"></span>Live on Robinhood Chain</p>
-            <p class="launch-addr">Raffle address: <span data-vault-addr class="addr-placeholder">—</span></p>
             <h3>Raffle rules</h3>
             <dl class="params" data-params></dl>
           </div>
           <div class="launch-card">
-            <h3>Community governance</h3>
+            <h3>Still being finalized</h3>
             <ul class="todo" data-todo></ul>
           </div>
         </div>
@@ -388,12 +400,12 @@
       </div>
       <div class="faq-list">
         <details>
-          <summary>What's an RWA?</summary>
-          <p>A tokenized real-world asset: a token on a blockchain that stands for something off-chain, like a share of a company or a fund. AAPLx, for example, tracks Apple shares.</p>
+          <summary>What counts as dust?</summary>
+          <p>Dust is any leftover ERC-20 token in your wallet that has a live price feed and is allow-listed on the vault. Instead of sitting there doing nothing, deposit it and earn raffle entries — every $0.50 of dust earns 1 entry, up to 5 per linked wallet.</p>
         </details>
         <details>
           <summary>Which assets can go in?</summary>
-          <p>The vault accepts any ERC-20 token with a USD price feed — AAPL, USDC, whatever has a live oracle. Accumulated dust is periodically converted to ETH: 50% goes to the prize pool and 50% goes back to the protocol. Ask in the community channel for the current supported list.</p>
+          <p>The vault accepts any allow-listed ERC-20 token with a live price feed. Accumulated dust is periodically converted to ETH: 50% goes to the prize pool and 50% goes back to the protocol. The current supported list is shown in the vault section.</p>
         </details>
         <details>
           <summary>Why is the vault empty?</summary>
@@ -409,7 +421,7 @@
         </details>
         <details>
           <summary>What is the Liberty Bell jackpot?</summary>
-          <p>The Liberty Bell is a growing RWA jackpot that receives 4% of every funded raffle. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the bell rings and one lucky holder takes the pot. It is drawn automatically on-chain.</p>
+          <p>The Liberty Bell is a growing jackpot that receives 4% of every funded raffle. Every eligible hour, there is an independent 1-in-72 chance (~1.39%) that the bell rings and one lucky holder takes the pot. It is drawn automatically on-chain.</p>
         </details>
         <details>
           <summary>Is this financial advice?</summary>
@@ -425,7 +437,7 @@
     <div class="footer-story">
       <a class="brand brand-light" href="#harbor">
         <svg class="mark" viewBox="0 0 64 58" aria-hidden="true"><use href="#mark"></use></svg>
-        <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">RWA raffle</span></span>
+        <span class="brand-text"><span class="brand-name">Lady Liberty</span><span class="brand-sub">Multi-asset raffle</span></span>
       </a>
       <p>Born copper in 1886, burned green by time. Lady Liberty grew from the <strong>$LIBERTY</strong> community, paired with <strong>TORCH</strong> on Robinhood Chain. Any token with real value can become dust — it's priced live, then converted to ETH for the prize pool.</p>
       <p class="fine">$LIBERTY is the community token. Hold it to enter. Everything that burns becomes greater.</p>
@@ -466,7 +478,7 @@
   </defs>
 </svg>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.min.js" integrity="sha384-o4kqc6TYIOHxgIVgTDIF+U8r4t8IVKF9k5zCgLOQb9dN3pIdrXNwPnmYPo5z0eA" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.min.js" integrity="sha384-o4kqc6TYIOHxgIVLXZnwlTQFMQ2newFx91h3XtIdvHNXR3GiZUIgpDRQtWErgkhq" crossorigin="anonymous"></script>
 <script src="js/config.js"></script>
 <script src="js/contracts.js"></script>
 <script src="js/rules.js"></script>
