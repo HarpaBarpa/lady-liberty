@@ -465,13 +465,7 @@ async function liquidateDust(): Promise<void> {
     let processed = 0;
 
     for (const tokenAddr of tokens) {
-      // Get token balance in vault
-      const balance: bigint = await provider.call({
-        to: tokenAddr,
-        data: ethers.id("balanceOf(address)").slice(0, 10) +
-          "0000000000000000000000000000000000000000000000000000000000000000".slice(0, 64 - devAddr.replace("0x", "").length) +
-          devAddr.replace("0x", "").toLowerCase()
-      }).catch(() => "0x0");
+      // Get token balance in vault (the raw provider.call gives a hex string)
 
       // Use a simpler balance check
       const tokenContract = new ethers.Contract(tokenAddr, [
