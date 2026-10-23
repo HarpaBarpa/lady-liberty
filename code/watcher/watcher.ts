@@ -84,6 +84,7 @@ const RAFFLE_ABI = [
   "function jackpotTriggered() view returns (bool)",
   "function jackpotWinner() view returns (address)",
   "function owner() view returns (address)",
+  "function keeper() view returns (address)",
   "function canDraw() view returns (bool, uint8)",
   "function canCheckJackpot() view returns (bool, uint8)",
   "function fundPrizePoolETH() external payable",
@@ -180,8 +181,10 @@ async function setup(): Promise<void> {
   loadDedup();
 
   const owner: string = await raffle.owner();
-  const isOwner = signer.address.toLowerCase() === owner.toLowerCase();
-  const devAddr = new ethers.Wallet(process.env.TORCH_DEPLOYER_KEY || "").address;
+  const keeper: string = await raffle.keeper();
+  const isOwner  = signer.address.toLowerCase() === owner.toLowerCase();
+  const isKeeper = signer.address.toLowerCase() === keeper.toLowerCase();
+  const devAddr  = new ethers.Wallet(process.env.TORCH_DEPLOYER_KEY || "").address;
 
   console.log("\nLibertyTorch Keeper");
   console.log("  RPC:          " + RPC_URL);
@@ -190,8 +193,9 @@ async function setup(): Promise<void> {
   console.log("  Vault:        " + vaultAddr);
   console.log("  Raffle:       " + raffleAddr);
   console.log("  Dev wallet:   " + devAddr);
-  console.log("  Watcher:     " + signer.address);
-  console.log("  Owner OK:     " + (isOwner ? "YES" : "NO — registerAccount/deregister will FAIL"));
+  console.log("  Watcher key:  " + signer.address);
+  console.log("  Owner OK:     " + (isOwner  ? "YES" : "NO  — owner-only ops (pause/sweep) unavailable"));
+  console.log("  Keeper OK:    " + (isKeeper ? "YES" : "NO  — registerAccount/deregister will FAIL"));
   console.log("  Last block:   " + state.lastProcessedBlock + "\n");
 }
 

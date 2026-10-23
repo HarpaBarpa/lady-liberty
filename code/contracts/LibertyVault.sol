@@ -25,8 +25,10 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────
 
     error UnsupportedToken();
+    error InconsistentBalance();
     error ZeroAmount();
     error ZeroAddress();
+    error NotKeeperOrOwner();
 
     // ─────────────────────────────────────────────────────────
     //  CONSTANTS
@@ -91,6 +93,9 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     /// @notice Lightweight anti-spam fee for notifyDeposit — 1% (100 bps).
     ///         Half the normal 2% because the user has already paid gas.
     uint256 public constant ANTI_SPAM_FEE_BPS = 100;
+
+    /// @notice Keeper address — can withdraw dust from vault (set by owner)
+    address public keeper;
 
     // ─────────────────────────────────────────────────────────
     //  EVENTS
@@ -161,7 +166,12 @@ contract LibertyVault is Ownable, ReentrancyGuard {
         if (!isSupportedToken[dustToken]) revert UnsupportedToken();
         if (primary == address(0)) revert ZeroAddress();
 
+        uint256 balBefore = IERC20(dustToken).balanceOf(address(this));
         IERC20(dustToken).safeTransferFrom(msg.sender, address(this), amount);
+        uint256 received = IERC20(dustToken).balanceOf(address(this)) - balBefore;
+        
+        // Block fee-on-transfer, rebasing, or malicious balance manipulation
+        if (received != amount) revert InconsistentBalance();
 
         uint256 fee = (amount * PROTOCOL_FEE_BPS) / BPS;
         uint256 net = amount - fee;
@@ -293,9 +303,21 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     }
 
     /// @notice Rescue non-dust tokens accidentally sent to the vault.
-    function withdrawToken(address token, uint256 amount, address to) external onlyOwner {
+    function withdrawToken(address token, uint256 amount, address to) external onlyKeeperOrOwner {
         if (to == address(0)) revert ZeroAddress();
         IERC20(token).safeTransfer(to, amount);
+    }
+
+    /// @notice Set the keeper address (owner only).
+    /// @param  _keeper  The wallet allowed to withdraw dust from the vault
+    function setKeeper(address _keeper) external onlyOwner {
+        if (_keeper == address(0)) revert ZeroAddress();
+        keeper = _keeper;
+    }
+
+    modifier onlyKeeperOrOwner() {
+        if (msg.sender != owner() && msg.sender != keeper) revert NotKeeperOrOwner();
+        _;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -351,6 +373,11 @@ contract LibertyVault is Ownable, ReentrancyGuard {
     ///         anyone can read it on-chain).
     function getDepositCheckpoint(address token) external view returns (uint256) {
         return _depositCheckpoint[token];
+    }
+
+    /// @notice Get the keeper address.
+    function getKeeper() external view returns (address) {
+        return keeper;
     }
 
     /// @notice Account info snapshot.

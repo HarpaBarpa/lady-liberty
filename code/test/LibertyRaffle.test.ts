@@ -232,7 +232,7 @@ describe("LibertyVault", function () {
     expect(await vault.DUST_ENTRY_STEP_CENTS()).to.equal(50n);
     expect(await vault.MAX_DUST_ENTRIES_PER_WALLET()).to.equal(5n);
     expect(await vault.CYCLE_DURATION()).to.equal(3600n);
-    expect(await vault.PROTOCOL_FEE_BPS()).to.equal(200n);
+    expect(await vault.PROTOCOL_FEE_BPS()).to.equal(300n);
   });
 
   it("rejects unsupported token deposits", async function () {
@@ -260,7 +260,7 @@ describe("LibertyVault", function () {
     await dust.connect(dusty).approve(await vault.getAddress(), amount);
     const ownerBalBefore = await dust.balanceOf(owner.address);
     await vault.connect(dusty).depositDust(owner.address, await dust.getAddress(), amount);
-    const fee = amount * 200n / 10000n;
+    const fee = amount * 300n / 10000n;
     expect(await dust.balanceOf(owner.address)).to.equal(ownerBalBefore + fee);
     expect(await dust.balanceOf(await vault.getAddress())).to.equal(amount - fee);
   });

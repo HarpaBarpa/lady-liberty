@@ -52,6 +52,7 @@ contract LibertyRaffle is Ownable, Pausable {
     error NotWinner();
     error ZeroAddress();
     error ZeroAmount();
+    error NotKeeperOrOwner();
     error InvalidRaffleId();
     error JackpotNotTriggered();
     error JackpotAlreadyClaimed();
@@ -165,6 +166,9 @@ contract LibertyRaffle is Ownable, Pausable {
     // ─────────────────────────────────────────────────────────
     //  STATE — LIBERTY BELL JACKPOT
     // ─────────────────────────────────────────────────────────
+
+    /// @notice Keeper address — can register/deregister accounts (set by owner)
+    address public keeper;
 
     /// @notice Accumulated jackpot pool in cents.
     ///         Funded by 4% of every funded draw's prize pool.
@@ -546,7 +550,7 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @notice Register an account as eligible for base entry.
     ///         Called by the watcher when $LIBERTY balance ≥ $10 confirmed.
     /// @param  account  The wallet to register
-    function registerAccount(address account) external onlyOwner {
+    function registerAccount(address account) external onlyKeeperOrOwner {
         if (account == address(0)) revert ZeroAddress();
         if (!isRegistered[account]) {
             isRegistered[account] = true;
@@ -557,7 +561,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
     /// @notice Deregister an account (e.g., balance dropped below $10).
     /// @param  account  The wallet to remove
-    function deregisterAccount(address account) external onlyOwner {
+    function deregisterAccount(address account) external onlyKeeperOrOwner {
         if (isRegistered[account]) {
             isRegistered[account] = false;
             emit AccountDeregistered({ account: account, timestamp: block.timestamp });
@@ -566,7 +570,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
     /// @notice Bulk register accounts (for watcher bootstrap).
     /// @param  accounts  Array of wallet addresses to register
-    function registerAccounts(address[] calldata accounts) external onlyOwner {
+    function registerAccounts(address[] calldata accounts) external onlyKeeperOrOwner {
         for (uint256 i = 0; i < accounts.length; i++) {
             address a = accounts[i];
             if (a != address(0) && !isRegistered[a]) {
@@ -600,9 +604,25 @@ contract LibertyRaffle is Ownable, Pausable {
     function pause() external onlyOwner { _pause(); }
     function unpause() external onlyOwner { _unpause(); }
 
+    /// @notice Set the keeper address (owner only).
+    /// @param  _keeper  The wallet allowed to register/deregister accounts
+    function setKeeper(address _keeper) external onlyOwner {
+        if (_keeper == address(0)) revert ZeroAddress();
+        keeper = _keeper;
+    }
+
+    modifier onlyKeeperOrOwner() {
+        if (msg.sender != owner() && msg.sender != keeper) revert NotKeeperOrOwner();
+        _;
+    }
+
     // ─────────────────────────────────────────────────────────
     //  EXTERNAL — VIEWS
     // ─────────────────────────────────────────────────────────
+
+    function getKeeper() external view returns (address) {
+        return keeper;
+    }
 
     function getEligibleAccounts() external view returns (address[] memory) {
         return registeredAccounts;

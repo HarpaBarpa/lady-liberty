@@ -58,7 +58,22 @@ async function main() {
   console.log(`     LIBERTY_TOKEN = ${LIBERTY_TOKEN}`);
   console.log(`     ETH_USD_FEED  = ${ETH_USD_FEED}`);
 
-  // ── 4. Save deployment record ──────────────────────────────────
+  // ── 4. Wire in keeper address ───────────────────────────────
+  const KEEPER_ADDR = process.env.KEEPER_ADDR;
+  if (KEEPER_ADDR) {
+    console.log(`\n4/4 Setting keeper to ${KEEPER_ADDR}...`);
+    const vaultKeeperTx = await vault.setKeeper(KEEPER_ADDR);
+    await vaultKeeperTx.wait();
+    console.log(`   ✓ Vault keeper set`);
+    const raffleKeeperTx = await raffle.setKeeper(KEEPER_ADDR);
+    await raffleKeeperTx.wait();
+    console.log(`   ✓ Raffle keeper set`);
+  } else {
+    console.log("\n⚠ KEEPER_ADDR not set — set it to enable the keeper role on both contracts.");
+    console.log("   Example: KEEPER_ADDR=0x... npx hardhat run scripts/deploy.ts --network robinhood");
+  }
+
+  // ── 5. Save deployment record ────────────────────────────────
   const deployments = {
     network: network.name,
     chainId: network.config.chainId,
