@@ -1,158 +1,264 @@
-# 🗽 LibertyTorch Launch Runbook
+# 🗽 LibertyTorch — Launch Runbook
 
-**Do these in order. Coin launch is LAST.**
+## Trigger Phrase
 
----
-
-## Phase 1 — Pre-Launch (Do Now)
-
-### 1. Get a Fly.io Account (Free)
-1. Go to [fly.io](https://fly.io) → Sign up (GitHub login is fastest)
-2. Run: `fly auth login`
-3. **Save the auth token in the vault as "Fly.io Token"**
-
-### 2. Set Up the Watcher VPS
-```bash
-# Install flyctl
-curl -fsSL https://fly.io/install.sh | sh
-export PATH="$HOME/.fly/bin:$PATH"
-
-# From the repo root
-cd code
-fly launch --name libertytorch-watcher --dockerfile watcher/Dockerfile --region ewr --no-deploy
-
-# Set secrets (get RAFFLE_ADDR and LIBERTY_TOKEN after Phase 2)
-fly secrets set ROBINHOOD_RPC=https://rpc.mainnet.chain.robinhood.com
-fly secrets set CHAIN_ID=4663
-fly secrets set RAFFLE_ADDR=<raffle_address>
-fly secrets set LIBERTY_TOKEN=<liberty_token_address>
-fly secrets set WATCHER_KEY=<watcher_private_key>
-
-# Deploy
-fly deploy
-```
-
-### 3. Verify Watcher is Running
-```bash
-fly logs libertytorch-watcher
-# Should see: "LibertyTorch Watcher" + "Watcher running"
-```
+Any human message containing **"libertytorch"** (any casing) triggers the full startup checklist. When triggered, the agent must:
+1. Read this file completely
+2. Read `/root/.openclaw/workspace/projects/liberty/Liberty.MD`
+3. Read `/root/.openclaw/workspace/memory/YYYY-MM-DD.md` for the last 3 days
+4. Check the current state of every item in the checklist below
+5. Report honestly where we stand — what's done, what's missing, what's next
 
 ---
 
-## Phase 2 — Launch Day: Deploy Contracts
+## Phase 0 — Pre-Flight Verification (Agent: Run Every Time)
 
-**Do this when you're ready to go live. Token must already exist.**
-
-### Prerequisites
-- $LIBERTY token address (from Torch Launchpad)
-- Watcher key funded with gas
-- ~0.001 ETH for deployment gas
-
-### Deploy
 ```bash
-cd code
+# 1. Robinhood Chain alive?
+curl -s https://rpc.mainnet.chain.robinhood.com \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | grep -o '"result":"0x[^"]*"'
 
-LIBERTY_TOKEN=0x... \
-PROTOCOL_FEE_RECIPIENT=0x... \
-ETH_USD_FEED=0x... \
+# 2. Deployer wallet funded?
+cd code
+node -e "
+const { ethers } = require('ethers');
+const p = new ethers.JsonRpcProvider('https://rpc.mainnet.chain.robinhood.com');
+p.getBalance('0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438').then(b => console.log(ethers.formatEther(b), 'ETH'));
+p.getFeeData().then(f => console.log('Gas:', ethers.formatUnits(f.gasPrice||0n, 'gwei'), 'gwei'));
+"
+
+# 3. Site live?
+curl -sL -o /dev/null -w "%{http_code}  %{url_effective}\n" https://libertytorch.online/
+
+# 4. Site has real addresses or still PENDING?
+curl -sL https://libertytorch.online/js/config.js | grep -E "PENDING|0x[0-9a-fA-F]{40}"
+# If output contains "PENDING" → contracts not deployed, site is a shell
+
+# 5. Watcher/keeper running?
+# After Hetzner VPS is set up (Phase 2): ssh in and check
+# For now: this will be "NOT RUNNING"
+```
+
+---
+
+## Phase 1 — Contracts (Run When $LIBERTY Token Address Is Known)
+
+### 1a. Deploy Contracts
+
+**Prerequisites:**
+- $LIBERTY token deployed on Torchpad → have the 0x address
+- Deployer wallet has gas (>0.001 ETH minimum, current: ~0.055 ETH)
+- `.env` contains `TORCH_DEPLOYER_KEY` (already set)
+
+```bash
+cd /root/.openclaw/workspace/projects/liberty/code
+
+# Load env
+source .env 2>/dev/null || true
+
+# Deploy all three contracts. Uses address(0) for ETH/USD feed = $1/ETH fallback.
+LIBERTY_TOKEN=<TOKEN_ADDRESS_FROM_TORCH> \
+PROTOCOL_FEE_RECIPIENT=0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438 \
+ETH_USD_FEED=0x0000000000000000000000000000000000000000 \
 npx hardhat run scripts/deploy.ts --network robinhood
+
+# Output saved to code/deployments.json
+# RECORD THESE ADDRESSES:
+#   LINK_REGISTRY:  _______
+#   LIBERTY_VAULT:  _______
+#   LIBERTY_RAFFLE: _______
 ```
 
-### Save These Addresses
-```
-LinkRegistry:    <address from deploy output>
-LibertyVault:    <address from deploy output>
-LibertyRaffle:   <address from deploy output>
-```
+### 1b. Seed Prize Pool
 
-### Update Watcher Secrets
 ```bash
-fly secrets set RAFFLE_ADDR=<raffle_address> -a libertytorch-watcher
-fly secrets set LIBERTY_TOKEN=<liberty_token_address> -a libertytorch-watcher
-fly deploy -a libertytorch-watcher
+cd /root/.openclaw/workspace/projects/liberty/code
+RAFFLE_ADDR=<RAFFLE_ADDRESS> \
+ETH_AMOUNT=0.05 \
+npx hardhat run scripts/fund-pool.ts --network robinhood
 ```
 
-### Update Site Config
-Edit `site/js/config.js` and `frontend/public/js/config.js`:
-```js
-const TOKEN_ADDRESS = "0x...";   // $LIBERTY token
-const VAULT_ADDRESS = "0x...";    // LibertyVault
-const RAFFLE_ADDRESS = "0x...";  // LibertyRaffle
+### 1c. Run Health Check
+
+```bash
+cd /root/.openclaw/workspace/projects/liberty/code
+ROBINHOOD_RPC=https://rpc.mainnet.chain.robinhood.com \
+RAFFLE_ADDR=<RAFFLE_ADDRESS> \
+VAULT_ADDR=<VAULT_ADDRESS> \
+LINK_REG_ADDR=<LINK_REGISTRY_ADDRESS> \
+npx hardhat run scripts/check.ts --network robinhood
+```
+
+---
+
+## Phase 2 — Hetzner VPS for Keeper (Replaces Fly.io)
+
+**Why Hetzner:** Single VPS, no Docker, no proprietary config. Systemd keeps the keeper alive. ~€3.50/mo, 2GB RAM, 20GB disk.
+
+### 2a. Provision VPS
+
+1. Go to [hetzner.com/cloud](https://www.hetzner.com/cloud) → sign up
+2. Create server: **CX22** (2 vCPU, 4GB RAM, 40GB, ~€3.99/mo), region: Ashburn, VA (us-east) or Nuremberg
+3. OS: Ubuntu 24.04 LTS
+4. Add SSH key during creation
+5. Save the IP address
+
+### 2b. Bootstrap (Run after SSH'ing in)
+
+```bash
+# SSH in
+ssh root@<VPS_IP>
+
+# Install Node 22
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt-get install -y nodejs git
+
+# Clone repo
+git clone https://github.com/HarpaBarpa/lady-liberty.git /opt/libertytorch
+cd /opt/libertytorch/code
+
+# Install deps + build watcher
+npm ci
+npm run watcher:build
+
+# Create .env (FILL IN REAL ADDRESSES AFTER CONTRACT DEPLOY)
+cat > .env << 'ENVEOF'
+ROBINHOOD_RPC=https://rpc.mainnet.chain.robinhood.com
+CHAIN_ID=4663
+TORCH_DEPLOYER_KEY=<DEPLOYER_PRIVATE_KEY>
+LIBERTY_TOKEN=<TOKEN_ADDRESS>
+VAULT_ADDR=<VAULT_ADDRESS>
+LIBERTY_RAFFLE=<RAFFLE_ADDRESS>
+WATCHER_KEY=<WATCHER_PRIVATE_KEY>
+ENVEOF
+
+# Secure the .env
+chmod 600 .env
+
+# Create systemd service
+cat > /etc/systemd/system/libertytorch-keeper.service << 'UNITEOF'
+[Unit]
+Description=LibertyTorch Keeper
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/libertytorch/code
+ExecStart=/usr/bin/node dist/watcher/watcher.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/libertytorch/code/.env
+
+[Install]
+WantedBy=multi-user.target
+UNITEOF
+
+systemctl daemon-reload
+systemctl enable --now libertytorch-keeper
+systemctl status libertytorch-keeper
+```
+
+### 2c. Verify Keeper Running
+
+```bash
+# Check logs
+journalctl -u libertytorch-keeper -f --no-pager
+# Should see: "LibertyTorch Keeper" header with contract addresses, then "Keeper running"
+```
+
+---
+
+## Phase 3 — Update Site Config
+
+After contract addresses are known, update `site/js/config.js`:
+
+```javascript
+contracts: {
+    LIBERTY_TOKEN: "<TOKEN_ADDRESS_FROM_TORCH>",
+    LINK_REGISTRY: "<LINK_REGISTRY_ADDRESS>",
+    LIBERTY_VAULT: "<VAULT_ADDRESS>",
+    LIBERTY_RAFFLE: "<RAFFLE_ADDRESS>",
+},
 ```
 
 Then deploy:
+
 ```bash
-vercel --prod
+cd /root/.openclaw/workspace/projects/liberty/site
+# Get Vercel token from Vault: Vercel Full Access
+./deploy.sh <VERCEL_TOKEN>
+```
+
+### Verify Live
+
+```bash
+curl -sL https://libertytorch.online/js/config.js | grep "0x[0-9a-fA-F]\{40\}"
+# Should show ALL REAL ADDRESSES, NO "PENDING"
 ```
 
 ---
 
-## Phase 3 — Pre-Coin Setup (Raffle Must Be Working)
+## Phase 4 — Post-Launch Verification
 
-### 1. Seed the Prize Pool
 ```bash
-npx hardhat run scripts/fund-pool.ts --network robinhood
+# 1. Site shows real pool data
+# Open https://libertytorch.online in browser, connect wallet, check:
+#   - Prize pool shows as funded (not "—")
+#   - Raffle status is alive
+#   - "Eligible" shown for registered accounts
+
+# 2. Keeper is processing blocks
+journalctl -u libertytorch-keeper --since "5 min ago" --no-pager | grep -E "Catching|registered|Draw|Bell"
 ```
 
-### 2. Register Initial Eligible Wallets
-```bash
-npx hardhat run scripts/register-holders.ts --network robinhood
-```
+---
 
-### 3. Test the Draw
+## VPS Commands
+
 ```bash
+# Restart keeper
+systemctl restart libertytorch-keeper
+
+# View live logs
+journalctl -u libertytorch-keeper -f
+
 # Check status
-npx hardhat run scripts/check.ts --network robinhood
+systemctl status libertytorch-keeper
 
-# Trigger draw manually if ready
-npx hardhat run scripts/draw.ts --network robinhood
+# Update from git
+cd /opt/libertytorch && git pull && cd code && npm ci && npm run watcher:build && systemctl restart libertytorch-keeper
 ```
-
-### 4. Verify on the Site
-- Open libertytorch.online
-- Connect wallet
-- Should show "Eligible" or "X entries"
 
 ---
 
-## Phase 4 — Coin Launch (LAST STEP)
+## Checklist — Final State
 
-Only do this after Phase 3 is confirmed working.
-
-1. Deploy $LIBERTY on Torch Launchpad → app.torchpad.fun/launch
-2. Copy the new token address immediately
-3. Update all configs with the new address (see Phase 2)
-4. Update watcher secrets with LIBERTY_TOKEN
-5. Announce on socials
+- [ ] $LIBERTY token deployed on Torchpad → token address known
+- [ ] 3 contracts deployed (LinkRegistry, LibertyVault, LibertyRaffle)
+- [ ] Prize pool seeded (≥0.02 ETH, recommended 0.05)
+- [ ] Hetzner VPS provisioned
+- [ ] Keeper running on VPS (systemd, auto-restart)
+- [ ] Keeper .env contains all real addresses (no PENDING values)
+- [ ] `site/js/config.js` updated with real addresses
+- [ ] Site deployed (`./deploy.sh`) and verified live
+- [ ] Browser test: connect wallet, pool shows funded, eligible status works
+- [ ] DEX aggregator API key acquired (0x or 1inch) — post-launch nice-to-have
+- [ ] Dust liquidation swap wired into keeper — once DEX API key is available
 
 ---
-
-## Key Commands
-
-```bash
-# Check raffle status
-npx hardhat run scripts/check.ts --network robinhood
-
-# Fund pool
-npx hardhat run scripts/fund-pool.ts --network robinhood
-
-# Manual draw (if keeper misses)
-npx hardhat run scripts/draw.ts --network robinhood
-
-# Watcher logs
-fly logs libertytorch-watcher
-
-# Restart watcher
-fly restart libertytorch-watcher
-```
 
 ## Gas Budget
-- Deploy: ~0.0003 ETH
-- Watcher daily: ~0.0002 ETH (2-3 txs/hour at Robinhood gas)
-- Keep deployer funded with at least 0.001 ETH
 
-## If Something Goes Wrong
-- **Draw not firing?** → Check fly logs, check if pool ≥ $50
-- **Watcher down?** → `fly restart libertytorch-watcher`
-- **Pool not filling?** → 2% of all token transfers goes there automatically
+| Operation | Approx Cost (Robinhood) |
+|-----------|------------------------|
+| Deploy 3 contracts | ~0.0003 ETH |
+| Seed pool | ~0.0001 ETH |
+| registerAccount (each) | ~0.00005 ETH |
+| checkAndDraw (hourly) | ~0.00008 ETH |
+| Keeper daily | ~0.001 ETH |
+
+**Deployer wallet current balance:** ~0.055 ETH — fine for launch + weeks of operation.

@@ -116,13 +116,13 @@ npx hardhat run scripts/deploy.ts --network robinhood
 **Deployer address:** `0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438` (key in Vault as "New Deployer Wallet Key")
 **Deployer balance:** ~0.054 ETH (Oct 22, 2026)
 
-**Pre-deploy checklist:** See `SCRIPTS.md` — full staged runbook for post-token-deploy steps including Fly.io secrets, site config update, pool seeding, and health check.
+**Pre-deploy checklist:** See `LAUNCH_RUNBOOK.md` — full launch runbook with Phase 0 pre-flight checks, contract deployment, Hetzner VPS provisioning, and site deploy. Also `SCRIPTS.md` for individual script usage.
 
 ---
 
 ## Watcher & Keeper Architecture
 
-A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs alongside the contracts on Fly.io. It does NOT use any third-party indexing service.
+A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs on a Hetzner VPS with systemd. It does NOT use any third-party indexing service.
 
 ### Four jobs
 
@@ -137,9 +137,11 @@ A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs alongside the cont
 - `watcher-dedup.json`: set of `txHash-logIndex` keys (no double-processing)
 - On restart, the watcher catches up from `lastProcessedBlock` → current block, then runs a full rescan of all tracked holders
 
-### Fly.io deployment
+### Keeper deployment (Hetzner VPS)
 
-- **App name:** `libertytorch-watcher`
+- **Hosting:** Hetzner Cloud CX22 (Ashburn, VA) — ~€3.99/mo
+- **Management:** systemd service `libertytorch-keeper`, auto-restarts on crash
+- **Setup:** see `LAUNCH_RUNBOOK.md` Phase 2 for full bootstrap script
 - **Region:** ewr (Newark, NJ)
 - **Machines:** 2 (shared-cpu-1x, 256MB RAM, ~$2.19/mo)
 - **Status:** Deployed, running. Awaiting `LIBERTY_TOKEN`, `RAFFLE_ADDR`, `WATCHER_KEY` secrets (injected after contract deployment).
@@ -233,7 +235,7 @@ frontend/
     whitepaper/
       index.html        — static whitepaper
 
-SCRIPTS.md              — staged post-deploy runbook (Fly.io, pool seeding, etc.)
+LAUNCH_RUNBOOK.md       — full launch runbook (pre-flight checks, contract deploy, Hetzner VPS, site deploy)
 LAUNCH_RUNBOOK.md       — original launch checklist
 TOKENOMICS.md           — tokenomics reference
 ```
@@ -259,7 +261,7 @@ TOKENOMICS.md           — tokenomics reference
 - **Key security hardened:** `.env` is `.gitignore`d, `dotenv` loads it automatically, key never touches source code
 - **`notifyDeposit()` added to LibertyVault:** alternative deposit path for the freedom machine frontend — users send plain `transfer()` then call `notifyDeposit()` to claim entries. 1% anti-spam fee, checkpoint-tracking prevents double-counting, LinkRegistry validates ownership
 - **`check.ts` fixed:** no longer hardcodes any private key
-- **Fly.io watcher deployed:** 2 machines at `libertytorch-watcher.fly.dev`, secrets ready (needs LIBERTY_TOKEN/RAFFLE_ADDR/WATCHER_KEY after deploy)
+- **Keeper hosting:** Hetzner VPS (CX22, Ashburn VA, ~€3.99/mo) — not yet provisioned as of 2026-10-22
 - **Freedom machine prototype reviewed** (`claude/eloquent-newton-b68b18`): scan, preflight, send guard architecture accepted; `notifyDeposit()` bridges it with the vault
 - **Buy tax revised to 3% (50/50 Burn/Creator):** Torch 1.00% / Buyback & Burn 1.00% / Raffle 0.85% / Dev+Marketing 0.15%. Torch Launchpad only allows a burn/creator split at contract level, so the 0.85% + 0.15% route through the Creator allocation and are split manually post-launch.
 - **Torch tap bug fixed:** `.torch-spot` hotspot and `.quip` bubble had no `z-index`, so they rendered behind the hero artwork on some viewports — the tap "did nothing". Added `z-index` and removed the masking `overflow: hidden` that clipped the quip bubble.
@@ -280,7 +282,7 @@ On October 21, 2026, the previous deployer private key (`0x5580599790c417a85a378
 1. **Reactivate domain** → check Namecheap account → re-enable `libertytorch.online` if suspended
 2. **Launch $LIBERTY on Torch** → `app.torchpad.fun/launch` → Launch preset (2.5 ETH MC) → 3% buy tax (50% Burn / 50% Creator) → buy 2% dev supply → pay 0.00015 ETH fee → save token address
 3. **Deploy vault + raffle** → paste token address → see `SCRIPTS.md` for full command
-4. **Inject watcher secrets** → `fly secrets set LIBERTY_TOKEN=... RAFFLE_ADDR=... WATCHER_KEY=... -a libertytorch-watcher` → `fly deploy -a libertytorch-watcher`
+4. **Provision Hetzner VPS** → bootstrap with `LAUNCH_RUNBOOK.md` Phase 2 script → configure .env → start `libertytorch-keeper` systemd service
 5. **Update site config** → edit `site/js/config.js` with deployed addresses → push → Vercel auto-deploys
 6. **Seed prize pool** → default is 0.01 ETH (below $50 threshold at $1/ETH fallback) — set `ETH_AMOUNT=0.05` for a healthy starting pool
 7. **Register eligible wallets** → edit `code/scripts/register-holders.ts` → `npx hardhat run scripts/register-holders.ts --network robinhood`
