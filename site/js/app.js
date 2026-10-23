@@ -102,59 +102,49 @@
   });
   assetDetail.textContent = "Pick an asset to see what it represents.";
 
-  /* The tablet calculator */
+  /* The tablet: entry calculator */
   var calcForm = $("[data-calc]");
   var calcInput = $("#calc-amount");
   var calcErr = $("[data-calc-error]");
-  var calcOut = $("[data-calc-out]");
-  var calcFee = $("[data-calc-fee]");
-  var calcNet = $("[data-calc-net]");
-  var calcRoman = $("[data-calc-roman]");
-  var calcRomanNote = $("[data-calc-roman-note]");
-  var lastNet = R.split(C.calculator.defaultCents, rules.feeBps).net;
+  var dustEntriesEl = $("[data-dust-entries]");
+  var totalEntriesEl = $("[data-total-entries]");
+  var winOddsEl = $("[data-win-odds]");
 
   function renderCalc() {
-    var parsed = R.parseUsdToCents(calcInput.value, C.calculator);
+    var parsed = R.parseUsdToCents(calcInput.value, { minCents: rules.minDustUsdCents, maxCents: C.calculator.maxCents });
     if (!parsed.ok) {
       calcErr.textContent = parsed.error;
       calcInput.setAttribute("aria-invalid", "true");
-      calcOut.classList.add("is-empty");
-      calcFee.textContent = "--";
-      calcNet.textContent = "--";
-      calcRoman.textContent = "";
-      calcRomanNote.textContent = "Nothing to carve yet.";
-
+      if (dustEntriesEl) dustEntriesEl.textContent = "0";
+      if (totalEntriesEl) totalEntriesEl.textContent = "1";
+      if (winOddsEl) winOddsEl.textContent = "1";
       return;
     }
-    var s = R.split(parsed.cents, rules.feeBps);
-    lastNet = s.net;
     calcErr.textContent = "";
     calcInput.removeAttribute("aria-invalid");
-    calcOut.classList.remove("is-empty");
-    calcFee.textContent = R.formatUsd(s.fee);
-    calcNet.textContent = R.formatUsd(s.net);
-    var whole = Math.floor(s.net / 100);
-    var roman = R.toRoman(whole);
-    if (roman) {
-      calcRoman.textContent = roman;
-      calcRomanNote.textContent = s.net % 100 ? "Carved in Roman numerals. Romans didn't do cents." : "Carved in Roman numerals, for the tablet.";
-    } else if (whole === 0) {
-      calcRoman.textContent = "";
-      calcRomanNote.textContent = "Less than one whole dollar. The Romans had no numeral for that.";
-    } else {
-      calcRoman.textContent = "MMMCMXCIX+";
-      calcRomanNote.textContent = "Too big for the tablet. Roman numerals stop at 3,999.";
-    }
-
+    
+    // Calculate dust entries: 1 entry per $0.50
+    var dustCents = parsed.cents;
+    var dustEntries = Math.floor(dustCents / rules.dustEntryStepCents);
+    if (dustEntries > rules.maxDustEntriesPerWallet) dustEntries = rules.maxDustEntriesPerWallet;
+    
+    var totalEntries = 1 + dustEntries; // 1 base + dust
+    var winOdds = (totalEntries / 100 * 100).toFixed(0); // out of 100 entries
+    
+    if (dustEntriesEl) dustEntriesEl.textContent = String(dustEntries);
+    if (totalEntriesEl) totalEntriesEl.textContent = String(totalEntries);
+    if (winOddsEl) winOddsEl.textContent = winOdds;
   }
+  
   calcInput.addEventListener("input", renderCalc);
   calcForm.addEventListener("submit", function (e) { e.preventDefault(); renderCalc(); });
-  calcInput.value = (C.calculator.defaultCents / 100).toString();
+  calcInput.value = "5.00"; // default $5 dust
   renderCalc();
 
   var carryBtn = $("[data-calc-carry]");
   if (carryBtn) {
-    carryBtn.addEventListener("click", function () {
+    carryBtn.addEventListener("click", function (e) {
+      e.preventDefault(); // stop form submission
       var target = $("#torch");
       if (target) target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     });

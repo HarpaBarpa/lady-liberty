@@ -173,26 +173,49 @@
     <div class="wrap tablet-grid">
       <div class="tablet-copy">
         <p class="level-tag">Level 3 · The tablet</p>
-        <h2 id="tablet-title">Carve an example.</h2>
-        <p>Type a pretend deposit value to see the arithmetic. This is an illustration only: it isn't connected to the vault above, and the net value is an entry weight, not a ticket count or a chance of winning.</p>
-        <p class="fine">Rounding to the cent.</p>
+        <h2 id="tablet-title">How many entries do you get?</h2>
+        <p>Hold at least $<span data-rule="min-liberty">10</span> in $LIBERTY for your base entry. Then deposit dust — every $<span data-rule="dust-step">0.50</span> you contribute earns 1 bonus entry. See your total below, and your odds in a 100-entry raffle.</p>
+        <p class="fine">This is an example. Not a real deposit.</p>
       </div>
       <form class="tablet" data-calc novalidate>
         <span class="tablet-rivet r1" aria-hidden="true"></span><span class="tablet-rivet r2" aria-hidden="true"></span>
-        <p class="tablet-head">Illustration · not a deposit</p>
-        <label class="calc-label" for="calc-amount">Pretend deposit value (USD)</label>
-        <div class="calc-input">
-          <span class="calc-prefix" aria-hidden="true">$</span>
-          <input id="calc-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" value="100" aria-describedby="calc-error calc-help">
+        <p class="tablet-head">Entry calculator</p>
+        
+        <div class="entry-calc">
+          <div class="entry-row entry-base">
+            <div class="entry-label">
+              <strong>Base entry</strong>
+              <p class="entry-desc">Hold $<span data-rule="min-liberty">10</span>+ in $LIBERTY</p>
+            </div>
+            <div class="entry-amount"><strong data-base-entries>1</strong> entry</div>
+          </div>
+
+          <div class="entry-row entry-dust">
+            <label class="entry-label" for="calc-amount">
+              <strong>Dust entries</strong>
+              <p class="entry-desc">Deposit dust (any supported token)</p>
+            </label>
+            <div class="calc-input calc-input-small">
+              <span class="calc-prefix" aria-hidden="true">$</span>
+              <input id="calc-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" value="5" aria-describedby="calc-help calc-error">
+            </div>
+            <div class="entry-amount"><strong data-dust-entries>10</strong> entries</div>
+          </div>
+
+          <p class="calc-help" id="calc-help">Between $0.50 and $1,000,000.00.</p>
+          <p class="calc-error" id="calc-error" data-calc-error aria-live="polite"></p>
+
+          <div class="entry-row entry-total">
+            <div class="entry-label"><strong>Your total in this raffle</strong></div>
+            <div class="entry-amount"><strong data-total-entries>11</strong> entries</div>
+          </div>
+
+          <div class="entry-odds">
+            <p>In a 100-entry raffle, your odds of winning are:</p>
+            <p class="odds-pct"><strong data-win-odds>11</strong>%</p>
+          </div>
         </div>
-        <p class="calc-help" id="calc-help">Between $1.00 and $1,000,000.00.</p>
-        <p class="calc-error" id="calc-error" data-calc-error aria-live="polite"></p>
-        <dl class="calc-out" data-calc-out aria-live="polite" aria-atomic="true">
-          <div><dt>Protocol fee (<span data-rule="fee">3%</span>)</dt><dd data-calc-fee>$3.00</dd></div>
-          <div class="calc-net"><dt>Net entry value</dt><dd data-calc-net>$98.00</dd></div>
-        </dl>
-        <p class="calc-roman" data-calc-roman aria-hidden="true">XCVIII</p>
-        <p class="calc-roman-note" data-calc-roman-note>Carved in Roman numerals, for the tablet. Romans didn't do cents.</p>
+        
         <button class="btn btn-copper" type="button" data-calc-carry>Jump to live draw</button>
       </form>
     </div>
