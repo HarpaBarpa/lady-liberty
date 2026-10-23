@@ -259,17 +259,17 @@
     d.appendChild(el("dd", null, row[1]));
     params.appendChild(d);
   });
-  /* Mechanical parity notes — things still open for the community to weigh in on */
-  var todo = $("[data-todo]");
-  if (todo) {
+  /* Live mechanical answers — resolved in the contracts */
+  var mech = $("[data-mech]");
+  if (mech) {
     [
-      "Duration of dust-earned entries before expiry",
-      "Rules for drawings with fewer than 10 eligible participants",
-      "Entry-weight precision and rounding",
-      "Deposits that land while a draw is in progress",
-      "The final supported token list and contract addresses",
-      "Legal review and eligible jurisdictions"
-    ].forEach(function (t) { todo.appendChild(el("li", null, t)); });
+      "Dust entries last 1 hour — reset each cycle when a new raffle begins",
+      "Draws fire with any number of participants (not capped at 10 winners)",
+      "Dust valued in USD cents via Chainlink; fractional entries round down",
+      "Deposits mid-draw are credited to the next cycle's entry tally",
+      "Supported tokens set by owner via addSupportedToken (Chainlink feeds)",
+      "Terms of Service and Privacy Policy are linked in the footer"
+    ].forEach(function (t) { mech.appendChild(el("li", null, t)); });
   }
 
   /* Aging slider: copper in 1886, patina by now */

@@ -419,9 +419,9 @@ button { font: inherit; color: inherit; }
 .params div { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(247, 255, 251, 0.1); }
 .params dt { color: var(--muted-light); font-size: 0.95rem; }
 .params dd { margin: 0; color: var(--porcelain); font-weight: 600; font-size: 0.97rem; }
-.todo { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.todo li { display: flex; gap: 10px; align-items: flex-start; color: #DCEDE7; font-size: 0.97rem; }
-.todo li::before { content: ""; flex-shrink: 0; width: 16px; height: 16px; margin-top: 4px; border: 2px solid var(--copper); border-radius: 4px; }
+.params-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.params-list li { display: flex; gap: 10px; align-items: flex-start; color: #DCEDE7; font-size: 0.97rem; line-height: 1.5; }
+.params-list li::before { content: ""; flex-shrink: 0; width: 16px; height: 16px; margin-top: 5px; border: 2px solid var(--mint); border-radius: 50%; background: var(--mint); box-shadow: 0 0 6px var(--mint); }
 @media (max-width: 860px) {
   .launch-grid { grid-template-columns: minmax(0, 1fr); }
   .pv-note { margin-left: 0; }
