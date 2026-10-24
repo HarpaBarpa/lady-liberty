@@ -166,11 +166,12 @@ A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs on a Hetzner VPS w
 ## Known Limitations
 
 1. **Holder registration requires keeper process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The keeper handles this, but it must run continuously.
-2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for community raffle; not suitable for high-stakes applications. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
+2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for small community raffle; a sophisticated attacker with sufficient entries and block control could improve their odds. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
 3. **ETH/USD feed unavailable on Robinhood Chain:** No Chainlink ETH/USD feed address has been confirmed on Robinhood Chain. Deploy with `ETH_USD_FEED = address(0)` for $1/ETH fallback. Prize pool thresholds and payouts will be in non-USD terms until a real feed is available.
 4. **$LIBERTY/USD price unavailable on-chain** — the keeper uses a token-count threshold (≥1000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
 5. **Dust swap requires DEX aggregator API** — the liquidator pulls dust from the vault to the deployer wallet, but the ETH swap step is stubbed pending a 0x or 1inch API key. Until then, dust accumulates in the deployer wallet without being converted. Configure the swap in `liquidateDust()` once a DEX API key is available on Robinhood Chain.
 6. **Deployer key is single point of trust** — the `TORCH_DEPLOYER_KEY` owns the vault, can drain dust, can pause the raffle, and receives the dev split from liquidation. If compromised, the attacker can drain accumulated dust and pause the raffle. Key must be stored securely (Vault + hardware wallet recommended for long-term).
+7. **Liberty Bell fixed odds scale poorly with pool size** — the 1-in-72 trigger probability is independent of jackpot size. As the Bell grows large, the expected payout per trigger increases while the trigger rate stays fixed. This is a feature at small pools but means large jackpots can accumulate quickly. Consider: raising `MIN_JACKPOT_CENTS` as the pool grows, or using Chainlink VRF to make the Bell's trigger probabilistic and fair-value-adjusted.
 
 ---
 

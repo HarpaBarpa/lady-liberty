@@ -282,6 +282,14 @@ Store last 5 raffleIds and show a scrollable history of winners. Useful social p
 ### 4. Make winners display personal
 Once winners are shown, add logic to check if `signerAddr` matches any winner address and display a personal message: "🎉 You won [rank] place! Claim your ETH."
 
+### 5. Upgrade to Chainlink VRF (before pools grow large)
+Replace `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` with Chainlink VRF for provably fair randomness. Requires a VRF coordinator contract on Robinhood Chain — check with Chainlink or Robinhood team. Eliminates miner/sequencer manipulation risk entirely. Relevant when prize pools become large enough to incentivize attack.
+
+### 6. Liberty Bell adaptive trigger
+The 1-in-72 fixed odds means large jackpots accumulate faster without proportionally higher trigger rates. Options:
+- Raise `MIN_JACKPOT_CENTS` as the pool grows to slow accumulation
+- Use Chainlink VRF to vary the Bell's trigger odds based on jackpot size (ensuring expected value stays proportional to pool size)
+
 ---
 
 ## Gas Budget
