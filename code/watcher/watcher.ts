@@ -206,9 +206,8 @@ async function checkBalance(account: string): Promise<boolean> {
       libertyToken.balanceOf(account) as Promise<bigint>,
       libertyToken.decimals() as Promise<number>,
     ]);
-    const balance = Number(ethers.formatUnits(raw, dec));
-    const MIN_TOKENS = 1000;
-    return balance >= MIN_TOKENS;
+    const MIN_TOKENS_RAW = BigInt("100000000000000000000000"); // 100,000 tokens × 10^18
+    return raw >= MIN_TOKENS_RAW;
   } catch (err) {
     console.error("  balanceOf failed for " + account + ":", err);
     return false;

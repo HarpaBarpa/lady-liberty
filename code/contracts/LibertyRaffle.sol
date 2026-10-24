@@ -69,8 +69,11 @@ contract LibertyRaffle is Ownable, Pausable {
     /// @notice Minimum prize pool to trigger a funded draw: $50 = 5000 cents
     uint256 public constant MIN_POOL_CENTS = 5000;
 
-    /// @notice Minimum $LIBERTY hold for base entry: $10 = 1000 cents
-    uint256 public constant MIN_HOLD_CENTS = 1000;
+    /// @notice Minimum $LIBERTY tokens held for base entry: 100,000 tokens
+    uint256 public constant MIN_HOLD_TOKENS = 100_000;
+
+    /// @notice Minimum eligible participants required before any draw fires
+    uint256 public constant MIN_PARTICIPANTS = 10;
 
     /// @notice Maximum winners per draw
     uint256 public constant MAX_WINNERS = 10;
@@ -355,6 +358,18 @@ contract LibertyRaffle is Ownable, Pausable {
             revert DrawTooSoon();
         }
 
+        uint256 eligible = _eligibleAccountCount();
+        if (eligible < MIN_PARTICIPANTS) {
+            lastDrawTime = block.timestamp;
+            emit DrawSkipped({
+                raffleId: raffleId,
+                poolCents: prizePoolCents,
+                nextCheckTime: lastDrawTime + drawInterval,
+                timestamp: block.timestamp
+            });
+            return;
+        }
+
         if (prizePoolCents < minPoolCents) {
             uint256 nextCheck = lastDrawTime + drawInterval;
             lastDrawTime = block.timestamp;
@@ -400,13 +415,8 @@ contract LibertyRaffle is Ownable, Pausable {
             revert JackpotTooSoon();
         }
 
-        if (jackpotTriggered) {
-            // A winner is already pending — no new trigger until claimed
-            revert JackpotNotTriggered();
-        }
-
-        if (jackpotPoolCents < MIN_JACKPOT_CENTS) {
-            // Not enough in the pot — just advance the check window
+        uint256 eligible = _eligibleAccountCount();
+        if (eligible < MIN_PARTICIPANTS) {
             lastJackpotCheckTime = block.timestamp;
             emit JackpotSkipped({
                 poolCents: jackpotPoolCents,
@@ -416,8 +426,13 @@ contract LibertyRaffle is Ownable, Pausable {
             return;
         }
 
-        uint256 eligible = _eligibleAccountCount();
-        if (eligible == 0) {
+        if (jackpotTriggered) {
+            // A winner is already pending — no new trigger until claimed
+            revert JackpotNotTriggered();
+        }
+
+        if (jackpotPoolCents < MIN_JACKPOT_CENTS) {
+            // Not enough in the pot — just advance the check window
             lastJackpotCheckTime = block.timestamp;
             emit JackpotSkipped({
                 poolCents: jackpotPoolCents,
