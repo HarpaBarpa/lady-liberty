@@ -101,11 +101,11 @@
       b.addEventListener("click", function () { showAsset(i); });
       chipWrap.appendChild(b);
     });
-    if (assetDetail) assetDetail.textContent = assetList.length ? "Pick an asset to see what it represents." : "No supported tokens yet.";
+    if (assetDetail) assetDetail.textContent = assetList.length ? "Pick an example to see what it represents." : "No token types set yet.";
   }
 
   renderAssetChips(C.exampleAssets.map(function (a) {
-    return { symbol: a.symbol, name: a.name, about: " is an example of " + a.about + ". It's here to explain the idea, not because it's on a confirmed list." };
+    return { symbol: a.symbol, name: a.name, about: " is an example of " + a.about + ". It's not a real listed token — it's here to show the kinds of assets the vault can accept." };
   }));
 
   /* The tablet: entry calculator */
