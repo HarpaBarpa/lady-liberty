@@ -732,7 +732,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
         // ── 4% to Liberty Bell ───────────────────────────────
         uint256 jackpotContribution = (poolCents * JACKPOT_CONTRIBUTION_BPS) / BPS;
-        uint256 distributable = poolCents - jackpotContribution;
+        // uint256 distributable = poolCents - jackpotContribution;
         jackpotPoolCents += jackpotContribution;
         emit JackpotFunded({ amountCents: jackpotContribution, newTotal: jackpotPoolCents, timestamp: block.timestamp });
 
@@ -797,7 +797,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
             raffleWinners[currentRaffleId][slot] = winner;
 
-            uint256 prize = (distributable * PAYOUT_DRAFT_BPS(slot)) / BPS;
+            uint256 prize = (poolCents * PAYOUT_DRAFT_BPS(slot)) / BPS;
             rafflePrizes[currentRaffleId][winner] = prize;
 
             cooldownUntil[winner] = block.timestamp + COOLDOWN_PERIOD;
