@@ -8,7 +8,7 @@ async function main() {
     process.exit(1);
   }
 
-  const amount = process.env.ETH_AMOUNT || "0.01"; // default 0.01 ETH
+  const amount = process.env.ETH_AMOUNT || "0.05"; // default 0.05 ETH — MUST be ≥ $50 (at $1/ETH fallback) to clear the draw floor
   const value = ethers.parseEther(amount);
 
   console.log(`Funding raffle ${raffleAddr} with ${amount} ETH...`);

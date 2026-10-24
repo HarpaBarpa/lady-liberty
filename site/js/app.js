@@ -267,7 +267,7 @@
       "Draws fire with any number of participants (not capped at 10 winners)",
       "Dust valued in USD cents via Chainlink; fractional entries round down",
       "Deposits mid-draw are credited to the next cycle's entry tally",
-      "Supported tokens are hardcoded to major Chainlink price feeds only (no custom tokens)",
+      "Only established tokens with Chainlink oracle prices qualify as dust — no custom tokens",
       "Terms of Service and Privacy Policy are linked in the footer"
     ].forEach(function (t) { mech.appendChild(el("li", null, t)); });
   }
@@ -381,7 +381,17 @@
           setLive(nextEl, until > 0 ? LIVE.fmtTimeUntil(until) : "Draw now!");
           setLive(raffleEl, "#" + data.raffle.raffleId);
 
-          if (pool >= 5000) {
+          var eligibleCount = data.raffle && data.raffle.eligibleAccounts ? data.raffle.eligibleAccounts.length : 0;
+          var holdersNeeded = 10;
+          var enoughHolders = eligibleCount >= holdersNeeded;
+
+          if (!enoughHolders && eligibleCount > 0) {
+            setLive(stateEl, eligibleCount + "/" + holdersNeeded + " eligible holders — need " + (holdersNeeded - eligibleCount) + " more to unlock draws");
+            if (stateDot) stateDot.className = "dot dot-copper";
+          } else if (!enoughHolders && eligibleCount === 0) {
+            setLive(stateEl, "Waiting for " + holdersNeeded + " eligible holders to unlock draws");
+            if (stateDot) stateDot.className = "dot dot-copper";
+          } else if (pool >= 5000) {
             setLive(stateEl, "Pool funded — draw imminent");
             if (stateDot) stateDot.className = "dot dot-mint";
           } else if (pool > 0) {
@@ -400,7 +410,18 @@
           if (drawTimeEl) { setLive(drawTimeEl, until > 0 ? LIVE.fmtTimeUntil(until) : "Draw now!"); drawTimeEl.classList.toggle("draw-time-now", until <= 0); }
           if (drawRoundEl) setLive(drawRoundEl, "#" + data.raffle.raffleId);
           if (drawStateEl) {
-            var ds2 = pool >= 5000 ? "Pool funded — draw imminent" : pool > 0 ? "Accumulating — next check in " + LIVE.fmtTimeUntil(until || 0) : "Waiting for first deposits";
+            var ds2;
+            if (!enoughHolders && eligibleCount > 0) {
+              ds2 = eligibleCount + "/" + holdersNeeded + " holders — " + (holdersNeeded - eligibleCount) + " more needed";
+            } else if (!enoughHolders) {
+              ds2 = "Awaiting " + holdersNeeded + " eligible holders";
+            } else if (pool >= 5000) {
+              ds2 = "Pool funded — draw imminent";
+            } else if (pool > 0) {
+              ds2 = "Accumulating — next check in " + LIVE.fmtTimeUntil(until || 0);
+            } else {
+              ds2 = "Waiting for first deposits";
+            }
             setLive(drawStateEl, ds2);
           }
         } else if (data.raffleError) {
@@ -409,8 +430,13 @@
         }
 
         /* ── Participants (eligible accounts) ─── */
-        if (data.raffle && data.raffle.eligibleAccounts && data.raffle.eligibleAccounts.length) {
-          setLive(partEl, String(data.raffle.eligibleAccounts.length));
+        if (data.raffle && data.raffle.eligibleAccounts) {
+          var pCount = data.raffle.eligibleAccounts.length;
+          if (pCount > 0) {
+            setLive(partEl, pCount + "/10");
+          } else {
+            setLive(partEl, "0/10");
+          }
         } else if (data.vault && data.vault.supportedCount != null) {
           setLive(partEl, "—");
         }
