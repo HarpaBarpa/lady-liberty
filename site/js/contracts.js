@@ -122,14 +122,19 @@
           supportedTokens: supportedTokens,
           supportedCount: supportedTokens.length,
         };
-        // Fetch per-token price feeds (for off-chain display)
+        // Fetch per-token metadata (symbol + price feed) for display
         var tokenData = [];
         for (var i = 0; i < supportedTokens.length; i++) {
           var t = supportedTokens[i];
+          var info = { token: t, symbol: shortAddr(t), feed: null };
           try {
-            var feed = await vaultContract.getTokenFeed(t);
-            tokenData.push({ token: t, feed: feed });
+            info.feed = await vaultContract.getTokenFeed(t);
           } catch (_) {}
+          try {
+            var erc = new ethers.Contract(t, ERC20_ABI, provider);
+            info.symbol = await erc.symbol();
+          } catch (_) {}
+          tokenData.push(info);
         }
         r.vault.tokenDetails = tokenData;
       } catch (e) { r.vaultError = e.message; }
@@ -138,14 +143,20 @@
     if (RAFFLE && !RAFFLE.startsWith("PENDING")) {
       try {
         raffleContract = new ethers.Contract(RAFFLE, RAFFLE_ABI, s || provider);
+        var raffleId = await raffleContract.raffleId();
         r.raffle = {
           poolCents:    await raffleContract.getPrizePoolCents(),
           untilNext:    await raffleContract.getTimeUntilNextDraw(),
-          raffleId:     await raffleContract.raffleId(),
+          raffleId:     raffleId,
           lastDraw:     await raffleContract.lastDrawTime(),
           interval:     await raffleContract.drawInterval(),
-          cooldownOf:  raffleContract.cooldownOf ? null : null,
         };
+        try {
+          r.raffle.eligibleAccounts = await raffleContract.getEligibleAccounts();
+        } catch (_) { r.raffle.eligibleAccounts = []; }
+        try {
+          r.raffle.winners = await raffleContract.getWinners(raffleId);
+        } catch (_) { r.raffle.winners = []; }
       } catch (e) { r.raffleError = e.message; }
     }
 

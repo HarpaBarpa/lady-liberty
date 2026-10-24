@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Whitepaper · LibertyTorch</title>
-<meta name="description" content="LibertyTorch whitepaper — $LIBERTY community token on Torch, Robinhood Chain. Hold to enter. Dust to boost. Hourly draws.">
+<meta name="description" content="LibertyTorch whitepaper — $LIBERTY community token on Torch, Robinhood Chain. Hold to enter. Dust to boost. Hourly draws and the Liberty Bell jackpot.">
 <meta name="theme-color" content="#174C4F">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,7 @@
   .wp-tag { display: inline-block; background: rgba(110,231,134,0.15); border: 1px solid rgba(110,231,134,0.3); border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; color: #174C4F; margin-bottom: 32px; }
   h2 { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 640; color: #174C4F; margin: 48px 0 16px; }
   h3 { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; font-size: 1.2rem; font-weight: 640; color: #174C4F; margin: 32px 0 12px; }
+  h4 { font-size: 1rem; font-weight: 700; color: #174C4F; margin: 24px 0 8px; }
   p { margin: 0 0 16px; max-width: 60em; }
   ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
   li { margin-bottom: 6px; }
@@ -45,6 +46,9 @@
   td:first-child { font-weight: 600; color: #174C4F; }
   .callout { margin: 24px 0; padding: 20px 24px; background: rgba(110,231,134,0.1); border-left: 4px solid #6EE786; border-radius: 0 12px 12px 0; }
   .callout p { margin: 0; color: #0E4D44; }
+  .bell { margin: 32px 0; padding: 24px; background: #174C4F; border-radius: 16px; color: #DCF5EB; }
+  .bell h3 { color: #6EE786; margin-top: 0; }
+  .bell p { color: #DCF5EB; }
   .disclaimer { margin-top: 48px; padding: 24px; background: rgba(23,76,79,0.05); border: 1px solid rgba(23,76,79,0.12); border-radius: 16px; font-size: 0.9rem; color: #3F6466; }
   .disclaimer p { margin-bottom: 10px; }
   .disclaimer p:last-child { margin-bottom: 0; }
@@ -79,15 +83,16 @@
 <article class="wrap">
   <p class="wp-tag">🔥 $LIBERTY · Torch · Robinhood Chain</p>
   <h1 class="wp-title">LibertyTorch<br>Whitepaper</h1>
-  <p class="wp-sub">Last updated: 2026-10-21 · v1.2</p>
+  <p class="wp-sub">Last updated: 2026-10-23 · v2.4</p>
 
   <h2>1. Abstract</h2>
   <p>LibertyTorch is a community token built on Torch, deployed on Robinhood Chain. Its brand is Lady Liberty — the Statue of Liberty reimagined as a friendly character, torch raised high, mint green flame burning bright.</p>
-  <p>The core utility is an automated RWA raffle. Holding $LIBERTY earns base raffle entries. Linking secondary wallets and contributing RWA dust earns additional entries. Every hour, a funded drawing selects 10 unique winners who share the prize pool in kind.</p>
+  <p>The core utility is a <strong>decentralized multi-asset raffle</strong>. Holding ≥100,000 $LIBERTY tokens earns a base entry. Linking secondary wallets and depositing crypto dust from any supported ERC-20 token earns bonus entries. Every hour, a funded drawing selects <strong>10 unique winners</strong> who share the ETH prize pool — split 35% / 20% / 12% / 8% / 6% / 5% / 4% / 3% / 2% / 1%.</p>
+  <p>There is also the <strong>Liberty Bell</strong> — a separate jackpot that grows at 4% of every successful draw, triggering independently at 1-in-72 odds per eligible hourly check.</p>
   <p>The 3% buy tax funds the raffle. There are no team tokens, no vesting schedules, no hidden allocations. The community owns the float from day one.</p>
 
   <h2>2. The Brand — Lady Liberty</h2>
-  <p>Lady Liberty is the Statue of Liberty reimagined as a friendly anime character. She has always stood for something: the tired, the poor, the huddled masses yearning to breathe free. LibertyTorch carries that forward — a token for the underdogs, the overlooked.</p>
+  <p>Lady Liberty is the Statue of Liberty reimagined as a friendly anime character. She has always stood for something: the tired, the poor, the huddled masses yearning to breathe free. LibertyTorch carries that forward — a token for the underdogs, the overlooked, the dust in every wallet.</p>
 
   <h3>Visual Identity</h3>
   <ul>
@@ -102,7 +107,13 @@
 
   <h2>3. Technology</h2>
   <p>Torch is a token launchpad on Robinhood Chain — handles the full token lifecycle in one transaction, no custom Solidity needed. Every Torch token address ends in 1111. Robinhood Chain is EVM-compatible, uses ETH for gas.</p>
-  <p>Contract is immutable: no owner, no pause, no blacklist, no mint. Liquidity locked forever via Torch launchpad.</p>
+  <p>The $LIBERTY token contract is immutable: no owner, no pause, no blacklist, no mint. Liquidity is locked via the Torch launchpad.</p>
+  <p>Three dedicated protocol contracts handle the raffle:</p>
+  <ul>
+    <li><strong>LinkRegistry</strong> — EIP-712 wallet linking (primary ↔ up to 5 secondary wallets).</li>
+    <li><strong>LibertyVault</strong> — accepts dust deposits, prices each token via its own oracle feed, computes entry weight.</li>
+    <li><strong>LibertyRaffle</strong> — hourly weighted draw + the Liberty Bell jackpot + prize distribution.</li>
+  </ul>
 
   <h3>Key Addresses</h3>
   <table>
@@ -110,7 +121,9 @@
     <tr><td>$TORCH</td><td><code>0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111</code></td></tr>
     <tr><td>Torch Launchpad</td><td><code>0x7891eA889899928aFE637e4Cca8106188427776a</code></td></tr>
     <tr><td>$LIBERTY</td><td><code>0x___________1111</code> (assigned at launch)</td></tr>
-    <tr><td>RWA Raffle Vault</td><td><code>0x___________1111</code> (assigned at launch)</td></tr>
+    <tr><td>LinkRegistry</td><td><code>Assigned at deployment</code></td></tr>
+    <tr><td>LibertyVault</td><td><code>Assigned at deployment</code></td></tr>
+    <tr><td>LibertyRaffle</td><td><code>Assigned at deployment</code></td></tr>
     <tr><td>Explorer</td><td>robinhoodchain.io</td></tr>
   </table>
 
@@ -132,14 +145,14 @@
     <tr><th>Allocation</th><th>Tax</th><th>Per $100K Volume</th></tr>
     <tr><td>Torch Protocol</td><td>1.00%</td><td>$1,000</td></tr>
     <tr><td>$LIBERTY Buyback &amp; Burn</td><td>1.00%</td><td>$1,000</td></tr>
-    <tr><td>RWA Raffle Funding</td><td>0.85%</td><td>$850</td></tr>
+    <tr><td>Raffle Funding</td><td>0.85%</td><td>$850</td></tr>
     <tr><td>Development / Marketing</td><td>0.15%</td><td>$150</td></tr>
     <tr><td><strong>TOTAL</strong></td><td><strong>3.00%</strong></td><td><strong>$3,000</strong></td></tr>
   </table>
 
   <p>· <strong>Torch Protocol 1.00%</strong> — Keeps the Torch ecosystem running.</p>
   <p>· <strong>$LIBERTY Buyback &amp; Burn 1.00%</strong> — Automated buyback and burn. Deflationary with every trade.</p>
-  <p>· <strong>RWA Raffle Funding 0.85%</strong> — Flows into the hourly prize pool. Every ~$5,882.35 in taxable buy volume generates ~$50 toward the raffle.</p>
+  <p>· <strong>Raffle Funding 0.85%</strong> — Flows into the hourly prize pool. Every ~$5,882.35 in taxable buy volume generates ~$50 toward the raffle.</p>
   <p>· <strong>Development / Marketing 0.15%</strong> — Site maintenance, social presence, community growth.</p>
 
   <p>Launch preset: <strong>Launch (2.5 ETH)</strong>. Dev buy: 2% of supply (~20M tokens) at launch, no tax — skin in the game, not a cash grab.</p>
@@ -147,16 +160,15 @@
   <h2 id="raffle">6. The Raffle — Entry System</h2>
 
   <h3>Who Can Enter</h3>
-  <p>Hold at least <strong>$10 USD</strong> worth of $LIBERTY in your primary wallet for one base raffle entry. Link up to <strong>five verified secondary wallets</strong> to contribute RWA dust and earn additional entries. All entries are credited to your primary Liberty account.</p>
+  <p>Hold at least <strong>100,000 $LIBERTY tokens</strong> in your primary wallet for one base raffle entry. Link up to <strong>five verified secondary wallets</strong> to contribute dust and earn additional entries. All entries are credited to your primary Liberty account.</p>
 
   <h3>Entry Calculation</h3>
 
   <h4>Base Entry</h4>
-  <p>Hold $10+ USD in $LIBERTY in your primary wallet → <strong>1 base entry</strong>.</p>
+  <p>Hold 100,000+ $LIBERTY in your primary wallet → <strong>1 base entry</strong>.</p>
 
   <h4>Dust Entries</h4>
-  <p>RWA dust must be <strong>contributed through the LibertyTorch website</strong> — specifically, transferred into the Liberty RWA prize vault on-chain. Simply holding assets or linking a wallet generates zero entries.</p>
-  <p>Every <strong>$0.50 USD</strong> worth of qualifying dust actually deposited earns <strong>1 dust entry</strong>, up to a maximum of <strong>5 dust entries per linked wallet</strong> per funded drawing cycle.</p>
+  <p>Dust must be <strong>deposited into the LibertyVault on-chain</strong> — simply holding assets or linking a wallet generates zero entries. Every <strong>$0.50 USD</strong> worth of qualifying dust actually deposited earns <strong>1 dust entry</strong>, up to a maximum of <strong>5 dust entries per linked wallet</strong> per cycle.</p>
   <p>Multiple contributions from the same wallet accumulate toward the five-entry cap. Contributions exceeding $2.50 may still be accepted into the vault but cannot generate more than five entries for that wallet during that cycle.</p>
 
   <h4>Entry Cap Table</h4>
@@ -171,22 +183,18 @@
   </table>
 
   <h4>Maximum Entries Per Account</h4>
-  <p><strong>26 entries</strong> maximum per primary account per funded drawing cycle:</p>
+  <p><strong>26 entries</strong> maximum per primary account per cycle:</p>
   <ul>
     <li>1 base entry (from holding $LIBERTY)</li>
     <li>25 dust entries (5 wallets × 5 entries each)</li>
   </ul>
 
-  <div class="callout">
-    <p><strong>Primary wallet dust:</strong> Whether the primary wallet may also contribute RWA dust for bonus entries is a separate configuration decision and is not yet confirmed.</p>
-  </div>
-
   <h3>Drawing Mechanics</h3>
-  <p>The system checks the prize pool <strong>every hour</strong>. A drawing takes place when the pool contains at least <strong>$50 USD</strong> in eligible prizes. If the pool is below $50, the drawing is skipped and funds roll over to the following hour.</p>
-  <p>Each funded drawing selects <strong>10 unique winners</strong> by weighted random draw. The winning account and all its linked wallets are excluded from subsequent drawings for a rolling <strong>24-hour period</strong>. Wallet holdings and prior dust contributions remain intact.</p>
+  <p>The system checks the prize pool <strong>every hour</strong>. A drawing takes place when the pool contains at least <strong>$50 USD</strong> <strong>and at least 10 eligible holders are registered</strong>. If either condition is unmet, the drawing is skipped and funds roll over to the following hour.</p>
+  <p>Each funded drawing selects <strong>10 unique winners</strong> by weighted random draw. The winning account and all its linked wallets are excluded from subsequent draws for a rolling <strong>24-hour period</strong>. Wallet holdings and prior dust contributions remain intact.</p>
 
   <h3>Prize Distribution</h3>
-  <p>10 winners per funded draw. Each winner receives a percentage of every asset in the vault, paid in kind — nothing is swapped into a single currency.</p>
+  <p>10 winners per funded draw, each receiving a share of the ETH prize pool. Dust is periodically liquidated to ETH, split 50% to the prize pool and 50% back to the protocol.</p>
 
   <table>
     <tr><th>Place</th><th>Pool Share</th></tr>
@@ -202,32 +210,45 @@
     <tr><td>10th</td><td>1%</td></tr>
     <tr><td><strong>Total</strong></td><td><strong>96%</strong></td></tr>
   </table>
-  <p>The remaining <strong>4%</strong> is awaiting a final decision on allocation.</p>
+  <p>The remaining <strong>4%</strong> goes to the Liberty Bell jackpot (see below).</p>
 
   <h3>Vault Funding</h3>
   <p>The prize pool is funded by two streams:</p>
   <ul>
     <li><strong>Tax stream:</strong> 0.85% of every $LIBERTY buy automatically flows into the vault — on-chain, every trade.</li>
-    <li><strong>Dust stream:</strong> RWA dust deposited through the website is held in the vault, increasing the pool.</li>
+    <li><strong>Dust stream:</strong> Dust deposited through the site is liquidated to ETH — 50% into the prize pool, 50% to the protocol.</li>
   </ul>
 
   <h3>Wallet Linking</h3>
-  <p>Secondary wallets must be linked through cryptographic ownership verification via the LibertyTorch website. A signed message proves wallet control — no gas, no transaction. Linking alone generates zero entries; only on-chain vault deposits count.</p>
+  <p>Secondary wallets must be linked through cryptographic ownership verification via the LibertyTorch website — an EIP-712 signed message proves wallet control. No gas, no transaction. Linking alone generates zero entries; only on-chain vault deposits count.</p>
 
-  <h2>7. The Flywheel</h2>
+  <div class="bell">
+    <h2 style="color:#6EE786; margin-top:0;">7. The Liberty Bell Jackpot</h2>
+    <p>A separate jackpot that grows at <strong>4% of every successful draw</strong>.</p>
+    <ul>
+      <li><strong>Independent trigger:</strong> each eligible hour (when ≥10 holders are registered), a fixed 1-in-72 probability (~1.39%) that the Bell rings. The number of participants does not change the odds.</li>
+      <li><strong>Always growing:</strong> 4% of every funded raffle rolls into the jackpot. Even on quiet days it keeps building.</li>
+      <li><strong>Weighted winner:</strong> when it triggers, one eligible holder is selected by the same weighted random method as the regular raffle.</li>
+      <li><strong>Shared cooldown:</strong> Bell winners share the same 24-hour cooldown as regular raffle winners — a recent winner cannot immediately take the jackpot, and vice versa.</li>
+      <li><strong>Prize:</strong> paid in ETH (or ERC-20 via claim), subject to the same eligibility and cooldown rules.</li>
+    </ul>
+    <p><strong>Odds reference:</strong> a 1-in-72 jackpot averages ~3 days between hits and has ~90.4% chance of hitting within any 7-day window. It could ring twice in one day or go more than a week without hitting.</p>
+  </div>
+
+  <h2>8. The Flywheel</h2>
   <div class="flywheel">
     <ol>
-      <li><strong>Buyers pay 3% tax</strong><br>1.00% to Torch, 1.00% buyback, 0.85% raffle, 0.15% dev/marketing</li>
-      <li><strong>Vault grows</strong><br>0.85% tax + dust deposits accumulate in the RWA prize vault</li>
+      <li><strong>Buyers pay 3% tax</strong><br>1.00% to Torch, 1.00% buyback &amp; burn, 0.85% raffle, 0.15% dev/marketing</li>
+      <li><strong>Vault grows</strong><br>0.85% tax + dust deposits accumulate, then liquidate to ETH</li>
       <li><strong>Prizes attract holders</strong><br>The raffle makes holding $LIBERTY valuable. People buy and hold to be eligible</li>
-      <li><strong>Dust depositors boost entries</strong><br>Users deposit RWA dust through the website — every $0.50 deposited earns 1 entry (max 5 per wallet)</li>
+      <li><strong>Dust depositors boost entries</strong><br>Users deposit dust through the site — every $0.50 deposited earns 1 entry (max 5 per wallet)</li>
       <li><strong>Volume compounds</strong><br>More holders = more community = more trading = more tax = LOOP</li>
     </ol>
   </div>
 
-  <h2>8. Raffle Parameters</h2>
+  <h2>9. Raffle Parameters</h2>
   <table>
-    <tr><td>Minimum $LIBERTY hold</td><td>$10 USD</td></tr>
+    <tr><td>Minimum $LIBERTY hold</td><td>100,000 tokens</td></tr>
     <tr><td>Base entries per primary wallet</td><td>1</td></tr>
     <tr><td>Maximum linked wallets</td><td>5 per primary account</td></tr>
     <tr><td>Minimum dust deposit</td><td>$0.50 USD</td></tr>
@@ -235,31 +256,37 @@
     <tr><td>Maximum dust entries per wallet</td><td>5</td></tr>
     <tr><td>Maximum total entries per account</td><td>26 (1 base + 25 dust)</td></tr>
     <tr><td>Draw frequency</td><td>Hourly</td></tr>
+    <tr><td>Minimum eligible holders to draw</td><td>10 registered holders</td></tr>
     <tr><td>Minimum pool for drawing</td><td>$50 USD</td></tr>
-    <tr><td>Funded drawings per cycle</td><td>As triggered by pool threshold</td></tr>
     <tr><td>Winners per funded draw</td><td>10 unique wallets</td></tr>
-    <tr><td>Prize currency</td><td>In kind — vault assets, not converted</td></tr>
+    <tr><td>Prize currency</td><td>ETH (dust liquidated to ETH, 50/50 split)</td></tr>
     <tr><td>Winner cooldown</td><td>24 hours (account + linked wallets)</td></tr>
-    <tr><td>Protocol fee on deposits</td><td>2% of each dust contribution</td></tr>
+    <tr><td>Protocol fee on deposits</td><td>3% of each dust deposit</td></tr>
+    <tr><td>Liberty Bell contribution</td><td>4% of every successful draw</td></tr>
+    <tr><td>Liberty Bell trigger odds</td><td>1-in-72 per eligible hourly check</td></tr>
   </table>
 
-  <h2>9. Items Still Being Finalized</h2>
+  <h2>10. Dust Verification &amp; Security</h2>
+  <p>To protect the prize pool from entry dilution — depositing worthless or "frozen" tokens to earn entries — LibertyTorch applies a multi-layer defense:</p>
   <ul>
-    <li>Allocation of the remaining 4% of prize payouts</li>
-    <li>Whether the primary wallet may also contribute dust for bonus entries</li>
+    <li><strong>On-chain balance verification:</strong> the vault strictly enforces that the received token amount matches the transferred amount, blocking fee-on-transfer and rebasing tokens.</li>
+    <li><strong>Strict curation:</strong> only tokens with verified liquidity and sellability on established DEXs are whitelisted as dust.</li>
+    <li><strong>Oracle-only pricing:</strong> each token is priced via its own oracle feed; the $1.00 fallback is restricted to test environments, never production.</li>
+    <li><strong>Continuous liquidation:</strong> after every draw the keeper attempts to liquidate accumulated dust into ETH. Tokens that become unsellable or rug-pulled are flagged and removed from the whitelist.</li>
+  </ul>
+
+  <h2>11. Items Still Being Finalized</h2>
+  <ul>
+    <li>Source of verifiable draw randomness (upgrade path: Chainlink VRF)</li>
     <li>Duration of dust-earned entries before expiry</li>
-    <li>Rules for drawings with fewer than 10 eligible participants</li>
-    <li>Who receives the 2% protocol fee on deposits</li>
+
     <li>Entry-weight precision and rounding rules</li>
     <li>Deposits that land while a draw is in progress</li>
-    <li>Oracle timestamps and stale price handling</li>
     <li>The final supported token list and contract addresses</li>
-    <li>Source of verifiable draw randomness</li>
-    <li>Settlement mechanics</li>
     <li>Legal review and eligible jurisdictions</li>
   </ul>
 
-  <h2>10. FAQ</h2>
+  <h2>12. FAQ</h2>
 
   <h3>Is this affiliated with Torch, Robinhood, or the Statue of Liberty?</h3>
   <p>No. LibertyTorch is a community project. $LIBERTY is not issued by, endorsed by, or affiliated with Torch, Robinhood Markets, Inc., or the National Park Service.</p>
@@ -274,13 +301,13 @@
   <p>No. The 3% buy tax is set at launch and fixed forever.</p>
 
   <h3>How do I enter the raffle?</h3>
-  <p>Hold $10+ USD worth of $LIBERTY in your primary wallet for one base entry. Link up to five secondary wallets through the website. Contribute RWA dust through the LibertyTorch website — it must be deposited into the vault on-chain. Every $0.50 deposited earns 1 dust entry, up to 5 per linked wallet per funded draw cycle.</p>
+  <p>Hold 100,000+ $LIBERTY in your primary wallet for one base entry. Link up to five secondary wallets through the site. Deposit dust into the vault on-chain — every $0.50 deposited earns 1 dust entry, up to 5 per linked wallet per cycle.</p>
 
   <h3>Does linking a wallet give me entries?</h3>
   <p>No. Only verified, completed dust deposits into the vault generate entries. Linking a wallet is required to associate a secondary wallet with your account, but linking alone produces zero entries.</p>
 
   <h3>What's the maximum I can earn?</h3>
-  <p>26 entries per primary account per funded drawing cycle: 1 base entry plus up to 25 dust entries (5 wallets × 5 entries each). The primary wallet may also contribute dust — this is a separate configuration decision.</p>
+  <p>26 entries per primary account per cycle: 1 base entry plus up to 25 dust entries (5 wallets × 5 entries each).</p>
 
   <h3>What happens if the prize pool is below $50?</h3>
   <p>The drawing is skipped. All unspent funds roll over to the following hour. The system checks every hour.</p>
@@ -289,26 +316,30 @@
   <p>No. Once you win, your account and all its linked wallets are excluded from drawings for 24 hours. After that window, you can qualify again.</p>
 
   <h3>What can I send as dust?</h3>
-  <p>Any allow-listed ERC-20 RWA token. USD value is calculated via oracle pricing at the time of deposit. The final supported token list is still being finalized.</p>
+  <p>Major ERC-20 tokens only (ETH, USDC, USDT, WETH). All tokens must have a standard Chainlink oracle price feed. The final supported token list is published at launch.</p>
 
   <h3>What are prizes paid in?</h3>
-  <p>In kind — your share of every asset in the vault, paid directly to your wallet. Nothing is swapped into a single currency.</p>
+  <p>ETH. Dust is periodically liquidated to ETH — 50% to the prize pool, 50% to the protocol — and winners claim their share in ETH.</p>
 
   <h3>How are winners chosen?</h3>
-  <p>Weighted random draw. Entry weight = base entry (1) + dust entries from qualifying deposits. Verifiable randomness is used to ensure fairness.</p>
+  <p>Weighted random draw. Entry weight = base entry (1) + dust entries from qualifying deposits.</p>
+
+  <h3>What is the Liberty Bell?</h3>
+  <p>A separate jackpot that receives 4% of every successful draw. It triggers independently at 1-in-72 odds per eligible hourly check — the number of participants does not change the odds. Requires ≥10 registered holders to trigger.</p>
 
   <h3>Where do I get ETH for Robinhood Chain?</h3>
   <p>Robinhood Crypto supports ETH purchases, or bridge from another network.</p>
 
-  <h2>11. Risk Disclosure</h2>
+  <h2>13. Risk Disclosure</h2>
   <ul>
-    <li><strong>Smart contract risk:</strong> Torch contracts are immutable and audited, but always exercise caution with any on-chain interaction.</li>
-    <li><strong>Robinhood Chain risk:</strong> Newer network — liquidity, tooling, and ecosystem depth may be lower than established chains.</li>
+    <li><strong>Smart contract risk:</strong> the LibertyTorch contracts have been reviewed but not formally audited by a third-party security firm. Always exercise caution with any on-chain interaction.</li>
+    <li><strong>Robinhood Chain risk:</strong> newer network — liquidity, tooling, and ecosystem depth may be lower than established chains.</li>
     <li><strong>Token price risk:</strong> $LIBERTY may have low liquidity at launch. Do not invest more than you can afford to lose.</li>
-    <li><strong>Raffle risk:</strong> Prize amounts depend entirely on trading volume and dust deposits. Draws are skipped if the pool is below $50.</li>
-    <li><strong>Regulatory risk:</strong> Community tokens may attract regulatory attention depending on jurisdiction.</li>
-    <li><strong>No financial advice:</strong> Nothing in this whitepaper is financial advice. Always DYOR.</li>
-    <li><strong>No refunds:</strong> On-chain transactions are irreversible.</li>
+    <li><strong>Raffle risk:</strong> prize amounts depend entirely on trading volume and dust deposits. Draws are skipped if the pool is below $50.</li>
+    <li><strong>Randomness risk:</strong> draw winners are selected using pseudorandom on-chain data. This is not provably fair.</li>
+    <li><strong>Regulatory risk:</strong> community tokens and blockchain-based raffles may attract regulatory attention depending on jurisdiction.</li>
+    <li><strong>No financial advice:</strong> nothing in this whitepaper is financial advice. Always DYOR.</li>
+    <li><strong>No refunds:</strong> on-chain transactions are irreversible.</li>
   </ul>
 
   <div class="disclaimer">

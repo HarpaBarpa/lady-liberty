@@ -3,17 +3,14 @@
 window.LIBERTY_CONFIG = {
   status: "live",
 
-  // Deploy password for /deploy.html — NEVER commit a real value here
-  // Injected at Vercel build time via NEXT_PUBLIC_DEPLOY_PASSWORD env var
-  
-
   rules: {
     network: "Robinhood Chain",
-    valuation: "Finnhub-backed oracle, USD value locked at deposit",
+    valuation: "On-chain oracle, USD value locked at deposit",
 
-    // Entry eligibility
-    minLibertyUsdCents: 1000,     // $10 minimum $LIBERTY hold
-    maxLinkedWallets: 5,          // max additional wallets per primary
+    // Entry eligibility — token count, not USD value
+    minLibertyTokens: 100000,    // hold ≥100,000 $LIBERTY to be eligible
+    minParticipants: 10,         // minimum eligible holders before any draw fires
+    maxLinkedWallets: 5,         // max additional wallets per primary
 
     // Dust contribution rules
     minDustUsdCents: 50,          // $0.50 minimum qualifying contribution
@@ -47,7 +44,7 @@ window.LIBERTY_CONFIG = {
   // Deployed contract addresses (chain: Robinhood Chain, chainId: 4663)
   contracts: {
     LIBERTY_TOKEN: "PENDING_TOKEN_ADDRESS",
-    LINK_REGISTRY: "0x6AeE4702002a768B3e9c626030D8d1370904CCCB",
+    LINK_REGISTRY: "PENDING_LINK_REGISTRY_ADDRESS",
     LIBERTY_VAULT: "PENDING_VAULT_ADDRESS",
     LIBERTY_RAFFLE: "PENDING_RAFFLE_ADDRESS",
     TORCH:        "0x000050E18ffa3F8F7aD170Eb9CeF160eb3Ed1111",

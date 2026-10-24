@@ -1,11 +1,11 @@
-/* Lady Liberty: wallet ledger — link secondary wallets, sign to prove control,
-   credit dust contributions to your primary $LIBERTY account.
-   Rules: $10 min LIBERTY hold, 5 wallet max, $0.50 min dust, 1 entry per $0.50, max 5 per wallet,
-   24h cooldown after winning. */
+/* Lady Liberty: wallet ledger — real on-chain wallet linking + dust deposits.
+   Contracts: LinkRegistry (EIP-712 linking) + LibertyVault (depositDust/notifyDeposit).
+   Falls back to an honest "opens at launch" state until contract addresses are set. */
 (function () {
   "use strict";
 
   var C = window.LIBERTY_CONFIG;
+  var RULES = C.rules;
   var R = window.LibertyRules;
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -19,325 +19,336 @@
     if (text != null) n.textContent = text;
     return n;
   }
+  function shortAddr(a) { return a ? a.slice(0, 6) + "…" + a.slice(-4) : ""; }
 
-  // --- State (localStorage-backed for concept preview) ---
-  var WALLETS_KEY = "lady-liberty-linked";
   var RULES = C.rules;
+  var CC = C.contracts || {};
+  var CHAIN_ID = CC.CHAIN_ID || 4663;
+  var RPC_URL = CC.RPC_URL || "https://rpc.mainnet.chain.robinhood.com";
+  var LINK_REG = CC.LINK_REGISTRY;
+  var VAULT = CC.LIBERTY_VAULT;
+  var RAFFLE = CC.LIBERTY_RAFFLE;
 
-  function loadState() {
-    try { return JSON.parse(localStorage.getItem(WALLETS_KEY)) || { primary: null, linked: [], lastWin: 0 }; }
-    catch (_) { return { primary: null, linked: [], lastWin: 0 }; }
-  }
+  var NOT_DEPLOYED = false;
 
-  function saveState(s) {
-    try { localStorage.setItem(WALLETS_KEY, JSON.stringify(s)); }
-    catch (_) {}
-  }
+  // ── ABI fragments ──────────────────────────────────────────────
+  var LINK_ABI = [
+    "function linkWallet(address primary, address secondary, uint256 timestamp, bytes sig) external",
+    "function unlinkWallet(address primary, address secondary) external",
+    "function getLinkedWallets(address primary) view returns (address[])",
+    "function getLinkedWalletCount(address primary) view returns (uint256)",
+    "function getLinkNonce(address primary) view returns (uint256)",
+    "function isLinkedTo(address primary, address secondary) view returns (bool)"
+  ];
+  var VAULT_ABI = [
+    "function depositDust(address primary, address dustToken, uint256 amount) external",
+    "function notifyDeposit(address primary, address dustToken) external",
+    "function getAccountInfo(address primary) view returns (uint256 dustEntries, uint256 cycleId, uint256 cycleUsdCents)",
+    "function getSupportedTokens() view returns (address[])",
+    "function isSupported(address token) view returns (bool)"
+  ];
+  var RAFFLE_ABI = [
+    "function getAccountEntries(address account) view returns (uint256)",
+    "function isInCooldown(address account) view returns (bool)"
+  ];
+  var ERC20_ABI = [
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)"
+  ];
 
-  var state = loadState();
+  // EIP-712 domain for LinkRegistry ("LibertyTorchLink", version "1")
+  var EIP712_NAME = "LibertyTorchLink";
+  var EIP712_VERSION = "1";
+  var LINK_REQUEST_TYPES = {
+    LinkRequest: [
+      { name: "primary", type: "address" },
+      { name: "secondary", type: "address" },
+      { name: "nonce", type: "uint256" },
+      { name: "timestamp", type: "uint256" }
+    ]
+  };
 
-  // --- Entry math ---
-  function isHoldingLiberty() {
-    // Concept preview: assumes primary connected = holds $LIBERTY
-    // At launch: replace with actual balance check
-    return !!state.primary;
-  }
+  // ── State ──────────────────────────────────────────────────────
+  var state = { primary: null, linked: [], supported: [], info: null };
 
-  function baseEntries() {
-    // 1 base entry if holding ≥$10 $LIBERTY
-    return isHoldingLiberty() ? 1 : 0;
-  }
-
-  function dustEntries() {
-    var total = 0;
-    state.linked.forEach(function (l) {
-      var c = l.contributed || 0;
-      if (c >= RULES.minDustUsdCents) {
-        var e = Math.floor(c / RULES.dustEntryStepCents);
-        total += Math.min(e, RULES.maxDustEntriesPerWallet);
-      }
-    });
-    return total;
-  }
-
-  function totalEntries() {
-    return baseEntries() + dustEntries();
-  }
-
-  function isInCooldown() {
-    if (!state.lastWin) return false;
-    return (Date.now() - state.lastWin) < (RULES.cooldownHours * 3600 * 1000);
-  }
-
-  function cooldownRemaining() {
-    if (!state.lastWin) return 0;
-    var ms = RULES.cooldownHours * 3600 * 1000 - (Date.now() - state.lastWin);
-    return Math.max(0, ms);
-  }
-
-  // --- Wallet connection ---
   function getProvider() {
     if (window.ethereum) return window.ethereum;
     throw new Error("No wallet detected. Install Rabby or MetaMask.");
   }
 
-  function shortAddr(a) {
-    return a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
+  function getSigner(address) {
+    var bp = new ethers.BrowserProvider(getProvider());
+    return address ? bp.getSigner(address) : bp.getSigner();
   }
 
+  async function ensureChain() {
+    var p = getProvider();
+    var hexId = "0x" + CHAIN_ID.toString(16);
+    try {
+      await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hexId }] });
+    } catch (e) {
+      if (e && e.code === 4902) {
+        await p.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: hexId,
+            chainName: "Robinhood Chain",
+            rpcUrls: [RPC_URL],
+            nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+          }]
+        });
+      } else { throw e; }
+    }
+  }
+
+  async function readChain() {
+    var signer = getSigner();
+    var addr = await signer.getAddress();
+    state.primary = addr;
+
+    var link = new ethers.Contract(LINK_REG, LINK_ABI, signer);
+    var vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    var raffle = new ethers.Contract(RAFFLE, RAFFLE_ABI, signer);
+
+    try { state.linked = await link.getLinkedWallets(addr); } catch (_) { state.linked = []; }
+    try { state.supported = await vault.getSupportedTokens(); } catch (_) { state.supported = []; }
+
+    try {
+      var ai = await vault.getAccountInfo(addr);
+      var total = await raffle.getAccountEntries(addr);
+      var cd = await raffle.isInCooldown(addr);
+      state.info = { dust: Number(ai[0]), cycleUsd: Number(ai[2]), total: Number(total), cooldown: cd };
+    } catch (_) { state.info = null; }
+  }
+
+  // ── Actions ────────────────────────────────────────────────────
   async function connectPrimary() {
-    var prov = getProvider();
-    var accounts = await prov.request({ method: "eth_requestAccounts" });
-    var addr = accounts[0];
-    state.primary = { address: addr, ens: null, linkedAt: Date.now() };
-    saveState(state);
-    renderLedger();
-  }
-
-  async function linkSecondary() {
-    if (!state.primary) throw new Error("Connect your main $LIBERTY wallet first.");
-    if (state.linked.length >= RULES.maxLinkedWallets) {
-      throw new Error("Maximum " + RULES.maxLinkedWallets + " linked wallets. Unlink one before adding another.");
-    }
-
-    var prov = getProvider();
-    var accounts = await prov.request({ method: "eth_requestAccounts" });
-    var secondaryAddr = accounts[0];
-
-    if (secondaryAddr.toLowerCase() === state.primary.address.toLowerCase()) {
-      throw new Error("That's your primary wallet. Switch to a different one in your wallet extension and try again.");
-    }
-
-    if (state.linked.some(function (l) { return l.address.toLowerCase() === secondaryAddr.toLowerCase(); })) {
-      throw new Error("This wallet is already linked.");
-    }
-
-    // Sign a proof
-    var ts = Date.now();
-    var message = (
-      "Lady Liberty RWA Raffle\n" +
-      "Link wallet: " + secondaryAddr + "\n" +
-      "To primary: " + state.primary.address + "\n" +
-      "Timestamp: " + ts + "\n\n" +
-      "By signing, you prove you control this address. No transaction, no gas."
-    );
-
-    var sig = await prov.request({
-      method: "personal_sign",
-      params: [message, secondaryAddr]
-    });
-
-    state.linked.push({
-      address: secondaryAddr,
-      ens: null,
-      linkedAt: ts,
-      proof: sig,
-      contributed: 0
-    });
-
-    saveState(state);
-    renderLedger();
-  }
-
-  function unlink(addr) {
-    state.linked = state.linked.filter(function (l) { return l.address !== addr; });
-    saveState(state);
-    renderLedger();
+    await ensureChain();
+    var signer = getSigner();
+    var addr = await signer.getAddress();
+    state.primary = addr;
+    await refresh();
   }
 
   function disconnectPrimary() {
     state.primary = null;
     state.linked = [];
-    saveState(state);
-    renderLedger();
+    state.info = null;
+    render();
   }
 
-  // Simulate a dust contribution (concept preview — no real tx)
-  function simulateContribution(addr) {
-    var linked = state.linked.find(function (l) { return l.address === addr; });
-    if (!linked) return;
+  async function linkSecondary() {
+    if (!state.primary) throw new Error("Connect your primary wallet first.");
+    if (state.linked.length >= RULES.maxLinkedWallets) {
+      throw new Error("Maximum " + RULES.maxLinkedWallets + " linked wallets reached.");
+    }
+    await ensureChain();
+    var p = getProvider();
 
-    var asset = C.exampleAssets[Math.floor(Math.random() * C.exampleAssets.length)];
-    var usd = Math.floor(Math.random() * 24500 + 50); // $0.50–$245
-    linked.contributed = (linked.contributed || 0) + usd;
-    linked.lastAsset = asset.symbol;
-    linked.lastUsd = usd;
-    linked.lastTime = Date.now();
+    // Read the current link nonce for the primary
+    var nonce = await (new ethers.Contract(LINK_REG, LINK_ABI, getSigner(state.primary))).getLinkNonce(state.primary);
+    var timestamp = BigInt(Math.floor(Date.now() / 1000));
 
-    var n = dustEntries();
-    var msg = "Deposited $" + R.formatUsd(usd) + " in " + asset.symbol + " from " + shortAddr(addr);
-    
-    var walletTotal = (linked.contributed || 0);
-    if (walletTotal < RULES.minDustUsdCents) {
-      msg += ". Below $" + (RULES.minDustUsdCents / 100).toFixed(2) + " minimum — no entries yet.";
-    } else {
-      var earned = Math.floor(walletTotal / RULES.dustEntryStepCents);
-      var capped = Math.min(earned, RULES.maxDustEntriesPerWallet);
-      msg += ". Earned " + capped + " dust entr" + (capped !== 1 ? 'ies' : 'y') + " (max " + RULES.maxDustEntriesPerWallet + ").";
+    toast("Switch to the secondary wallet in your extension, then approve the signature request.");
+    var accs = await p.request({ method: "eth_requestAccounts" });
+    var secondary = accs[0];
+    if (secondary.toLowerCase() === state.primary.toLowerCase()) {
+      throw new Error("That's still your primary wallet. Switch accounts and try again.");
+    }
+    if (state.linked.some(function (a) { return a.toLowerCase() === secondary.toLowerCase(); })) {
+      throw new Error("This wallet is already linked.");
     }
 
-    var p = $(".ledger-toast");
+    // The secondary signs the EIP-712 LinkRequest
+    var domain = { name: EIP712_NAME, version: EIP712_VERSION, chainId: CHAIN_ID, verifyingContract: LINK_REG };
+    var message = { primary: state.primary, secondary: secondary, nonce: nonce, timestamp: timestamp };
+    var sig = await getSigner(secondary).signTypedData(domain, LINK_REQUEST_TYPES, message);
+
+    // Switch back to the primary to submit the transaction
+    toast("Now switch back to your primary wallet and approve the transaction.");
+    accs = await p.request({ method: "eth_requestAccounts" });
+    if (accs[0].toLowerCase() !== state.primary.toLowerCase()) {
+      throw new Error("Expected primary wallet " + shortAddr(state.primary) + " but got " + shortAddr(accs[0]) + ".");
+    }
+
+    var link = new ethers.Contract(LINK_REG, LINK_ABI, getSigner(state.primary));
+    var tx = await link.linkWallet(state.primary, secondary, timestamp, sig);
+    await tx.wait();
+    await refresh();
+  }
+
+  async function unlink(secondary) {
+    if (!state.primary) throw new Error("Connect your primary wallet first.");
+    var link = new ethers.Contract(LINK_REG, LINK_ABI, getSigner(state.primary));
+    var tx = await link.unlinkWallet(state.primary, secondary);
+    await tx.wait();
+    await refresh();
+  }
+
+  async function depositDust(secondary, token, amountRaw) {
+    if (!state.primary) throw new Error("Connect your primary wallet first.");
+    await ensureChain();
+    var p = getProvider();
+
+    toast("Switch to the linked wallet " + shortAddr(secondary) + " and approve the deposit.");
+    var accs = await p.request({ method: "eth_requestAccounts" });
+    if (accs[0].toLowerCase() !== secondary.toLowerCase()) {
+      throw new Error("Switch to the linked wallet " + shortAddr(secondary) + " to deposit its dust.");
+    }
+
+    var signer = getSigner(secondary);
+    var erc = new ethers.Contract(token, ERC20_ABI, signer);
+    var decimals = await erc.decimals();
+    var amount = ethers.parseUnits(String(amountRaw).trim(), decimals);
+
+    var vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    var allowance = await erc.allowance(secondary, VAULT);
+    if (allowance < amount) {
+      toast("Approve the dust token spend…");
+      var atx = await erc.approve(VAULT, amount);
+      await atx.wait();
+    }
+    toast("Confirm the dust deposit…");
+    var dtx = await vault.depositDust(state.primary, token, amount);
+    await dtx.wait();
+    await refresh();
+  }
+
+  async function refresh() {
+    try { await readChain(); } catch (e) { showError(e.message); }
+    render();
+  }
+
+  // ── Toast / error ──────────────────────────────────────────────
+  function toast(msg) {
+    var t = $(".ledger-toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("visible");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("visible"); }, 6000);
+  }
+  function showError(msg) {
+    var p = $(".ledger-error");
+    if (!p) return;
     p.textContent = msg;
     p.classList.add("visible");
-    setTimeout(function () { p.classList.remove("visible"); }, 4000);
-
-    saveState(state);
-    renderLedger();
+    setTimeout(function () { p.classList.remove("visible"); }, 7000);
   }
 
-  function simulateWin() {
-    state.lastWin = Date.now();
-    saveState(state);
-    renderLedger();
+  // ── Deposit form (inline) ──────────────────────────────────────
+  function buildDepositForm(secondary) {
+    var wrap = el("div", { class: "deposit-form" });
+
+    var select = el("select", { "aria-label": "Dust token" });
+    select.appendChild(el("option", { value: "" }, "Choose token…"));
+    state.supported.forEach(function (token) {
+      select.appendChild(el("option", { value: token }, shortAddr(token)));
+    });
+
+    var input = el("input", { type: "text", inputmode: "decimal", placeholder: "Amount", "aria-label": "Deposit amount" });
+    var go = el("button", { type: "button", class: "btn btn-primary" }, "Deposit");
+
+    go.addEventListener("click", function () {
+      var token = select.value;
+      var amount = input.value;
+      if (!token) { showError("Choose a token."); return; }
+      if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) { showError("Enter a valid amount."); return; }
+      go.disabled = true;
+      depositDust(secondary, token, amount)
+        .catch(function (e) { showError(e.message || "Deposit failed"); })
+        .finally(function () { go.disabled = false; });
+    });
+
+    wrap.appendChild(select);
+    wrap.appendChild(input);
+    wrap.appendChild(go);
+    return wrap;
   }
 
-  // --- Render ---
-  function renderLedger() {
+  // ── Render ─────────────────────────────────────────────────────
+  function render() {
     var container = $("[data-ledger]");
     if (!container) return;
-
-    var primaryConnected = !!state.primary;
-    var base = baseEntries();
-    var dust = dustEntries();
-    var total = base + dust;
-    var inCooldown = isInCooldown();
-    var slotsLeft = RULES.maxLinkedWallets - state.linked.length;
-
     container.innerHTML = "";
-    container.className = "ledger" + (primaryConnected ? " is-connected" : "");
+    container.className = "ledger";
 
-    // --- Rules summary card ---
+    // Rules card
     var rulesCard = el("div", { class: "ledger-card ledger-rules" });
     rulesCard.innerHTML =
-      '<div class="ledger-card-header">' +
-        '<span class="ledger-icon" aria-hidden="true">📋</span>' +
-        '<h3>How Entries Work</h3>' +
-      '</div>' +
+      '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">📋</span><h3>How Entries Work</h3></div>' +
       '<div class="rules-grid">' +
         '<div class="rules-item"><strong>1 base entry</strong>Hold $' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ in $LIBERTY</div>' +
-        '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets for RWA dust</div>' +
-        '<div class="rules-item"><strong>1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' dust</strong>Contributed into the vault</div>' +
+        '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets</div>' +
+        '<div class="rules-item"><strong>1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' dust</strong>Deposited into the vault</div>' +
         '<div class="rules-item"><strong>Max ' + RULES.maxDustEntriesPerWallet + ' entries</strong>Per linked wallet per cycle</div>' +
-        '<div class="rules-item"><strong>Hourly draws</strong>Prize pool must reach $' + (RULES.minPoolUsdCents / 100).toFixed(0) + ' to trigger a drawing</div>' +
-        '<div class="rules-item"><strong>' + RULES.cooldownHours + 'h cooldown</strong>Winners excluded for ' + RULES.cooldownHours + ' hours after a win</div>' +
+        '<div class="rules-item"><strong>Hourly draws</strong>Pool must reach $' + (RULES.minPoolUsdCents / 100).toFixed(0) + ' to trigger</div>' +
+        '<div class="rules-item"><strong>' + RULES.cooldownHours + 'h cooldown</strong>Winners excluded after a win</div>' +
       '</div>';
     container.appendChild(rulesCard);
 
-    // --- Primary wallet card ---
+    // Primary wallet card
     var primaryCard = el("div", { class: "ledger-card ledger-primary" });
-    if (primaryConnected) {
+    if (state.primary) {
       primaryCard.innerHTML =
-        '<div class="ledger-card-header">' +
-          '<span class="ledger-icon" aria-hidden="true">🔗</span>' +
-          '<h3>Primary Wallet</h3>' +
-          '<span class="ledger-badge badge-active">Connected</span>' +
-        '</div>' +
-        '<div class="ledger-addr">' +
-          '<code>' + shortAddr(state.primary.address) + '</code>' +
-          '<span class="ledger-copy-hint">Holds $LIBERTY</span>' +
-        '</div>' +
-        '<div class="ledger-entry-row">' +
-          '<span class="entry-stat"><strong>' + base + '</strong> base entry</span>' +
-          (inCooldown ? '<span class="entry-stat cooldown">⏳ Cooldown: ' + R.timeAgo(state.lastWin, { suffix: false }) + ' remaining</span>' : '') +
-        '</div>' +
-        '<div class="ledger-meta">Connected ' + R.timeAgo(state.primary.linkedAt) + '</div>' +
+        '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🔗</span><h3>Primary Wallet</h3><span class="ledger-badge badge-active">Connected</span></div>' +
+        '<div class="ledger-addr"><code>' + shortAddr(state.primary) + '</code><span class="ledger-copy-hint">Holds $LIBERTY</span></div>' +
+        '<div class="ledger-meta">' + (state.info && state.info.cooldown ? '⏳ In 24h cooldown' : '✅ Eligible for next draw') + '</div>' +
         '<button class="btn btn-outline-sm" data-disconnect type="button">Disconnect</button>';
     } else {
       primaryCard.innerHTML =
-        '<div class="ledger-card-header">' +
-          '<span class="ledger-icon" aria-hidden="true">🔗</span>' +
-          '<h3>Primary Wallet</h3>' +
-          '<span class="ledger-badge badge-inactive">Not connected</span>' +
-        '</div>' +
-        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY ($' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ required for raffle eligibility). This is your raffle account — all dust contributions from linked wallets credit here. 1 base entry.</p>' +
+        '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🔗</span><h3>Primary Wallet</h3><span class="ledger-badge badge-inactive">Not connected</span></div>' +
+        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY ($' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ required). This is your raffle account — dust from linked wallets credits here.</p>' +
         '<button class="btn btn-primary" data-connect-primary type="button">Connect Primary Wallet</button>';
     }
     container.appendChild(primaryCard);
 
-    // --- Linked wallets ---
-    if (primaryConnected) {
+    if (state.primary) {
+      // Linked wallets card
       var linkedCard = el("div", { class: "ledger-card ledger-linked" });
       linkedCard.innerHTML =
-        '<div class="ledger-card-header">' +
-          '<span class="ledger-icon" aria-hidden="true">📜</span>' +
-          '<h3>Linked Wallets</h3>' +
-          '<span class="ledger-count">' + state.linked.length + '/' + RULES.maxLinkedWallets + ' linked</span>' +
-        '</div>' +
-        '<p class="ledger-blurb">Link secondary wallets holding RWA dust. Sign a message to prove control — no gas, no transaction. Every qualifying contribution earns entries toward your primary raffle account.' +
-        (slotsLeft > 0 ? ' <strong>' + slotsLeft + ' slot' + (slotsLeft !== 1 ? 's' : '') + ' remaining</strong>.</p>' : '') +
-        '<p class="ledger-note">Must deposit into vault. 1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' contributed. Max ' + RULES.maxDustEntriesPerWallet + ' entries per linked wallet.</p>';
+        '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">📜</span><h3>Linked Wallets</h3><span class="ledger-count">' + state.linked.length + '/' + RULES.maxLinkedWallets + ' linked</span></div>' +
+        '<p class="ledger-blurb">Link secondary wallets holding dust. Sign an EIP-712 message to prove control — no gas, no transaction. Every $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' deposited earns 1 entry, up to ' + RULES.maxDustEntriesPerWallet + ' per wallet.</p>';
 
       if (state.linked.length) {
         var list = el("ul", { class: "linked-list" });
-        state.linked.forEach(function (l) {
+        state.linked.forEach(function (addr) {
           var item = el("li", { class: "linked-item" });
-          var c = l.contributed || 0;
-          var dEntries = c >= RULES.minDustUsdCents ? Math.min(Math.floor(c / RULES.dustEntryStepCents), RULES.maxDustEntriesPerWallet) : 0;
           item.innerHTML =
-            '<div class="linked-info">' +
-              '<code class="linked-addr">' + shortAddr(l.address) + '</code>' +
-              '<span class="linked-meta">Proved ' + R.timeAgo(l.linkedAt) + '</span>' +
-              '<span class="linked-contrib">$' + R.formatUsd(c) + ' contributed · <strong>' + dEntries + ' dust entr' + (dEntries !== 1 ? 'ies' : 'y') + '</strong></span>' +
-            '</div>' +
+            '<div class="linked-info"><code class="linked-addr">' + shortAddr(addr) + '</code><span class="linked-meta">Verified on-chain</span></div>' +
             '<div class="linked-actions">' +
-              '<button class="btn btn-outline-sm" data-contribute="' + l.address + '" type="button">Simulate Deposit</button>' +
-              '<button class="btn btn-text-sm" data-unlink="' + l.address + '" type="button" aria-label="Unlink ' + shortAddr(l.address) + '">✕</button>' +
+              '<button class="btn btn-outline-sm" data-deposit="' + addr + '" type="button">Deposit Dust</button>' +
+              '<button class="btn btn-text-sm" data-unlink="' + addr + '" type="button" aria-label="Unlink ' + shortAddr(addr) + '">✕</button>' +
             '</div>';
           list.appendChild(item);
         });
         linkedCard.appendChild(list);
       }
 
-      if (slotsLeft > 0) {
+      if (state.linked.length < RULES.maxLinkedWallets) {
         linkedCard.appendChild(el("div", { class: "ledger-ctas" },
           '<button class="btn btn-primary" data-link-secondary type="button">Link Another Wallet</button>'
         ));
       }
-
       container.appendChild(linkedCard);
 
-      // --- Entry tally card ---
+      // Entry tally card
+      var dust = state.info ? state.info.dust : 0;
+      var total = state.info ? state.info.total : (dust + 1);
       var tallyCard = el("div", { class: "ledger-card ledger-tally" });
       tallyCard.innerHTML =
-        '<div class="ledger-card-header">' +
-          '<span class="ledger-icon" aria-hidden="true">🎫</span>' +
-          '<h3>Your Entries</h3>' +
-          '<span class="ledger-badge ' + (total > 0 ? 'badge-active' : 'badge-inactive') + '">' + total + ' total</span>' +
-        '</div>' +
+        '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🎫</span><h3>Your Entries</h3><span class="ledger-badge ' + (total > 0 ? 'badge-active' : 'badge-inactive') + '">' + total + ' total</span></div>' +
         '<div class="tally-grid">' +
-          '<div class="tally-item"><span class="tally-num">' + base + '</span><span class="tally-label">Base entry</span><span class="tally-help">$' + (RULES.minLibertyUsdCents / 100).toFixed(0) + ' $LIBERTY</span></div>' +
+          '<div class="tally-item"><span class="tally-num">1</span><span class="tally-label">Base entry</span><span class="tally-help">$' + (RULES.minLibertyUsdCents / 100).toFixed(0) + ' $LIBERTY</span></div>' +
           '<div class="tally-item"><span class="tally-num">' + dust + '</span><span class="tally-label">Dust entries</span><span class="tally-help">From ' + state.linked.length + ' linked wallet' + (state.linked.length !== 1 ? 's' : '') + '</span></div>' +
-          '<div class="tally-item"><span class="tally-num">' + total + '</span><span class="tally-label">Total weight</span><span class="tally-help">' + (inCooldown ? '⏳ In 24h cooldown' : '✅ Eligible for next draw') + '</span></div>' +
-        '</div>' +
-        (state.lastWin ? '<p class="ledger-note">Last win: ' + new Date(state.lastWin).toLocaleString() + '. Cooldown lifts ' + new Date(state.lastWin + RULES.cooldownHours * 3600 * 1000).toLocaleString() + '.</p>' : '') +
-        '<button class="btn btn-outline-sm" data-sim-win type="button">Simulate Win (Demo)</button>';
+          '<div class="tally-item"><span class="tally-num">' + total + '</span><span class="tally-label">Total weight</span><span class="tally-help">' + (state.info && state.info.cooldown ? '⏳ In 24h cooldown' : '✅ Eligible for next draw') + '</span></div>' +
+        '</div>';
       container.appendChild(tallyCard);
-
-      // --- History card ---
-      if (state.linked.some(function (l) { return l.lastTime; })) {
-        var history = el("div", { class: "ledger-card ledger-history" });
-        history.innerHTML =
-          '<div class="ledger-card-header">' +
-            '<span class="ledger-icon" aria-hidden="true">📖</span>' +
-            '<h3>Contribution History</h3>' +
-          '</div>';
-        var histTotal = state.linked.reduce(function (s, l) { return s + (l.contributed || 0); }, 0);
-        history.innerHTML += '<p class="ledger-total">Total contributed: <strong>$' + R.formatUsd(histTotal) + '</strong> across ' + state.linked.length + ' wallet' + (state.linked.length !== 1 ? 's' : '') + '</p>';
-
-        var histList = el("ul", { class: "history-list" });
-        state.linked.filter(function (l) { return l.lastTime; })
-          .sort(function (a, b) { return b.lastTime - a.lastTime; })
-          .forEach(function (l) {
-            var li = el("li", { class: "history-item" });
-            li.textContent = "$" + R.formatUsd(l.lastUsd) + " in " + l.lastAsset + " from " + shortAddr(l.address) + " · " + R.timeAgo(l.lastTime);
-            histList.appendChild(li);
-          });
-        history.appendChild(histList);
-        container.appendChild(history);
-      }
     }
 
-    // --- Event wiring ---
+    // Event wiring
     var btnPrimary = $("[data-connect-primary]");
     if (btnPrimary) btnPrimary.addEventListener("click", function () {
       connectPrimary().catch(function (e) { showError(e.message); });
@@ -351,61 +362,34 @@
     var btnDisc = $("[data-disconnect]");
     if (btnDisc) btnDisc.addEventListener("click", disconnectPrimary);
 
-    var btnSimWin = $("[data-sim-win]");
-    if (btnSimWin) btnSimWin.addEventListener("click", simulateWin);
-
     $$("[data-unlink]").forEach(function (b) {
-      b.addEventListener("click", function () { unlink(b.dataset.unlink); });
+      b.addEventListener("click", function () {
+        unlink(b.dataset.unlink).catch(function (e) { showError(e.message); });
+      });
     });
 
-    $$("[data-contribute]").forEach(function (b) {
-      b.addEventListener("click", function () { simulateContribution(b.dataset.contribute); });
+    $$("[data-deposit]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var item = b.closest(".linked-item");
+        var existing = item && item.querySelector(".deposit-form");
+        if (existing) { existing.remove(); return; }
+        if (item) item.appendChild(buildDepositForm(b.dataset.deposit));
+      });
     });
-
-    // Badge wiring
-    var badge = $("[data-entries-total]");
-    if (badge) { badge.textContent = total; badge.className = "ledger-badge " + (total > 0 ? "badge-active" : "badge-inactive"); }
   }
 
-  function showError(msg) {
-    var p = $(".ledger-error");
-    if (!p) return;
-    p.textContent = msg;
-    p.classList.add("visible");
-    setTimeout(function () { p.classList.remove("visible"); }, 5000);
-  }
-
-  // --- Init ---
+  // ── Init ───────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", function () {
-    renderLedger();
-
     if (!window.ethereum) {
       var p = $("[data-ledger]");
-      if (p) {
-        p.innerHTML =
-          '<div class="ledger-card">' +
-            '<div class="ledger-card-header"><h3>Wallet Ledger</h3></div>' +
-            '<p class="ledger-blurb">No wallet extension detected. Install <a href="https://rabby.io" target="_blank" rel="noopener">Rabby</a> or <a href="https://metamask.io" target="_blank" rel="noopener">MetaMask</a> to link wallets. (The Ledger will be functional at launch — this is a concept preview.)</p>' +
-          '</div>';
-      }
+      if (p) p.innerHTML = '<div class="ledger-card"><div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🔗</span><h3>Wallet Ledger</h3></div><p class="ledger-blurb">No wallet extension detected. Install <a href="https://rabby.io" target="_blank" rel="noopener">Rabby</a> or <a href="https://metamask.io" target="_blank" rel="noopener">MetaMask</a> to connect your wallet.</p></div>';
+      return;
     }
+    render();
+    getProvider().request({ method: "eth_accounts" }).then(function (accs) {
+      if (accs && accs[0]) refresh().catch(function () {});
+    }).catch(function () {});
   });
 
-  // Expose for external use
-  window.LibertyLedger = {
-    getState: function () { return state; },
-    totalEntries: totalEntries,
-    isInCooldown: isInCooldown,
-    addContribution: function (fromAddr, cents, symbol) {
-      var linked = state.linked.find(function (l) { return l.address === fromAddr; });
-      if (linked) {
-        linked.contributed = (linked.contributed || 0) + cents;
-        linked.lastUsd = cents;
-        linked.lastAsset = symbol;
-        linked.lastTime = Date.now();
-        saveState(state);
-        renderLedger();
-      }
-    }
-  };
+  window.LibertyLedger = { refresh: refresh };
 })();

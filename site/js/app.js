@@ -33,7 +33,7 @@
   $$("[data-rule='interval']").forEach(function (n) { n.textContent = rules.drawIntervalMinutes + " minutes"; });
   $$("[data-rule='winners']").forEach(function (n) { n.textContent = rules.winnersPerRound; });
   $$("[data-rule='network']").forEach(function (n) { n.textContent = rules.network; });
-  $$("[data-rule='min-liberty']").forEach(function (n) { n.textContent = (rules.minLibertyUsdCents / 100).toFixed(0); });
+  $$("[data-rule='min-liberty']").forEach(function (n) { n.textContent = String(C.rules.minLibertyTokens); });
   $$("[data-rule='max-wallets']").forEach(function (n) { n.textContent = rules.maxLinkedWallets; });
   $$("[data-rule='min-dust']").forEach(function (n) { n.textContent = (rules.minDustUsdCents / 100).toFixed(2); });
   $$("[data-rule='dust-step']").forEach(function (n) { n.textContent = (rules.dustEntryStepCents / 100).toFixed(2); });
@@ -267,7 +267,7 @@
       "Draws fire with any number of participants (not capped at 10 winners)",
       "Dust valued in USD cents via Chainlink; fractional entries round down",
       "Deposits mid-draw are credited to the next cycle's entry tally",
-      "Supported tokens set by owner via addSupportedToken (Chainlink feeds)",
+      "Supported tokens are hardcoded to major Chainlink price feeds only (no custom tokens)",
       "Terms of Service and Privacy Policy are linked in the footer"
     ].forEach(function (t) { mech.appendChild(el("li", null, t)); });
   }
