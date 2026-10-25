@@ -259,8 +259,10 @@ cd /opt/libertytorch && git pull && cd code && npm ci && npm run watcher:build &
 - [ ] Keeper running on VPS (systemd, auto-restart)
 - [ ] Keeper .env contains all real addresses (no PENDING values)
 - [ ] `site/js/config.js` updated with real addresses (PENDING → real addresses, done BEFORE sharing CA)
+- [ ] **Display CA prominently at top of page** (hero section above the fold) so visitors can verify the contract immediately — do this AFTER updating config.js, before sharing CA publicly
 - [ ] "🔗 Connect Wallet" button visible and correctly styled in hero section
-- [ ] Dust deposit flow verified in-browser (connect → link → deposit, no gas on link step)
+- [ ] Legal pages live at `/legal/tos.html` and `/legal/privacy.html`
+- [ ] Header shows X and Telegram social links (verified via browser)
 - [ ] Site deployed (`./deploy.sh`) and verified live
 - [ ] Browser test: connect wallet, pool shows funded, eligible status works
 - [ ] DEX aggregator API key acquired (0x or 1inch) — post-launch nice-to-have
