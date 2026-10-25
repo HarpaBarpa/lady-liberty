@@ -1,0 +1,66 @@
+/* Minimal shared styles for legal pages */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --harbor: #174C4F;
+  --harbor-deep: #0F3739;
+  --porcelain: #F7FFFB;
+  --patina: #5FB59B;
+  --copper: #B8733A;
+  --muted: #3F6466;
+  --muted-light: #B9D6CF;
+  --granite: #E9E7E0;
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-body: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--harbor-deep);
+  color: var(--porcelain);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+a { color: var(--patina); text-decoration: underline; }
+a:hover { color: var(--copper); }
+
+header {
+  background: rgba(247, 255, 251, 0.06);
+  border-bottom: 1px solid rgba(247, 255, 251, 0.1);
+  padding: 24px 0;
+}
+header .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+header .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--porcelain); font-family: var(--font-display); font-size: 1.2rem; }
+header .back { color: var(--muted-light); text-decoration: none; font-size: 0.9rem; }
+header .back:hover { color: var(--patina); }
+
+main { max-width: 860px; margin: 0 auto; padding: 60px 24px 80px; }
+h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 8px; line-height: 1.1; }
+.subtitle { color: var(--muted-light); font-size: 0.95rem; margin-bottom: 48px; }
+
+h2 { font-family: var(--font-display); font-size: 1.4rem; margin: 40px 0 12px; color: var(--patina); }
+h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+p { margin-bottom: 16px; color: rgba(247, 255, 251, 0.85); }
+
+ul, ol { margin: 0 0 16px 24px; color: rgba(247, 255, 251, 0.85); }
+li { margin-bottom: 6px; }
+
+hr { border: none; border-top: 1px solid rgba(247, 255, 251, 0.1); margin: 40px 0; }
+
+.disclaimer-box {
+  background: rgba(184, 115, 58, 0.12);
+  border: 1px solid rgba(184, 115, 58, 0.3);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  font-size: 0.95rem;
+}
+.disclaimer-box strong { color: var(--copper); }
+
+.version { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+
+@media (max-width: 600px) {
+  main { padding: 40px 20px 60px; }
+  h2 { font-size: 1.2rem; }
+}
