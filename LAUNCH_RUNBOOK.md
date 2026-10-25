@@ -172,9 +172,11 @@ journalctl -u libertytorch-keeper -f --no-pager
 
 ---
 
-## Phase 3 — Update Site Config
+## Phase 3 — Update Site Config + Verify Connect Wallet Flow
 
-After contract addresses are known, update `site/js/config.js`:
+### 3a. Update contract addresses in `site/js/config.js`
+
+⚠️ **Do this BEFORE sharing the CA publicly.** The site must have real addresses before users try to connect.
 
 ```javascript
 contracts: {
@@ -185,7 +187,20 @@ contracts: {
 },
 ```
 
-Then deploy:
+### 3b. Verify Connect Wallet button
+
+Confirm the hero "🔗 Connect Wallet" button is visible and correctly styled (btn-copper on dark background). See Phase 0.
+
+### 3c. Verify dust deposit flow
+
+Before launch, test the full deposit flow in-browser:
+1. Connect primary wallet → should prompt for Robinhood Chain switch
+2. Link a secondary wallet → EIP-712 signature, no gas
+3. Deposit dust → approve token → call `vault.depositDust()`
+
+All three require real contract addresses (no PENDING values) to succeed.
+
+### 3d. Deploy
 
 ```bash
 cd /root/.openclaw/workspace/projects/liberty/site
@@ -243,7 +258,9 @@ cd /opt/libertytorch && git pull && cd code && npm ci && npm run watcher:build &
 - [ ] Hetzner VPS provisioned
 - [ ] Keeper running on VPS (systemd, auto-restart)
 - [ ] Keeper .env contains all real addresses (no PENDING values)
-- [ ] `site/js/config.js` updated with real addresses
+- [ ] `site/js/config.js` updated with real addresses (PENDING → real addresses, done BEFORE sharing CA)
+- [ ] "🔗 Connect Wallet" button visible and correctly styled in hero section
+- [ ] Dust deposit flow verified in-browser (connect → link → deposit, no gas on link step)
 - [ ] Site deployed (`./deploy.sh`) and verified live
 - [ ] Browser test: connect wallet, pool shows funded, eligible status works
 - [ ] DEX aggregator API key acquired (0x or 1inch) — post-launch nice-to-have
