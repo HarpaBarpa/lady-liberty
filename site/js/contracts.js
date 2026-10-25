@@ -23,6 +23,10 @@
   // ── Ethers setup ──────────────────────────────────────────────────
   var provider;
   try { provider = new ethers.BrowserProvider(window.ethereum); } catch (_) {}
+  // Fallback: read-only RPC routed through Vercel CORS proxy (/api/rpc)
+  // Direct RPC calls fail in-browser due to Robinhood Chain CORS policy
+  var proxyUrl = (window.location && window.location.origin ? window.location.origin : 'https://libertytorch.online') + '/api/rpc';
+  var readProvider = new ethers.JsonRpcProvider(proxyUrl);
 
   // ── Helpers ────────────────────────────────────────────────────────
   function shortAddr(a) { return a ? a.slice(0, 6) + "…" + a.slice(-4) : "—"; }
@@ -116,7 +120,7 @@
 
     if (VAULT && !VAULT.startsWith("PENDING")) {
       try {
-        vaultContract = new ethers.Contract(VAULT, VAULT_ABI, s || provider);
+        vaultContract = new ethers.Contract(VAULT, VAULT_ABI, s || readProvider);
         var supportedTokens = await vaultContract.getSupportedTokens();
         r.vault = {
           supportedTokens: supportedTokens,
@@ -131,7 +135,7 @@
             info.feed = await vaultContract.getTokenFeed(t);
           } catch (_) {}
           try {
-            var erc = new ethers.Contract(t, ERC20_ABI, provider);
+            var erc = new ethers.Contract(t, ERC20_ABI, readProvider);
             info.symbol = await erc.symbol();
           } catch (_) {}
           tokenData.push(info);
@@ -142,7 +146,7 @@
 
     if (RAFFLE && !RAFFLE.startsWith("PENDING")) {
       try {
-        raffleContract = new ethers.Contract(RAFFLE, RAFFLE_ABI, s || provider);
+        raffleContract = new ethers.Contract(RAFFLE, RAFFLE_ABI, s || readProvider);
         var raffleId = await raffleContract.raffleId();
         r.raffle = {
           poolCents:    await raffleContract.getPrizePoolCents(),
@@ -162,7 +166,7 @@
 
     if (TOKEN && !TOKEN.startsWith("PENDING")) {
       try {
-        tokenContract = new ethers.Contract(TOKEN, ERC20_ABI, s || provider);
+        tokenContract = new ethers.Contract(TOKEN, ERC20_ABI, s || readProvider);
         var [total, deadBal, vaultBal] = await Promise.all([
           tokenContract.totalSupply(),
           tokenContract.balanceOf(DEAD_ADDR),

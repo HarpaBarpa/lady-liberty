@@ -1,6 +1,6 @@
 # LibertyTorch — Project Spec
-**Last updated:** 2026-10-22
-**Version:** 2.4
+**Last updated:** 2026-10-25
+**Version:** 2.5
 
 ---
 
@@ -33,7 +33,7 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
 | LibertyRaffle | `LibertyRaffle.sol` | Hourly draw + Liberty Bell jackpot + prize distribution |
 | RWAFFLE | `RWAFFLE.sol` | Legacy contract — not in active use; superseded by LibertyVault + LibertyRaffle |
 
-**Frontend:** Single-page site at `libertytorch.online` — live on-chain data via `contracts.js` reads directly from deployed contracts. Browser wallet (Rabby/Metamask) required to connect.
+**Frontend:** Single-page site at `libertytorch.online` — live on-chain data via `contracts.js` reads directly from deployed contracts. No wallet needed for live data (read-only `JsonRpcProvider` routes through Vercel `/api/rpc` proxy to bypass Robinhood Chain CORS). Browser wallet (Rabby/Metamask) required only for connecting and depositing.
 
 **Legal:** `site/legal/tos.html` (Terms of Service) and `site/legal/privacy.html` (Privacy Policy) — both compliant with New York State and U.S. federal law (CCPA, NY SHIELD Act, AAA arbitration in New York County).
 
@@ -66,7 +66,7 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
 
 ### LibertyRaffle
 - **Constructor:** `(vault, linkRegistry, libertyToken, ethUsdFeed)`
-- **Registration:** `registerAccount(wallet)` / `registerAccounts([...])` — owner only. Base entry (1 per wallet) requires $LIBERTY ≥ $10 at time of registration.
+- **Registration:** `registerAccount(wallet)` / `registerAccounts([...])` — owner/keeper only. Base entry (1 per wallet) requires $LIBERTY ≥ 100,000 tokens at time of registration check.
 - **Draw:** `checkAndDraw()` — anyone can call. Fires when:
   - `block.timestamp ≥ lastDrawTime + drawInterval`
   - `prizePoolCents ≥ minPoolCents` ($50)
@@ -76,6 +76,7 @@ Torch Launchpad   →   $LIBERTY token (ERC-20)
   - **On success:** 4% of pool → Liberty Bell jackpot. Remainder distributed to winners.
 - **Weighted selection:** Each registered account has 1 + vault dust entries. 10 unique winners drawn by weighted random. Winner + all linked wallets enter 24h cooldown.
 - **Payout draft (96% of pool):** [35%, 20%, 12%, 8%, 6%, 5%, 4%, 3%, 2%, 1%]
+- **Auto-send:** All 10 winners are paid ETH automatically in `_executeDraw()` via `.call{value}()`. Events: `PrizeAutoSent(raffleId, uint8(place), winner, prizeCents)`. On transfer failure, winner must call `claimPrize()` manually.
 - **Prize:** Paid in ETH (or any ERC-20 via `claimPrize`). If ETH_USD_FEED is `address(0)`, $1/ETH fallback.
 - **Funding:** ETH via `receive()` or `fundPrizePoolETH()`. ERC-20 via `fundPrizePoolERC20`.
 - **Admin:** `setMinPoolCents`, `setDrawInterval`, `pause/unpause`, `sweepToken` (ERC-20 only, blocks ETH).
@@ -126,7 +127,7 @@ A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs on a Hetzner VPS w
 
 ### Four jobs
 
-1. **Holder watcher** — monitors `Transfer` events on the $LIBERTY token via direct RPC polling. When a wallet's balance crosses the threshold (≥1000 $LIBERTY), it calls `raffle.registerAccount()`. When it drops, it calls `raffle.deregisterAccount()`. Runs a full rescan of all known holders every 5 minutes to correct any drift.
+1. **Holder watcher** — monitors `Transfer` events on the $LIBERTY token via direct RPC polling. When a wallet's balance crosses 100,000 $LIBERTY, it calls `raffle.registerAccount()`. When it drops below, it calls `raffle.deregisterAccount()`. Runs a full rescan of all known holders every 5 minutes to correct any drift.
 2. **Draw keeper** — calls `raffle.checkAndDraw()` at each eligible hourly window. `checkAndDraw()` is permissionless (anyone can call it), but the keeper ensures it fires reliably.
 3. **Jackpot keeper** — calls `raffle.checkJackpot()` at each eligible hourly window. Same independence as the draw keeper — fires regardless of whether the regular draw has fired.
 4. **Dust liquidator** — runs automatically after every successful draw. Pulls all accumulated dust from `LibertyVault` to the deployer Torch wallet, swaps it for ETH (DEX aggregator integration pending — 0x or 1inch API), and splits the proceeds: **50% → `LibertyRaffle.fundPrizePoolETH()` (prize pool)** | **50% → deployer Torch wallet (dev income)**.
@@ -168,10 +169,11 @@ A self-hosted Node.js keeper (`code/watcher/watcher.ts`) runs on a Hetzner VPS w
 1. **Holder registration requires keeper process** — the raffle cannot read $LIBERTY balances on-chain from other wallets. Until a $LIBERTY/USD feed exists or the token is integrated into the vault, an off-chain process must call `registerAccount()` / `deregisterAccount()`. The keeper handles this, but it must run continuously.
 2. **Draw randomness:** Uses `keccak256(block.prevrandao, block.timestamp, block.number, poolCents, raffleId)` — pseudorandom, not provably fair. Acceptable for small community raffle; a sophisticated attacker with sufficient entries and block control could improve their odds. Upgrade path: Chainlink VRF if/when available on Robinhood Chain.
 3. **ETH/USD feed unavailable on Robinhood Chain:** No Chainlink ETH/USD feed address has been confirmed on Robinhood Chain. Deploy with `ETH_USD_FEED = address(0)` for $1/ETH fallback. Prize pool thresholds and payouts will be in non-USD terms until a real feed is available.
-4. **$LIBERTY/USD price unavailable on-chain** — the keeper uses a token-count threshold (≥1000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
+4. **$LIBERTY/USD price unavailable on-chain** — the keeper uses a token-count threshold (≥100,000 $LIBERTY ≈ ≥$10 at launch prices). A proper USD-denominated check needs either a Chainlink $LIBERTY/USD feed or a DEX TWAP oracle.
 5. **Dust swap requires DEX aggregator API** — the liquidator pulls dust from the vault to the deployer wallet, but the ETH swap step is stubbed pending a 0x or 1inch API key. Until then, dust accumulates in the deployer wallet without being converted. Configure the swap in `liquidateDust()` once a DEX API key is available on Robinhood Chain.
 6. **Deployer key is single point of trust** — the `TORCH_DEPLOYER_KEY` owns the vault, can drain dust, can pause the raffle, and receives the dev split from liquidation. If compromised, the attacker can drain accumulated dust and pause the raffle. Key must be stored securely (Vault + hardware wallet recommended for long-term).
-7. **Liberty Bell fixed odds scale poorly with pool size** — the 1-in-72 trigger probability is independent of jackpot size. As the Bell grows large, the expected payout per trigger increases while the trigger rate stays fixed. This is a feature at small pools but means large jackpots can accumulate quickly. Consider: raising `MIN_JACKPOT_CENTS` as the pool grows, or using Chainlink VRF to make the Bell's trigger probabilistic and fair-value-adjusted.
+7. **Robinhood Chain RPC CORS blocks browser requests** — `rpc.mainnet.chain.robinhood.com` returns no `Access-Control-Allow-Origin` headers, so `fetch`/`XMLHttpRequest` from `libertytorch.online` are blocked. Site live data uses a Vercel serverless proxy at `/api/rpc` that forwards JSON-RPC calls server-side (where CORS doesn't apply). If Vercel hosting changes, a new CORS proxy must be stood up.
+8. **Liberty Bell fixed odds scale poorly with pool size** — the 1-in-72 trigger probability is independent of jackpot size. As the Bell grows large, the expected payout per trigger increases while the trigger rate stays fixed. This is a feature at small pools but means large jackpots can accumulate quickly. Consider: raising `MIN_JACKPOT_CENTS` as the pool grows, or using Chainlink VRF to make the Bell's trigger probabilistic and fair-value-adjusted.
 
 ---
 
@@ -215,14 +217,17 @@ code/
   .gitignore            — .env*, node_modules/, artifacts/, cache/
 
 site/
-  index.html            — main landing page
+  index.html            — main landing page (self-hosts ethers.js UMD bundle at `js/ethers.min.js`)
+  api/
+    rpc.js              — Vercel serverless CORS proxy for Robinhood Chain RPC
   deploy.html           — browser-based contract deployer (gate disabled)
   legal/
     tos.html            — Terms of Service (NY/US law, AAA arbitration)
     privacy.html        — Privacy Policy (CCPA, NY SHIELD Act compliant)
   js/
     config.js           — product parameters + contract addresses
-    contracts.js        — live chain data layer (ethers.js v6)
+    contracts.js        — live chain data layer (ethers.js v6, routes through `/api/rpc` proxy)
+    ethers.min.js       — self-hosted ethers.js v6.13.5 UMD build (browser global, not CDN)
     app.js              — page UI, live data wiring
     wallet.js           — wallet linking ledger
     rules.js            — arithmetic utilities
@@ -242,6 +247,20 @@ TOKENOMICS.md           — tokenomics reference
 ```
 
 ---
+
+## v2.4 Changes (Oct 25, 2026)
+
+- **LibertyRaffle v3 deployed** at `0x535bf9dBC0ea098574ABdba75CDc4eEf7c59fc1b` — auto-sends ETH to all 10 winners in `_executeDraw()` via `.call{value}()`. Fallback: winner calls `claimPrize()` manually.
+- **Contract fixes (v2 → v3):** Fixed fallback math (`1e10` → `FALLBACK_ETH_USD_CENTS = 250000`), added `RoundResult` struct + `getRaffleHistory(n)` view, NatSpec named params, Solidity struct/function ordering, explicit `uint8()` casts.
+- **Live data broken → fixed:** Site was showing "—" dashes. Root cause was two bugs:
+  1. `cdn.jsdelivr.net` serves ethers v6 CJS build (has `export` statements) — fails in classic `<script>` tags, `window.ethers` never set. Fixed: self-hosted `site/js/ethers.min.js` (UMD build, `factory(global.ethers={})` pattern).
+  2. Robinhood Chain RPC blocks browser `fetch` (no CORS headers). Fixed: `site/api/rpc.js` Vercel serverless proxy. `contracts.js` now uses `window.location.origin + '/api/rpc'` as `readProvider` URL.
+- **Vercel deploy:** `cd site && ./deploy.sh <token>` — never `vercel` from repo root (wrong project).
+- **Prize pool:** 0.04 ETH seeded (~$100 at $2500/ETH fallback).
+- **Keeper updated:** `.env` updated with v3 raffle address, rebuilt (`npm run watcher:build`), restarted.
+- **Supported tokens:** Vault has 0 supported tokens — needs `addSupportedToken(token, address(0))` calls.
+- **Social links:** X → `x.com/LibertyTorchX`, Telegram → `t.me/ladylibertyofficial`.
+- **CA display badge** added to hero section.
 
 ## v2.3 Changes (Oct 22, 2026)
 

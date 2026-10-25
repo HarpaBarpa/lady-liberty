@@ -78,6 +78,32 @@ button { font: inherit; color: inherit; }
 .btn-ghost:hover { background: var(--porcelain); border-color: var(--harbor); }
 .btn-copper { background: var(--copper-deep); color: #FFF7EE; }
 .btn-copper:hover { background: #6F3E19; }
+
+.ca-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(23, 76, 79, 0.12);
+  border: 1px solid rgba(23, 76, 79, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--harbor);
+}
+.ca-badge code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--harbor-deep);
+  letter-spacing: 0.02em;
+}
+.ca-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
 .btn-mint { background: var(--mint); color: var(--night); }
 .btn-mint:hover { background: #8CF0A0; }
 .btn-outline-light { background: transparent; color: var(--porcelain); border-color: rgba(247, 255, 251, 0.5); }

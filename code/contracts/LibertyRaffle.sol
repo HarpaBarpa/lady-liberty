@@ -58,6 +58,13 @@ contract LibertyRaffle is Ownable, Pausable {
     error JackpotAlreadyClaimed();
     error JackpotBelowFloor();
     error JackpotTooSoon();
+    error TransferFailed();
+
+    struct RoundResult {
+        uint256 raffleId;
+        address[10] winners;
+        uint256[10] prizesCents;
+    }
 
     // ─────────────────────────────────────────────────────────
     //  CONSTANTS
@@ -92,6 +99,9 @@ contract LibertyRaffle is Ownable, Pausable {
 
     /// @notice Minimum jackpot to pay out: $50
     uint256 public constant MIN_JACKPOT_CENTS = 5000;
+
+    /// @notice Fallback ETH/USD price when no Chainlink feed is available (cents, i.e. 250000 = $2500.00)
+    uint256 public constant FALLBACK_ETH_USD_CENTS = 250000;
 
     /// @notice 10-winner payout draft in basis points (total = 96%)
     ///         [35, 20, 12, 8, 6, 5, 4, 3, 2, 1]
@@ -219,6 +229,14 @@ contract LibertyRaffle is Ownable, Pausable {
         address indexed winner,
         uint256 amountCents,
         address indexed token,
+        uint256 timestamp
+    );
+
+    event PrizeAutoSent(
+        uint256 indexed raffleId,
+        uint8 rank,
+        address indexed winner,
+        uint256 amountCents,
         uint256 timestamp
     );
 
@@ -716,6 +734,28 @@ contract LibertyRaffle is Ownable, Pausable {
         return (true, 0);
     }
 
+    /// @notice Returns winners and prizes for the last N raffle rounds.
+    /// @param  n  How many past raffles to return (most recent first).
+    /// @return results  Array of round data structs, most recent first.
+    function getRaffleHistory(uint256 n) external view returns (RoundResult[] memory results) {
+        if (n == 0) return results;
+        uint256 startId = raffleId > n ? raffleId - n + 1 : 1;
+        uint256 count = raffleId >= startId ? raffleId - startId + 1 : 0;
+        results = new RoundResult[](count);
+        uint256 idx;
+        for (uint256 id = startId; id <= raffleId; id++) {
+            address[10] memory winners;
+            uint256[10] memory prizes;
+            for (uint256 i = 0; i < MAX_WINNERS; i++) {
+                winners[i] = raffleWinners[id][i];
+                if (winners[i] != address(0)) {
+                    prizes[i] = rafflePrizes[id][winners[i]];
+                }
+            }
+            results[idx++] = RoundResult({ raffleId: id, winners: winners, prizesCents: prizes });
+        }
+    }
+
     // ─────────────────────────────────────────────────────────
     //  INTERNAL — DRAW EXECUTION
     // ─────────────────────────────────────────────────────────
@@ -821,6 +861,24 @@ contract LibertyRaffle is Ownable, Pausable {
             winnerCount: winnerCount,
             timestamp: block.timestamp
         });
+
+        // ── Auto-send ETH to all winners ────────────────────────
+        for (uint256 i = 0; i < winnerCount; i++) {
+            address winnerAddr = raffleWinners[currentRaffleId][i];
+            if (winnerAddr == address(0)) break;
+            uint256 prizeCents = rafflePrizes[currentRaffleId][winnerAddr];
+            if (prizeCents == 0) break;
+            uint256 prizeEth = _centsToEthWei(prizeCents);
+            (bool sent, ) = winnerAddr.call{value: prizeEth}("");
+            if (!sent) revert TransferFailed();
+            emit PrizeAutoSent({
+                raffleId: currentRaffleId,
+                rank: uint8(i + 1),
+                winner: winnerAddr,
+                amountCents: prizeCents,
+                timestamp: block.timestamp
+            });
+        }
     }
 
     // ─────────────────────────────────────────────────────────
@@ -882,7 +940,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
     function _centsToEthWei(uint256 cents) internal view returns (uint256) {
         if (ETH_USD_FEED == address(0)) {
-            return cents * 1e10;
+            return (cents * 1e18) / FALLBACK_ETH_USD_CENTS;
         }
         int256 price = IChainlinkFeed(ETH_USD_FEED).latestAnswer();
         return (cents * 1e18) / uint256(price);
@@ -890,7 +948,7 @@ contract LibertyRaffle is Ownable, Pausable {
 
     function _ethToUsdCents(uint256 ethWei) internal view returns (uint256) {
         if (ETH_USD_FEED == address(0)) {
-            return ethWei / 1e10;
+            return (ethWei * FALLBACK_ETH_USD_CENTS) / 1e18;
         }
         int256 price = IChainlinkFeed(ETH_USD_FEED).latestAnswer();
         return (ethWei * uint256(price)) / 1e18;

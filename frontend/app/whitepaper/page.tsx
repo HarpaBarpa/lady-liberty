@@ -41,7 +41,7 @@ export default function WhitepaperPage() {
         <section id="abstract" style={{ paddingTop: "56px" }}>
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 900, color: "#F7FFFB", marginBottom: "16px" }}>1. Abstract</h2>
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>LibertyTorch is a community token built on <strong style={{ color: "#6EE786" }}>Torch</strong>, deployed on <strong style={{ color: "#6EE786" }}>Robinhood Chain</strong>. Its brand is Lady Liberty — the Statue of Liberty reimagined as a friendly character, torch raised high, mint green flame burning bright.</p>
-          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>The core utility is a weighted hourly raffle. Holding ≥$10 in $LIBERTY earns a base entry. Depositing dust from any ERC-20 token earns bonus entries. Every hour, up to <strong style={{ color: "#6EE786" }}>10 winners</strong> share the ETH prize vault, split 35% / 20% / 12% / 8% / 6% / 5% / 4% / 3% / 2% / 1%.</p>
+          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>The core utility is a weighted hourly raffle. Holding ≥100,000 $LIBERTY tokens earns a base entry. Depositing dust from any ERC-20 token earns bonus entries. Every hour, up to <strong style={{ color: "#6EE786" }}>10 winners</strong> share the ETH prize vault, split 35% / 20% / 12% / 8% / 6% / 5% / 4% / 3% / 2% / 1%.</p>
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>There is also the Liberty Bell — a separate jackpot that grows at 4% of every successful draw, triggering independently at 1-in-72 odds per eligible hourly check.</p>
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9 }}>There are no team tokens, no vesting schedules, no hidden allocations. The community owns the float from day one.</p>
         </section>
@@ -112,11 +112,11 @@ export default function WhitepaperPage() {
 
         <section id="raffle" style={{ paddingTop: "56px" }}>
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 900, color: "#F7FFFB", marginBottom: "16px" }}>6. The Raffle — Hold to Enter</h2>
-          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "20px" }}>Hold ≥$10 in $LIBERTY for your base entry. Deposit dust from any ERC-20 token to earn bonus entries. Every hour, <strong style={{ color: "#6EE786" }}>10 unique winners</strong> split the ETH prize vault.</p>
+          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "20px" }}>Hold ≥100,000 $LIBERTY tokens for your base entry. Deposit dust from any ERC-20 token to earn bonus entries. Every hour, <strong style={{ color: "#6EE786" }}>10 unique winners</strong> split the ETH prize vault.</p>
           <div style={{ background: "#174C4F", borderRadius: "16px", padding: "24px", margin: "16px 0" }}>
             <p style={{ fontSize: "0.7rem", color: "#6EE786", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "16px" }}>Raffle Parameters</p>
             {[
-              ["Eligibility","Hold ≥$10 in $LIBERTY (registered by off-chain watcher)"],
+              ["Eligibility","Hold ≥100,000 $LIBERTY tokens (registered by off-chain watcher)"],
               ["Base entry","1 entry per eligible wallet per hour"],
               ["Entry boost","Deposit dust from any ERC-20 token — USD value (via Chainlink oracle) earns bonus entries"],
               ["Dust math","Every $0.50 in USD value = 1 bonus entry. Max 5 bonus entries per linked wallet per cycle"],
@@ -125,7 +125,7 @@ export default function WhitepaperPage() {
               ["Prize split","35% / 20% / 12% / 8% / 6% / 5% / 4% / 3% / 2% / 1%"],
               ["Prize currency","ETH — sent directly to winners' wallets"],
               ["Winner cooldown","24 hours — winners cannot be selected again during this period"],
-              ["Min pool","$50 minimum ETH in vault before a draw fires"],
+              ["Draw fires when","≥10 eligible holders AND prize pool ≥$50"],,
               ["Vault funding","0.85% buy tax accumulates in the ETH prize vault"],
             ].map(([k,v]) => (
               <div key={String(k)} style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: "16px", marginBottom: "12px", fontSize: "0.9rem" }}>
@@ -137,7 +137,7 @@ export default function WhitepaperPage() {
           <h3 style={{ fontSize: "1.05rem", color: "#6EE786", fontWeight: 700, marginBottom: "10px" }}>How to boost your entries</h3>
           <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>Link up to 5 secondary wallets to your primary $LIBERTY wallet using an EIP-712 signature (no gas, no transaction). From each linked wallet, you can deposit any ERC-20 token to the LibertyVault. The USD value of your deposit is calculated via Chainlink oracle pricing, and that USD value is converted into bonus entries at a rate of 1 entry per $0.50. Each linked wallet can earn up to 5 bonus entries per cycle. A 2% protocol fee is deducted from each deposit.</p>
           <h3 style={{ fontSize: "1.05rem", color: "#6EE786", fontWeight: 700, marginBottom: "10px" }}>Registration</h3>
-          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>Because the raffle cannot read $LIBERTY balances on-chain from external wallets, an off-chain watcher monitors wallet balances via RPC and calls <code style={{ fontFamily: "monospace", fontSize: "0.85em", background: "rgba(23,76,79,0.8)", padding: "2px 6px", borderRadius: "4px" }}>registerAccount()</code> / <code style={{ fontFamily: "monospace", fontSize: "0.85em", background: "rgba(23,76,79,0.8)", padding: "2px 6px", borderRadius: "4px" }}>deregisterAccount()</code> automatically when balances cross the $10 threshold.</p>
+          <p style={{ fontSize: "1.05rem", color: "#DCF5EB", lineHeight: 1.8, opacity: 0.9, marginBottom: "16px" }}>Because the raffle cannot read $LIBERTY balances on-chain from external wallets, an off-chain watcher monitors wallet balances via RPC and calls <code style={{ fontFamily: "monospace", fontSize: "0.85em", background: "rgba(23,76,79,0.8)", padding: "2px 6px", borderRadius: "4px" }}>registerAccount()</code> / <code style={{ fontFamily: "monospace", fontSize: "0.85em", background: "rgba(23,76,79,0.8)", padding: "2px 6px", borderRadius: "4px" }}>deregisterAccount()</code> automatically when balances crosses the 100,000-token threshold.</p>
         </section>
 
         <section id="bell" style={{ paddingTop: "56px" }}>
@@ -147,7 +147,7 @@ export default function WhitepaperPage() {
             <p style={{ fontSize: "0.7rem", color: "#6EE786", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "16px" }}>Liberty Bell Parameters</p>
             {[
               ["Trigger odds","1 in 72 (~1.39%) per eligible hourly check — independent of participant count"],
-              ["Trigger condition","Jackpot pool ≥ $50, at least 1 eligible account not in cooldown, not paused"],
+              ["Trigger condition","Jackpot pool ≥ $50, at least 10 eligible accounts, not paused"],,
               ["Funding","4% of every successful regular draw is added to the Bell pool"],
               ["Winner selection","Weighted random — same weighting as regular raffle (1 base + dust entries)"],
               ["Prize payout","ETH or any ERC-20 via claimJackpotPrize(token)"],
@@ -211,7 +211,7 @@ export default function WhitepaperPage() {
             ["Where can I buy $LIBERTY?","Through the Torch trading interface or any DEX on Robinhood Chain after launch."],
             ["What's the anti-snipe protection?","Torch applies an 80% tax on the first 15–30 seconds of trading, then normalizes."],
             ["Can the tax rate change?","No. The 3% buy tax is set at launch and fixed forever."],
-            ["How do I enter the raffle?","Hold ≥$10 in $LIBERTY. An off-chain watcher automatically registers eligible wallets."],
+            ["How do I enter the raffle?","Hold ≥100,000 $LIBERTY tokens. An off-chain watcher automatically registers eligible wallets."],
             ["How do I boost my entries?","Link up to 5 secondary wallets and deposit dust from any ERC-20 token. The USD value of your deposit (via oracle) earns bonus entries at 1 per $0.50. Max 5 bonus entries per linked wallet per cycle."],
             ["What can I send as dust?","Any ERC-20 token. USD value is calculated via Chainlink oracle pricing."],
             ["How are winners chosen?","Entry weight = 1 base + bonus entries from dust deposits. Draw is random, weighted by total score. 10 unique winners per draw."],
@@ -229,7 +229,17 @@ export default function WhitepaperPage() {
         </section>
 
         <section id="risks" style={{ paddingTop: "56px" }}>
-          <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 900, color: "#F7FFFB", marginBottom: "16px" }}>11. Risk Disclosure</h2>
+          <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", fontWeight: 900, color: "#F7FFFB", marginBottom: "16px" }}>11. Security & Risk Disclosure</h2>
+          <div style={{ background: "rgba(110,231,134,0.06)", border: "1px solid rgba(110,231,134,0.2)", borderRadius: "12px", padding: "20px", marginBottom: "24px" }}>
+            <h3 style={{ fontSize: "1rem", color: "#6EE786", fontWeight: 700, marginBottom: "12px" }}>Dust Verification (Safety First)</h3>
+            <p style={{ fontSize: "0.95rem", color: "#DCF5EB", lineHeight: 1.6, opacity: 0.9, marginBottom: "12px" }}>To protect the prize pool from entry dilution, LibertyTorch implements a multi-layer defense against malicious or "frozen" tokens:</p>
+            <ul style={{ fontSize: "0.9rem", color: "#DCF5EB", opacity: 0.85, margin: 0, paddingLeft: "20px" }}>
+              <li style={{ marginBottom: "8px" }}><strong style={{ color: "#6EE786" }}>On-Chain Verification:</strong> The vault strictly enforces that the received token amount matches the transferred amount, blocking fee-on-transfer or rebasing tokens.</li>
+              <li style={{ marginBottom: "8px" }}><strong style={{ color: "#6EE786" }}>Strict Curation:</strong> Only tokens with verified liquidity and sellability on established DEXs are whitelisted for dust deposits.</li>
+              <li style={{ marginBottom: "8px" }}><strong style={{ color: "#6EE786" }}>Feed-Only Pricing:</strong> (Production) All entries are priced via verified Chainlink or DEX oracles; arbitrary fallback pricing is restricted to test environments.</li>
+              <li><strong style={{ color: "#6EE786" }}>Continuous Liquidation:</strong> The keeper automatically attempts to liquidate dust into ETH after every draw. Tokens that become unsellable are flagged and removed from the whitelist.</li>
+            </ul>
+          </div>
           {[
             ["Smart contract risk","The LibertyTorch contracts have been reviewed but not formally audited by a third-party security firm. Always exercise caution with any on-chain interaction."],
             ["Robinhood Chain risk","Newer network — liquidity, tooling, and ecosystem depth may be lower than established chains."],

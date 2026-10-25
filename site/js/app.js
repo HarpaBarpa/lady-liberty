@@ -48,6 +48,13 @@
     vaultAddrEl.textContent = vaultAddr;
   }
 
+  /* Raffle CA — displayed in hero badge */
+  var raffleCA = C.contracts && C.contracts.LIBERTY_RAFFLE;
+  var caEl = $("[data-ca]");
+  if (caEl && raffleCA && !raffleCA.startsWith("PENDING")) {
+    caEl.textContent = raffleCA;
+  }
+
   /* Mobile navigation */
   var menuBtn = $(".menu-btn");
   var nav = $("#site-nav");
@@ -241,7 +248,7 @@
   var params = $("[data-params]");
   [
     ["Network", rules.network],
-    ["Eligibility", "Hold $" + (rules.minLibertyUsdCents / 100).toFixed(0) + " in $LIBERTY for 1 base entry"],
+    ["Eligibility", "Hold " + (rules.minLibertyTokens / 1000).toFixed(0) + "k $LIBERTY for 1 base entry"],
     ["Linked wallets", "Up to " + rules.maxLinkedWallets + " secondary wallets for RWA dust"],
     ["Min dust", "$" + (rules.minDustUsdCents / 100).toFixed(2) + " minimum; 1 entry per $" + (rules.dustEntryStepCents / 100).toFixed(2) + " (max " + rules.maxDustEntriesPerWallet + "/wallet)"],
     ["Protocol fee", rules.feeBps / 100 + "% on each deposit"],

@@ -1,0 +1,17 @@
+{
+  "network": "robinhood",
+  "chainId": 4663,
+  "timestamp": "2026-10-25T19:49:39.200Z",
+  "deployer": "0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438",
+  "contracts": {
+    "LinkRegistry": "0x204Baf2B34bEE7E57ebC96C421c3cfd8553DB25A",
+    "LibertyVault": "0xbab1dff4fc92c3de3F0ed9F9e1C264DeA06e63B3",
+    "LibertyRaffle": "0x535bf9dBC0ea098574ABdba75CDc4eEf7c59fc1b"
+  },
+  "env": {
+    "LIBERTY_TOKEN": "0xFd30679405C7fDF1D42366327C49819afCE81111",
+    "PROTOCOL_FEE_RECIPIENT": "0x5F5E4ca54956D8Bd8Ad224835adD0A2bb0B6A438",
+    "ETH_USD_FEED": "0x0000000000000000000000000000000000000000"
+  },
+  "deploymentNote": "v3 — auto-send winners + raffle history"
+}
