@@ -280,7 +280,7 @@
     rulesCard.innerHTML =
       '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">📋</span><h3>How Entries Work</h3></div>' +
       '<div class="rules-grid">' +
-        '<div class="rules-item"><strong>1 base entry</strong>Hold $' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ in $LIBERTY</div>' +
+        '<div class="rules-item"><strong>1 base entry</strong>Hold 100k $LIBERTY in your wallet</div>' +
         '<div class="rules-item"><strong>Link wallets</strong>Up to ' + RULES.maxLinkedWallets + ' additional wallets</div>' +
         '<div class="rules-item"><strong>1 entry per $' + (RULES.dustEntryStepCents / 100).toFixed(2) + ' dust</strong>Deposited into the vault</div>' +
         '<div class="rules-item"><strong>Max ' + RULES.maxDustEntriesPerWallet + ' entries</strong>Per linked wallet per cycle</div>' +
@@ -300,7 +300,7 @@
     } else {
       primaryCard.innerHTML =
         '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🔗</span><h3>Primary Wallet</h3><span class="ledger-badge badge-inactive">Not connected</span></div>' +
-        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY ($' + (RULES.minLibertyUsdCents / 100).toFixed(0) + '+ required). This is your raffle account — dust from linked wallets credits here.</p>' +
+        '<p class="ledger-blurb">Connect the wallet that holds your $LIBERTY (100k+ required). This is your raffle account — dust from linked wallets credits here.</p>' +
         '<button class="btn btn-primary" data-connect-primary type="button">Connect Primary Wallet</button>';
     }
     container.appendChild(primaryCard);
@@ -341,7 +341,7 @@
       tallyCard.innerHTML =
         '<div class="ledger-card-header"><span class="ledger-icon" aria-hidden="true">🎫</span><h3>Your Entries</h3><span class="ledger-badge ' + (total > 0 ? 'badge-active' : 'badge-inactive') + '">' + total + ' total</span></div>' +
         '<div class="tally-grid">' +
-          '<div class="tally-item"><span class="tally-num">1</span><span class="tally-label">Base entry</span><span class="tally-help">$' + (RULES.minLibertyUsdCents / 100).toFixed(0) + ' $LIBERTY</span></div>' +
+          '<div class="tally-item"><span class="tally-num">1</span><span class="tally-label">Base entry</span><span class="tally-help">100k $LIBERTY</span></div>' +
           '<div class="tally-item"><span class="tally-num">' + dust + '</span><span class="tally-label">Dust entries</span><span class="tally-help">From ' + state.linked.length + ' linked wallet' + (state.linked.length !== 1 ? 's' : '') + '</span></div>' +
           '<div class="tally-item"><span class="tally-num">' + total + '</span><span class="tally-label">Total weight</span><span class="tally-help">' + (state.info && state.info.cooldown ? '⏳ In 24h cooldown' : '✅ Eligible for next draw') + '</span></div>' +
         '</div>';
